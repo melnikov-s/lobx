@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "rootDir": "src",
+    "target": "es5",
+    "alwaysStrict": false,
+    "sourceMap": false,
+    "removeComments": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "lib": ["es6"],
+    "strictNullChecks": true,
+    "declaration": true,
+    "declarationDir": "./lib",
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
