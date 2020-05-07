@@ -1,19 +1,21 @@
 import AtomNode from "../core/nodes/atom";
 import { resolveGraph, Graph } from "./graph";
 
-export type Atom = Omit<
-  AtomNode,
-  "onBecomeObserved" | "onBecomeUnobserved" | "observers" | "nodeType"
->;
+export type Atom<T = unknown> = {
+  reportChanged: (value?: T) => void;
+  reportObserved: () => boolean;
+};
 
-export default function(opts?: {
+export default function<T = unknown>(opts?: {
   graph?: Graph;
   onBecomeObserved?: () => void;
   onBecomeUnobserved?: () => void;
-}): Atom {
+  equals?: (v: T) => boolean;
+}): Atom<T> {
   return new AtomNode(
     resolveGraph(opts?.graph),
     opts?.onBecomeObserved,
-    opts?.onBecomeUnobserved
+    opts?.onBecomeUnobserved,
+    opts?.equals
   );
 }

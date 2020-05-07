@@ -1,12 +1,15 @@
-import CoreGraph from "../core/graph";
+import CoreGraph, { ObservableNode } from "../core/graph";
 import { Observable } from "./observable";
 import { Computed } from "./computed";
 import { Atom } from "./atom";
 
-export type Graph = Omit<
-  CoreGraph,
-  "remove" | "reportChanged" | "reportObserved" | "runObserver"
->;
+export type Graph = {
+  isInAction: () => boolean;
+  isObserved: (node: ObservableNode) => boolean;
+  isTracking: () => boolean;
+  runAction: <T>(fn: () => T) => T;
+  untracked: <T>(fn: () => T) => T;
+};
 
 export default function makeGraph(): Graph {
   return new CoreGraph();
@@ -34,7 +37,7 @@ export function action<T extends unknown[], U>(
 }
 
 export function isObserved(
-  observable: Observable<unknown> | Computed<unknown> | Atom,
+  observable: Observable<unknown> | Computed<unknown> | Atom<unknown>,
   { graph = defaultGraph }: GraphOptions = {}
 ): boolean {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

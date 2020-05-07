@@ -211,4 +211,22 @@ describe("atom test", () => {
 
     d();
   });
+
+  it("can set a custom equals method", () => {
+    const a = atom({ equals: a => a === 1 });
+
+    let count = 0;
+
+    autorun(() => {
+      count++;
+      a.reportObserved();
+    });
+
+    a.reportChanged();
+    expect(count).toBe(2);
+    a.reportChanged(0);
+    expect(count).toBe(3);
+    a.reportChanged(1);
+    expect(count).toBe(3);
+  });
 });

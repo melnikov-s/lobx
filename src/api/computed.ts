@@ -1,16 +1,13 @@
 import ComputedNode from "../core/nodes/computed";
 import { resolveGraph, Graph } from "./graph";
 
-export type Computed<T> = Omit<
-  ComputedNode<T>,
-  | "onBecomeObserved"
-  | "onBecomeUnobserved"
-  | "value"
-  | "observing"
-  | "observers"
-  | "nodeType"
-  | "clear"
->;
+export type Computed<T> = {
+  equals: (value: T) => boolean;
+  isDirty: () => boolean;
+  isKeepAlive: () => boolean;
+  get: () => T;
+  setKeepAlive: (keepAlive: boolean) => void;
+};
 
 export default function<T>(
   fn: () => T,

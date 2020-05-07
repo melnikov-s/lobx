@@ -80,8 +80,9 @@ interface Observer {
   observing: Set<ObservableNode>;
 }
 
-export interface Atom extends Observable {
+export interface Atom<T = unknown> extends Observable {
   nodeType: typeof nodeTypes.atom;
+  equals(a: T): boolean;
 }
 
 export interface ObservableValue<T = unknown> extends Observable {
@@ -134,8 +135,6 @@ export default class Graph {
 
     switch (node.nodeType) {
       case nodeTypes.atom:
-        changed = this.changedObservables.has(node);
-        break;
       case nodeTypes.observable:
         changed =
           this.changedObservables.has(node) &&
@@ -278,7 +277,7 @@ export default class Graph {
 
     // we only care about an observable being accessed if there's
     // currently an observer running
-    if (topOfRunStack) {
+    if (topOfRunStack && !topOfRunStack.observing.has(node)) {
       // if this is the first time an observable is being observed ...
       if (!this.isObserved(node)) {
         node.onBecomeObserved?.();

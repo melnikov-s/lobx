@@ -1,7 +1,10 @@
 import ListenerNode from "../core/nodes/listener";
 import { resolveGraph, Graph } from "./graph";
 
-export type Listener<T> = Omit<ListenerNode<T>, "nodeType" | "react">;
+export type Listener<T> = {
+  dispose: () => void;
+  track: (trackFn: () => void | T) => void | T;
+};
 
 export default function<T>(
   callback: () => void,
