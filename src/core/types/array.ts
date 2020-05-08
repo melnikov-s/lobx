@@ -1,76 +1,35 @@
 import Graph from "../graph";
 import Atom from "../nodes/atom";
-import { getAdm, linkAdm, getObservable, getObservableSource } from "./utils";
+import {
+	getAdministration,
+	linkAdministration,
+	getObservable,
+	getObservableSource,
+	Administration
+} from "./types";
 import { notifyArrayUpdate, notifySpliceArray } from "../trace";
 
-const arrayTraps = {
-	get<T>(target: T[], name: string | number | symbol, proxy: T[]): unknown {
-		const adm = getAdm(proxy);
-		if (name === "length") {
-			return adm.getArrayLength();
-		}
-
-		if (typeof name === "number") {
-			return adm.get(name);
-		}
-
-		if (typeof name === "string" && String(parseInt(name)) === name) {
-			return adm.get(parseInt(name));
-		}
-
-		if (arrayMethods.hasOwnProperty(name)) {
-			return arrayMethods[name as keyof typeof arrayMethods];
-		}
-
-		return target[name];
-	},
-	set<T>(
-		target: T[],
-		name: string | number | symbol,
-		value: T | number,
-		proxy: T[]
-	): boolean {
-		const adm = getAdm(proxy);
-
-		if (name === "length") {
-			adm.setArrayLength(value as number);
-		} else if (typeof name === "number") {
-			adm.set(name, value as T);
-		} else if (typeof name === "string" && String(parseInt(name)) === name) {
-			adm.set(parseInt(name), value as T);
-		} else {
-			target[name] = value;
-		}
-
-		return true;
-	},
-	preventExtensions(): boolean {
-		throw new Error(`Observable arrays cannot be frozen`);
-		return false;
-	}
-};
-
-export class ObservableArrayAdministration<T> {
+export class ObservableArrayAdministration<T> implements Administration<T[]> {
 	atom: Atom;
-	target: T[];
+	source: T[];
 	proxy: T[];
 	graph: Graph;
 
-	constructor(target: T[] = [], graph: Graph) {
+	constructor(source: T[] = [], graph: Graph) {
 		this.atom = new Atom(graph);
-		this.target = target;
-		this.proxy = new Proxy(this.target, arrayTraps) as T[];
+		this.source = source;
+		this.proxy = new Proxy(this.source, arrayTraps) as T[];
 		this.graph = graph;
-		linkAdm(this.proxy, this);
+		linkAdministration(this.proxy, this);
 	}
 
 	get(index: number): T | undefined {
 		this.atom.reportObserved();
-		return getObservable(this.target[index], this.graph);
+		return getObservable(this.source[index], this.graph);
 	}
 
 	set(index: number, newValue: T): void {
-		const values = this.target;
+		const values = this.source;
 		const targetValue = getObservableSource(newValue);
 
 		if (index < values.length) {
@@ -96,13 +55,13 @@ export class ObservableArrayAdministration<T> {
 
 	getArrayLength(): number {
 		this.atom.reportObserved();
-		return this.target.length;
+		return this.source.length;
 	}
 
 	setArrayLength(newLength: number): void {
 		if (typeof newLength !== "number" || newLength < 0)
 			throw new Error("Out of range: " + newLength);
-		const currentLength = this.target.length;
+		const currentLength = this.source.length;
 		if (newLength === currentLength) return;
 		else if (newLength > currentLength) {
 			const newItems = new Array(newLength - currentLength);
@@ -113,7 +72,7 @@ export class ObservableArrayAdministration<T> {
 	}
 
 	spliceWithArray(index: number, deleteCount?: number, newItems?: T[]): T[] {
-		const length = this.target.length;
+		const length = this.source.length;
 		const newTargetItems: T[] = [];
 
 		if (newItems) {
@@ -145,17 +104,64 @@ export class ObservableArrayAdministration<T> {
 		deleteCount: number,
 		newItems: T[]
 	): T[] {
-		return this.target.splice.apply(
-			this.target,
+		return this.source.splice.apply(
+			this.source,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			[index, deleteCount].concat(newItems as any) as any
 		);
 	}
 }
 
+const arrayTraps = {
+	get<T>(target: T[], name: string | number | symbol, proxy: T[]): unknown {
+		const adm = getAdministration(proxy);
+		if (name === "length") {
+			return adm.getArrayLength();
+		}
+
+		if (typeof name === "number") {
+			return adm.get(name);
+		}
+
+		if (typeof name === "string" && String(parseInt(name)) === name) {
+			return adm.get(parseInt(name));
+		}
+
+		if (arrayMethods.hasOwnProperty(name)) {
+			return arrayMethods[name as keyof typeof arrayMethods];
+		}
+
+		return target[name];
+	},
+	set<T>(
+		target: T[],
+		name: string | number | symbol,
+		value: T | number,
+		proxy: T[]
+	): boolean {
+		const adm = getAdministration(proxy);
+
+		if (name === "length") {
+			adm.setArrayLength(value as number);
+		} else if (typeof name === "number") {
+			adm.set(name, value as T);
+		} else if (typeof name === "string" && String(parseInt(name)) === name) {
+			adm.set(parseInt(name), value as T);
+		} else {
+			target[name] = value;
+		}
+
+		return true;
+	},
+	preventExtensions(): boolean {
+		throw new Error(`Observable arrays cannot be frozen`);
+		return false;
+	}
+};
+
 const arrayMethods = {
 	concat<T>(this: T[], ...args: Array<T | T[]>): T[] {
-		const adm = getAdm(this);
+		const adm = getAdministration(this);
 		adm.atom.reportObserved();
 
 		const targetArgs = [];
@@ -172,7 +178,7 @@ const arrayMethods = {
 			}
 		}
 
-		return getObservable(adm.target.concat(...targetArgs), adm.graph);
+		return getObservable(adm.source.concat(...targetArgs), adm.graph);
 	},
 	fill<T>(
 		this: T[],
@@ -180,8 +186,8 @@ const arrayMethods = {
 		start?: number | undefined,
 		end?: number | undefined
 	): T[] {
-		const adm = getAdm(this);
-		adm.target.fill(value, start, end);
+		const adm = getAdministration(this);
+		adm.source.fill(value, start, end);
 		adm.atom.reportChanged();
 
 		return this;
@@ -193,7 +199,7 @@ const arrayMethods = {
 		deleteCount?: number,
 		...newItems: T[]
 	): T[] {
-		const adm = getAdm(this);
+		const adm = getAdministration(this);
 		switch (arguments.length) {
 			case 0:
 				return [];
@@ -206,13 +212,16 @@ const arrayMethods = {
 	},
 
 	push<T>(this: T[], ...items: T[]): number {
-		const adm = getAdm(this);
-		adm.spliceWithArray(adm.target.length, 0, items);
-		return adm.target.length;
+		const adm = getAdministration(this);
+		adm.spliceWithArray(adm.source.length, 0, items);
+		return adm.source.length;
 	},
 
 	pop<T>(this: T[]): T {
-		return this.splice(Math.max(getAdm(this).target.length - 1, 0), 1)[0];
+		return this.splice(
+			Math.max(getAdministration(this).source.length - 1, 0),
+			1
+		)[0];
 	},
 
 	shift<T>(this: T[]): T {
@@ -220,15 +229,15 @@ const arrayMethods = {
 	},
 
 	unshift<T>(this: T[], ...items: T[]): number {
-		const adm = getAdm(this);
+		const adm = getAdministration(this);
 		adm.spliceWithArray(0, 0, items);
-		return adm.target.length;
+		return adm.source.length;
 	},
 
 	reverse<T>(this: T[]): T[] {
-		const adm = getAdm(this);
+		const adm = getAdministration(this);
 
-		adm.target.reverse();
+		adm.source.reverse();
 
 		adm.atom.reportChanged();
 
@@ -236,10 +245,10 @@ const arrayMethods = {
 	},
 
 	sort<T>(this: T[], compareFn?: ((a: T, b: T) => number) | undefined): T[] {
-		const adm = getAdm(this);
+		const adm = getAdministration(this);
 		adm.atom.reportChanged();
 
-		adm.target.sort(compareFn);
+		adm.source.sort(compareFn);
 
 		return this;
 	}
@@ -249,9 +258,9 @@ const arrayMethods = {
 ["join", "toString", "toLocaleString"].forEach(method => {
 	if (Array.prototype.hasOwnProperty(method)) {
 		arrayMethods[method] = function(this: unknown[]): string {
-			const adm = getAdm(this);
+			const adm = getAdministration(this);
 			adm.atom.reportObserved();
-			return adm.target[method].apply(adm.target, arguments);
+			return adm.source[method].apply(adm.source, arguments);
 		};
 	}
 });
@@ -264,10 +273,10 @@ const arrayMethods = {
 			value: unknown,
 			...args: unknown[]
 		): unknown {
-			const adm = getAdm(this);
+			const adm = getAdministration(this);
 			adm.atom.reportObserved();
 			const target = getObservableSource(value);
-			return adm.target[method].call(adm.target, target, ...args);
+			return adm.source[method].call(adm.source, target, ...args);
 		};
 	}
 });
@@ -276,10 +285,10 @@ const arrayMethods = {
 ["slice", "copyWithin", "flat"].forEach(method => {
 	if (Array.prototype.hasOwnProperty(method)) {
 		arrayMethods[method] = function(this: unknown[]): unknown[] {
-			const adm = getAdm(this);
+			const adm = getAdministration(this);
 			adm.atom.reportObserved();
 			return getObservable(
-				adm.target[method].apply(adm.target, arguments),
+				adm.source[method].apply(adm.source, arguments),
 				adm.graph
 			);
 		};
@@ -303,9 +312,9 @@ const arrayMethods = {
 			func: (value: unknown, index: number, arr: unknown[]) => unknown,
 			context: unknown
 		): unknown[] {
-			const adm = getAdm(this);
+			const adm = getAdministration(this);
 			adm.atom.reportObserved();
-			return adm.target[method](function(v: unknown, i: number) {
+			return adm.source[method](function(v: unknown, i: number) {
 				return func.call(context, getObservable(v, adm.graph), i, adm.proxy);
 			});
 		};
@@ -325,9 +334,9 @@ const arrayMethods = {
 			) => unknown,
 			initialvalue: unknown
 		): unknown {
-			const adm = getAdm(this);
+			const adm = getAdministration(this);
 			adm.atom.reportObserved();
-			return adm.target[method](function(
+			return adm.source[method](function(
 				acc: unknown,
 				value: unknown,
 				index: number

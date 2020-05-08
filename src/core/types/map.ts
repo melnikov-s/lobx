@@ -1,108 +1,119 @@
 import Atom from "../nodes/atom";
 import Graph from "../graph";
 
-import { AtomMap, getObservable, getObservableSource } from "./utils";
+import {
+	AtomMap,
+	getObservable,
+	getObservableSource,
+	getAdministration,
+	linkAdministration,
+	Administration
+} from "./types";
 import { notifyUpdate, notifyAdd, notifyDelete } from "../trace";
 
 class ObservableValueMap<K, V> {
-	private _map: Map<K, V>;
-	private _atomMap: AtomMap<K>;
+	map: Map<K, V>;
+	atomMap: AtomMap<K>;
 
 	constructor(map: Map<K, V>, graph: Graph) {
-		this._map = map;
-		this._atomMap = new AtomMap(graph);
+		this.map = map;
+		this.atomMap = new AtomMap(graph);
 	}
 
 	get(key: K): V | undefined {
-		if (this._map.has(key)) {
-			this._atomMap.reportObserved(key);
+		if (this.map.has(key)) {
+			this.atomMap.reportObserved(key);
 		}
 
-		return this._map.get(key);
+		return this.map.get(key);
 	}
 
 	peek(key: K): V | undefined {
-		return this._map.get(key);
+		return this.map.get(key);
 	}
 
 	has(key: K): boolean {
-		return this._map.has(key);
+		return this.map.has(key);
 	}
 
 	set(key: K, value: V): void {
-		if (!this._map.has(key) || this._map.get(key) !== value) {
-			this._map.set(key, value);
-			this._atomMap.reportChanged(key);
+		if (!this.map.has(key) || this.map.get(key) !== value) {
+			this.map.set(key, value);
+			this.atomMap.reportChanged(key);
 		}
 	}
 
 	delete(key: K): void {
-		if (this._map.has(key)) {
-			this._map.delete(key);
-			this._atomMap.reportChanged(key);
-			this._atomMap.delete(key);
+		if (this.map.has(key)) {
+			this.map.delete(key);
+			this.atomMap.reportChanged(key);
+			this.atomMap.delete(key);
 		}
 	}
 
 	keys(): IterableIterator<K> {
-		return this._map.keys();
+		return this.map.keys();
 	}
 
 	forEach(callback: (value: V, key: K, object: Map<K, V>) => void): void {
-		this._map.forEach(callback);
+		this.map.forEach(callback);
 	}
 
 	get size(): number {
-		return this._map.size;
+		return this.map.size;
 	}
 }
 
-export class ObservableMap<K, V> implements Map<K, V> {
-	private _data: ObservableValueMap<K, V>;
-	private _hasMap: AtomMap<K>;
-	private _keysAtom: Atom;
-	private _graph: Graph;
-	[Symbol.iterator](): IterableIterator<[K, V]> {
-		return this.entries();
-	}
-	[Symbol.toStringTag]: "Map" = "Map";
+export class ObservableMapAdministration<K, V>
+	implements Map<K, V>, Administration<Map<K, V>> {
+	data: ObservableValueMap<K, V>;
+	hasMap: AtomMap<K>;
+	keysAtom: Atom;
+	graph: Graph;
+	proxy: Map<K, V>;
 
-	constructor(map: Map<K, V> = new Map(), graph: Graph) {
-		this._data = new ObservableValueMap(map, graph);
-		this._hasMap = new AtomMap(graph);
-		this._keysAtom = new Atom(graph);
-		this._graph = graph;
+	constructor(source: Map<K, V> = new Map(), graph: Graph) {
+		this.data = new ObservableValueMap(source, graph);
+		this.hasMap = new AtomMap(graph);
+		this.keysAtom = new Atom(graph);
+		this.graph = graph;
+		this.proxy = new Proxy(this.source, mapProxyTraps) as Map<K, V>;
+		linkAdministration(this.proxy, this);
+	}
+
+	get source(): Map<K, V> {
+		return this.data.map;
 	}
 
 	has(key: K): boolean {
 		const targetKey = getObservableSource(key);
 
-		if (this._graph.isTracking()) {
-			this._hasMap.reportObserved(targetKey);
+		if (this.graph.isTracking()) {
+			this.hasMap.reportObserved(targetKey);
 		}
 
-		return this._data.has(targetKey);
+		return this.data.has(targetKey);
 	}
 
 	set(key: K, value: V): this {
 		const targetKey = getObservableSource(key);
 		const targetValue = getObservableSource(value);
 
-		const hasKey = this._data.has(targetKey);
+		const hasKey = this.data.has(targetKey);
 		let oldValue: V | undefined;
 
-		if (!hasKey || (oldValue = this._data.peek(targetKey)) !== targetValue) {
-			this._graph.runAction(() => {
-				this._data.set(targetKey, targetValue);
+		if (!hasKey || (oldValue = this.data.peek(targetKey)) !== targetValue) {
+			this.graph.runAction(() => {
+				this.data.set(targetKey, targetValue);
 				if (!hasKey) {
-					this._hasMap.reportChanged(targetKey);
-					this._keysAtom.reportChanged();
+					this.hasMap.reportChanged(targetKey);
+					this.keysAtom.reportChanged();
 				}
 			});
 
 			hasKey
-				? notifyUpdate(this, targetValue, oldValue, targetKey)
-				: notifyAdd(this, targetValue, targetKey);
+				? notifyUpdate(this.proxy, targetValue, oldValue, targetKey)
+				: notifyAdd(this.proxy, targetValue, targetKey);
 		}
 
 		return this;
@@ -111,16 +122,16 @@ export class ObservableMap<K, V> implements Map<K, V> {
 	delete(key: K): boolean {
 		const targetKey = getObservableSource(key);
 
-		if (this._data.has(targetKey)) {
-			const oldValue = this._data.peek(targetKey);
+		if (this.data.has(targetKey)) {
+			const oldValue = this.data.peek(targetKey);
 
-			this._graph.runAction(() => {
-				this._keysAtom.reportChanged();
-				this._hasMap.reportChanged(targetKey);
-				this._data.delete(targetKey);
+			this.graph.runAction(() => {
+				this.keysAtom.reportChanged();
+				this.hasMap.reportChanged(targetKey);
+				this.data.delete(targetKey);
 			});
 
-			notifyDelete(this, oldValue, targetKey);
+			notifyDelete(this.proxy, oldValue, targetKey);
 			return true;
 		}
 		return false;
@@ -129,16 +140,16 @@ export class ObservableMap<K, V> implements Map<K, V> {
 	get(key: K): V | undefined {
 		const targetKey = getObservableSource(key);
 		return this.has(targetKey)
-			? getObservable(this._data.get(targetKey), this._graph)
+			? getObservable(this.data.get(targetKey), this.graph)
 			: undefined;
 	}
 
 	keys(): IterableIterator<K> {
-		this._keysAtom.reportObserved();
+		this.keysAtom.reportObserved();
 
 		let nextIndex = 0;
-		const observableKeys = Array.from(this._data.keys()).map(o =>
-			getObservable(o, this._graph)
+		const observableKeys = Array.from(this.data.keys()).map(o =>
+			getObservable(o, this.graph)
 		);
 		return {
 			[Symbol.iterator]: function(): IterableIterator<K> {
@@ -197,20 +208,66 @@ export class ObservableMap<K, V> implements Map<K, V> {
 		callback: (value: V, key: K, object: Map<K, V>) => void,
 		thisArg?: unknown
 	): void {
-		this._keysAtom.reportObserved();
-		this._data.forEach((_, key) =>
+		this.keysAtom.reportObserved();
+		this.data.forEach((_, key) =>
 			callback.call(thisArg, this.get(key)!, key, this)
 		);
 	}
 
 	clear(): void {
-		this._graph.runAction(() => {
-			this._data.forEach((_, key) => this.delete(key));
+		this.graph.runAction(() => {
+			this.data.forEach((_, key) => this.delete(key));
 		});
 	}
 
 	get size(): number {
-		this._keysAtom.reportObserved();
-		return this._data.size;
+		this.keysAtom.reportObserved();
+		return this.data.size;
 	}
+
+	[Symbol.iterator](): IterableIterator<[K, V]> {
+		return this.entries();
+	}
+
+	[Symbol.toStringTag]: "Map" = "Map";
 }
+
+const mapProxyTraps: ProxyHandler<Map<unknown, unknown>> = {
+	get<K, V>(
+		target: Map<K, V>,
+		name: string | number | symbol,
+		proxy: Map<K, V>
+	) {
+		const adm = getAdministration(proxy);
+
+		if (name === "size") {
+			return adm.size;
+		}
+
+		if (mapMethods.hasOwnProperty(name)) {
+			return mapMethods[name];
+		}
+
+		return target[name];
+	}
+};
+
+const mapMethods = {};
+
+[
+	"clear",
+	"forEach",
+	"has",
+	"get",
+	"set",
+	"delete",
+	"entries",
+	"keys",
+	"values",
+	Symbol.iterator
+].forEach(method => {
+	mapMethods[method] = function(): unknown {
+		const adm = getAdministration(this);
+		return adm[method].apply(adm, arguments);
+	};
+});

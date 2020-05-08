@@ -1,7 +1,7 @@
 import ObservableNode from "../core/nodes/observable";
 import { resolveGraph, Graph } from "./graph";
 import { defaultEquals, isNonPrimitive } from "../utils";
-import { getObservable } from "../core/types/utils";
+import { getObservable } from "../core/types/types";
 
 export type Observable<T> = {
 	readonly comparator: <T>(a: T, b: T) => boolean;

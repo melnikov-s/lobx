@@ -1,26 +1,29 @@
 import Atom from "../nodes/atom";
 import Graph from "../graph";
 import {
-	getAdm,
-	linkAdm,
+	getAdministration,
+	linkAdministration,
 	AtomMap,
 	getObservable,
-	getObservableSource
-} from "./utils";
+	getObservableSource,
+	Administration
+} from "./types";
 import { notifyUpdate, notifyAdd, notifyDelete } from "../trace";
+import { isPropertyKey } from "../../utils";
 
-export class ObservableObjectAdministration<T extends object> {
+export class ObservableObjectAdministration<T extends object>
+	implements Administration {
 	keysAtom: Atom;
 	hasMap: AtomMap<PropertyKey>;
 	values: AtomMap<PropertyKey>;
-	target: T;
+	source: T;
 	proxy: T;
 	graph: Graph;
 
-	constructor(target: T | undefined, graph: Graph) {
-		this.target = target || ({} as T);
-		linkAdm(this.target, this);
-		this.proxy = new Proxy(this.target, objectProxyTraps) as T;
+	constructor(source: T = {} as T, graph: Graph) {
+		this.source = source;
+		linkAdministration(this.source, this);
+		this.proxy = new Proxy(this.source, objectProxyTraps) as T;
 		this.keysAtom = new Atom(graph);
 		this.hasMap = new AtomMap(graph);
 		this.values = new AtomMap(graph);
@@ -28,7 +31,7 @@ export class ObservableObjectAdministration<T extends object> {
 	}
 
 	read(key: keyof T): void {
-		if (this.target.hasOwnProperty(key)) {
+		if (this.source.hasOwnProperty(key)) {
 			this.values.reportObserved(key);
 		} else if (this.graph.isTracking()) {
 			this.hasMap.reportObserved(key);
@@ -36,12 +39,12 @@ export class ObservableObjectAdministration<T extends object> {
 	}
 
 	write(key: keyof T, newValue: T[keyof T]): void {
-		const had = this.target.hasOwnProperty(key);
-		const oldValue: T[keyof T] = this.target[key];
+		const had = this.source.hasOwnProperty(key);
+		const oldValue: T[keyof T] = this.source[key];
 		const targetValue = getObservableSource(newValue);
 
 		if (!had || oldValue !== targetValue) {
-			this.target[key] = targetValue;
+			this.source[key] = targetValue;
 
 			this.graph.runAction(() => {
 				if (!had) {
@@ -63,14 +66,14 @@ export class ObservableObjectAdministration<T extends object> {
 			this.hasMap.reportObserved(key);
 		}
 
-		return key in this.target;
+		return key in this.source;
 	}
 
 	remove(key: keyof T): void {
-		if (!this.target.hasOwnProperty(key)) return;
+		if (!this.source.hasOwnProperty(key)) return;
 
-		const oldValue = this.target[key];
-		delete this.target[key];
+		const oldValue = this.source[key];
+		delete this.source[key];
 		this.graph.runAction(() => {
 			this.values.reportChanged(key);
 			this.keysAtom.reportChanged();
@@ -83,29 +86,21 @@ export class ObservableObjectAdministration<T extends object> {
 
 	getKeys(): PropertyKey[] {
 		this.keysAtom.reportObserved();
-		return Object.keys(this.target);
+		return Object.keys(this.source);
 	}
-}
-
-function isPropertyKey(val: PropertyKey): boolean {
-	return (
-		typeof val === "string" ||
-		typeof val === "number" ||
-		typeof val === "symbol"
-	);
 }
 
 const objectProxyTraps: ProxyHandler<object> = {
 	has<T extends object>(target: T, name: PropertyKey) {
 		if (name === "constructor") return true;
-		const adm = getAdm(target);
+		const adm = getAdministration(target);
 
 		if (isPropertyKey(name)) return adm.has(name);
 		return name in target;
 	},
 	get<T extends object>(target: T, name: keyof T) {
 		if (name === "constructor") return target[name];
-		const adm = getAdm(target);
+		const adm = getAdministration(target);
 
 		if (isPropertyKey(name)) adm.read(name);
 
@@ -114,7 +109,7 @@ const objectProxyTraps: ProxyHandler<object> = {
 	set<T extends object>(target: T, name: keyof T, value: T[keyof T]) {
 		if (!isPropertyKey(name)) return false;
 
-		const adm = getAdm(target);
+		const adm = getAdministration(target);
 
 		adm.write(name, value);
 
@@ -122,12 +117,12 @@ const objectProxyTraps: ProxyHandler<object> = {
 	},
 	deleteProperty<T extends object>(target: T, name: keyof T) {
 		if (!isPropertyKey(name)) return false;
-		const adm = getAdm(target);
+		const adm = getAdministration(target);
 		adm.remove(name);
 		return true;
 	},
 	ownKeys<T extends object>(target: T) {
-		const adm = getAdm(target);
+		const adm = getAdministration(target);
 		adm.keysAtom.reportObserved();
 		return Reflect.ownKeys(target);
 	},

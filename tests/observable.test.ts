@@ -102,6 +102,13 @@ describe("observable tests", () => {
 		expect(countUnObserved).toBe(2);
 	});
 
+	it("can't observe primitive values", () => {
+		expect(() => observable(1 as any)).toThrow();
+		expect(() => observable("" as any)).toThrow();
+		expect(() => observable(false as any)).toThrow();
+		expect(() => observable(Symbol() as any)).toThrow();
+	});
+
 	//from mobx
 	it("nested observables", () => {
 		const factor = observable.box(0);

@@ -306,3 +306,8 @@ test("set equality for observed and target objects", () => {
 	s.delete(target);
 	expect(s.size).toBe(0);
 });
+
+test("instanceof Set", () => {
+	const s = set();
+	expect(s instanceof Set).toBe(true);
+});

@@ -352,6 +352,22 @@ test("can iterate arrays", () => {
 	d();
 });
 
+test("iteration returns observable results", () => {
+	const arr = array([{}, {}, {}]);
+	const itr = arr[Symbol.iterator]();
+
+	let i = itr.next();
+	let count = 0;
+
+	while (!i.done) {
+		count++;
+		expect(isObservable(i.value)).toBe(true);
+		i = itr.next();
+	}
+
+	expect(count).toBe(3);
+});
+
 test("array is concat spreadable", () => {
 	const x = array([1, 2, 3, 4]);
 	const y = [5].concat(x);

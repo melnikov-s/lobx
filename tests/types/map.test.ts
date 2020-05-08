@@ -5,6 +5,7 @@ import {
 	reaction,
 	trace
 } from "../../src/index";
+import { getAdministration } from "../../src/core/types/types";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
@@ -193,37 +194,39 @@ test("observe collections", function() {
 });
 
 test("cleanup", function() {
-	const x = map(new Map(Object.entries({ a: 1 }))) as any;
+	const x = map(new Map(Object.entries({ a: 1 })));
 
 	let aValue;
 	const disposer = autorun(function() {
 		aValue = x.get("a");
 	});
 
-	let observable = x._data._atomMap.get("a");
+	const adm = getAdministration(x);
+
+	let observable = adm.data.atomMap.get("a");
 
 	expect(aValue).toBe(1);
 	expect(observable.observers.size).toBe(1);
-	expect(x._hasMap.get("a").observers.size).toBe(1);
+	expect(adm.hasMap.get("a").observers.size).toBe(1);
 
 	expect(x.delete("a")).toBe(true);
 	expect(x.delete("not-existing")).toBe(false);
 
 	expect(aValue).toBe(undefined);
 	expect(observable.observers.size).toBe(0);
-	expect(x._hasMap.get("a").observers.size).toBe(1);
+	expect(adm.hasMap.get("a").observers.size).toBe(1);
 
 	x.set("a", 2);
-	observable = x._data._atomMap.get("a");
+	observable = adm.data.atomMap.get("a");
 
 	expect(aValue).toBe(2);
 	expect(observable.observers.size).toBe(1);
-	expect(x._hasMap.get("a").observers.size).toBe(1);
+	expect(adm.hasMap.get("a").observers.size).toBe(1);
 
 	disposer();
 	expect(aValue).toBe(2);
 	expect(observable.observers.size).toBe(0);
-	expect(x._hasMap._map.has("a")).toBe(false);
+	expect((adm.hasMap as any).map.has("a")).toBe(false);
 });
 
 test("unobserve before delete", function() {
@@ -738,4 +741,9 @@ test("map equality for observed and target objects", () => {
 
 	m.delete(target);
 	expect(m.size).toBe(0);
+});
+
+test("instanceof Map", () => {
+	const m = map();
+	expect(m instanceof Map).toBe(true);
 });

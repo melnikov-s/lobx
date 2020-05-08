@@ -1,24 +1,35 @@
 import Graph from "../graph";
 import Atom from "../nodes/atom";
-import { AtomMap, getObservable, getObservableSource } from "./utils";
+import {
+	AtomMap,
+	getObservable,
+	getObservableSource,
+	getAdministration,
+	linkAdministration,
+	Administration
+} from "./types";
 import { notifyAdd, notifyDelete } from "../trace";
 
-export class ObservableSet<T> implements Set<T> {
-	private _data: Set<T>;
-	private _hasMap: AtomMap<T>;
-	private _atom: Atom;
-	private _graph: Graph;
+export class ObservableSetAdministration<T>
+	implements Set<T>, Administration<Set<T>> {
+	source: Set<T>;
+	hasMap: AtomMap<T>;
+	keysAtom: Atom;
+	graph: Graph;
+	proxy: Set<T>;
 
-	constructor(set: Set<T> = new Set(), graph: Graph) {
-		this._data = set;
-		this._hasMap = new AtomMap(graph);
-		this._atom = new Atom(graph);
-		this._graph = graph;
+	constructor(source: Set<T> = new Set(), graph: Graph) {
+		this.source = source;
+		this.hasMap = new AtomMap(graph);
+		this.keysAtom = new Atom(graph);
+		this.graph = graph;
+		this.proxy = new Proxy(this.source, setProxyTraps) as Set<T>;
+		linkAdministration(this.proxy, this);
 	}
 
 	clear(): void {
-		this._graph.runAction(() => {
-			this._data.forEach(value => this.delete(value));
+		this.graph.runAction(() => {
+			this.source.forEach(value => this.delete(value));
 		});
 	}
 
@@ -26,29 +37,29 @@ export class ObservableSet<T> implements Set<T> {
 		callbackFn: (value: T, value2: T, set: Set<T>) => void,
 		thisArg?: unknown
 	): void {
-		this._atom.reportObserved();
-		this._data.forEach(value => {
-			const observed = getObservable(value, this._graph);
+		this.keysAtom.reportObserved();
+		this.source.forEach(value => {
+			const observed = getObservable(value, this.graph);
 			callbackFn.call(thisArg, observed, observed, this);
 		});
 	}
 
 	get size(): number {
-		this._atom.reportObserved();
-		return this._data.size;
+		this.keysAtom.reportObserved();
+		return this.source.size;
 	}
 
 	add(value: T): this {
 		const target = getObservableSource(value);
 
-		if (!this._data.has(target)) {
-			this._data.add(target);
-			this._graph.runAction(() => {
-				this._atom.reportChanged();
-				this._hasMap.reportChanged(target);
+		if (!this.source.has(target)) {
+			this.source.add(target);
+			this.graph.runAction(() => {
+				this.keysAtom.reportChanged();
+				this.hasMap.reportChanged(target);
 			});
 
-			notifyAdd(this, target);
+			notifyAdd(this.proxy, target);
 		}
 
 		return this;
@@ -57,14 +68,14 @@ export class ObservableSet<T> implements Set<T> {
 	delete(value: T): boolean {
 		const target = getObservableSource(value);
 
-		if (this._data.has(target)) {
-			this._data.delete(target);
-			this._graph.runAction(() => {
-				this._atom.reportChanged();
-				this._hasMap.reportChanged(target);
+		if (this.source.has(target)) {
+			this.source.delete(target);
+			this.graph.runAction(() => {
+				this.keysAtom.reportChanged();
+				this.hasMap.reportChanged(target);
 			});
 
-			notifyDelete(this, target);
+			notifyDelete(this.proxy, target);
 
 			return true;
 		}
@@ -74,11 +85,11 @@ export class ObservableSet<T> implements Set<T> {
 	has(value: T): boolean {
 		const target = getObservableSource(value);
 
-		if (this._graph.isTracking()) {
-			this._hasMap.reportObserved(target);
+		if (this.graph.isTracking()) {
+			this.hasMap.reportObserved(target);
 		}
 
-		return this._data.has(target);
+		return this.source.has(target);
 	}
 
 	entries(): IterableIterator<[T, T]> {
@@ -103,11 +114,11 @@ export class ObservableSet<T> implements Set<T> {
 	}
 
 	values(): IterableIterator<T> {
-		this._atom.reportObserved();
+		this.keysAtom.reportObserved();
 
 		let nextIndex = 0;
-		const observableValues = Array.from(this._data.values()).map(o =>
-			getObservable(o, this._graph)
+		const observableValues = Array.from(this.source.values()).map(o =>
+			getObservable(o, this.graph)
 		);
 		return {
 			[Symbol.iterator]: function(): IterableIterator<T> {
@@ -130,3 +141,38 @@ export class ObservableSet<T> implements Set<T> {
 
 	[Symbol.toStringTag]: "Set" = "Set";
 }
+
+const setProxyTraps: ProxyHandler<Set<unknown>> = {
+	get<T>(target: Set<T>, name: string | number | symbol, proxy: Set<T>) {
+		const adm = getAdministration(proxy);
+
+		if (name === "size") {
+			return adm.size;
+		}
+
+		if (setMethods.hasOwnProperty(name)) {
+			return setMethods[name];
+		}
+
+		return target[name];
+	}
+};
+
+const setMethods = {};
+
+[
+	"clear",
+	"forEach",
+	"has",
+	"add",
+	"delete",
+	"entries",
+	"keys",
+	"values",
+	Symbol.iterator
+].forEach(method => {
+	setMethods[method] = function(): unknown {
+		const adm = getAdministration(this);
+		return adm[method].apply(adm, arguments);
+	};
+});
