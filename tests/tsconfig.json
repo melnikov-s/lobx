@@ -1,15 +1,16 @@
 {
-  "compilerOptions": {
-    "rootDir": "src",
-    "target": "es5",
-    "alwaysStrict": false,
-    "noImplicitReturns": false,
-    "noUnusedLocals": false,
-    "noImplicitAny": false,
-    "noImplicitThis": false,
-    "lib": ["es6"],
-    "strictNullChecks": false
-  },
-  "include": ["tests/**/*"],
-  "exclude": ["node_modules"]
+	"compilerOptions": {
+		"rootDir": "src",
+		"target": "es5",
+		"alwaysStrict": false,
+		"noImplicitReturns": false,
+		"noUnusedLocals": false,
+		"noImplicitAny": false,
+		"noImplicitThis": false,
+		"lib": ["es6"],
+		"strictNullChecks": false,
+		"downlevelIteration": true
+	},
+	"include": ["tests/**/*.ts"],
+	"exclude": ["node_modules"]
 }

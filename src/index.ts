@@ -5,33 +5,38 @@ import atom, { Atom } from "./api/atom";
 import observable, { Observable } from "./api/observable";
 import reaction from "./api/reaction";
 import graph, {
-  Graph,
-  action,
-  isInAction,
-  isTracking,
-  runInAction,
-  isObserved,
-  untracked,
-  getDefaultGraph
+	Graph,
+	action,
+	isInAction,
+	isTracking,
+	runInAction,
+	isObserved,
+	untracked,
+	getDefaultGraph
 } from "./api/graph";
+import { getObservableSource, isObservable } from "./core/types/utils";
+import { trace } from "./core/trace";
 
 export {
-  action,
-  atom,
-  Atom,
-  autorun,
-  computed,
-  Computed,
-  getDefaultGraph,
-  graph,
-  Graph,
-  isInAction,
-  isObserved,
-  isTracking,
-  listener,
-  observable,
-  Observable,
-  reaction,
-  runInAction,
-  untracked
+	action,
+	atom,
+	Atom,
+	autorun,
+	computed,
+	Computed,
+	getDefaultGraph,
+	getObservableSource,
+	graph,
+	Graph,
+	isInAction,
+	isObservable,
+	isObserved,
+	isTracking,
+	listener,
+	observable,
+	Observable,
+	reaction,
+	runInAction,
+	trace,
+	untracked
 };

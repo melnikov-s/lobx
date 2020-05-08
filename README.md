@@ -41,7 +41,7 @@ lobx has comparable or better performance to mobx according to mobx own benchmar
 
 _Note: lobx is not API compatible with mobx._
 
-### `observable(value, { equals?, onBecomeObserved?, onBecomeUnobserved?, graph? })`
+### `observable.box(value, { equals?, onBecomeObserved?, onBecomeUnobserved?, graph? })`
 
 Wrap single value with an observable context.
 _mobx equivalent: `observable.box`_
@@ -49,7 +49,7 @@ _mobx equivalent: `observable.box`_
 ```javascript
 import { observable } from "lobx";
 
-const name = observable("Alice");
+const name = observable.box("Alice");
 console.log(name.get()); // Alice
 name.set("Bob");
 console.log(name.get()); // Bob
@@ -74,8 +74,8 @@ Derive a new value from observables
 ```javascript
 import { observable, computed } from "lobx";
 
-const firstName = observable("Alice");
-const lastName = observable("Smith");
+const firstName = observable.box("Alice");
+const lastName = observable.box("Smith");
 const fullName = computed(() => `${firstName.get()} ${lastName.get()}`);
 console.log(fullName.get()); // Alice Smith
 ```
@@ -102,8 +102,8 @@ Perform a side effect each time from when an observable value changes. Runs imme
 ```javascript
 import { observable, computed, autorun } from "lobx";
 
-const firstName = observable("Alice");
-const lastName = observable("Smith");
+const firstName = observable.box("Alice");
+const lastName = observable.box("Smith");
 const fullName = computed(() => `${firstName.get()} ${lastName.get()}`);
 const unsub = autorun(() => console.log(fullName())); //Alice Smith
 firstName.set("Bob"); // Bob Smith
@@ -117,12 +117,12 @@ Similar to `autorun` but splits the observation and effect into separate functio
 ```javascript
 import { observable, computed, reaction } from "lobx";
 
-const firstName = observable("Alice");
-const lastName = observable("Smith");
+const firstName = observable.box("Alice");
+const lastName = observable.box("Smith");
 const fullName = computed(() => `${firstName.get()} ${lastName.get()}`);
 const unsub = reaction(
-  () => fullName.get(),
-  name => console.log(name)
+	() => fullName.get(),
+	name => console.log(name)
 );
 firstName.set("Bob"); // Bob Smith
 lastName.set("Jones"); // Bob Jones
@@ -136,15 +136,15 @@ An action allows you to mutate multiple observables and hold off reactions until
 ```javascript
 import { observableObject, autorun, action } from "lobx";
 
-const firstName = observable("Alice");
-const lastName = observable("Smith");
+const firstName = observable.box("Alice");
+const lastName = observable.box("Smith");
 const fullName = computed(() => `${firstName.get()} ${lastName.get()}`);
 
 autorun(() => console.log(fullName.get())); //Alice Smith
 
 const changeName = action(() => {
-  firstName.set("Bob");
-  lastName.set("Jones");
+	firstName.set("Bob");
+	lastName.set("Jones");
 });
 
 //execute the action
@@ -158,15 +158,15 @@ Just like `action` but instead of returning a function that can be later execute
 ```javascript
 import { observableObject, autorun, runInAction } from "lobx";
 
-const firstName = observable("Alice");
-const lastName = observable("Smith");
+const firstName = observable.box("Alice");
+const lastName = observable.box("Smith");
 const fullName = computed(() => `${firstName.get()} ${lastName.get()}`);
 
 autorun(() => console.log(fullName.get())); //Alice Smith
 
 runInAction(() => {
-  firstName.set("Bob");
-  lastName.set("Jones");
+	firstName.set("Bob");
+	lastName.set("Jones");
 }); // Bob Jones
 ```
 
@@ -183,53 +183,53 @@ _mobx equivalent: `createAtom`_
 import { atom, autorun } from "lobx";
 
 class Clock {
-  atom;
-  intervalHandler = null;
-  currentDateTime;
+	atom;
+	intervalHandler = null;
+	currentDateTime;
 
-  constructor() {
-    // creates an node to interact with the lobx core algorithm
-    this.atom = atom(
-      // first (optional) parameter: callback for when this node transitions from unobserved to observed.
-      () => this.startTicking(),
-      // second (optional) parameter: callback for when this node transitions from observed to unobserved
-      // note that the same node transitions multiple times between these two states
-      () => this.stopTicking()
-    );
-  }
+	constructor() {
+		// creates an node to interact with the lobx core algorithm
+		this.atom = atom(
+			// first (optional) parameter: callback for when this node transitions from unobserved to observed.
+			() => this.startTicking(),
+			// second (optional) parameter: callback for when this node transitions from observed to unobserved
+			// note that the same node transitions multiple times between these two states
+			() => this.stopTicking()
+		);
+	}
 
-  getTime() {
-    // let lobx know this observable data source has been used
-    // reportObserved will return true if the node is currently being observed
-    // by some reaction.
-    // reportObserved will also trigger the onBecomeObserved event handler (startTicking) if needed
-    if (this.atom.reportObserved()) {
-      return this.currentDateTime;
-    } else {
-      // apparently getTime was called but not while a reaction is running.
-      // So, nobody depends on this value, hence the onBecomeObserved handler (startTicking) won't be fired
-      // Depending on the nature of your node
-      // it might behave differently in such circumstances
-      // (like throwing an error, returning a default value etc)
-      return new Date();
-    }
-  }
+	getTime() {
+		// let lobx know this observable data source has been used
+		// reportObserved will return true if the node is currently being observed
+		// by some reaction.
+		// reportObserved will also trigger the onBecomeObserved event handler (startTicking) if needed
+		if (this.atom.reportObserved()) {
+			return this.currentDateTime;
+		} else {
+			// apparently getTime was called but not while a reaction is running.
+			// So, nobody depends on this value, hence the onBecomeObserved handler (startTicking) won't be fired
+			// Depending on the nature of your node
+			// it might behave differently in such circumstances
+			// (like throwing an error, returning a default value etc)
+			return new Date();
+		}
+	}
 
-  tick() {
-    this.currentDateTime = new Date();
-    // let lobx know that this data source has changed
-    this.atom.reportChanged();
-  }
+	tick() {
+		this.currentDateTime = new Date();
+		// let lobx know that this data source has changed
+		this.atom.reportChanged();
+	}
 
-  startTicking() {
-    this.tick(); // initial tick
-    this.intervalHandler = setInterval(() => this.tick(), 1000);
-  }
+	startTicking() {
+		this.tick(); // initial tick
+		this.intervalHandler = setInterval(() => this.tick(), 1000);
+	}
 
-  stopTicking() {
-    clearInterval(this.intervalHandler);
-    this.intervalHandler = null;
-  }
+	stopTicking() {
+		clearInterval(this.intervalHandler);
+		this.intervalHandler = null;
+	}
 }
 
 const clock = new Clock();
@@ -257,8 +257,8 @@ _mobx equivalent: `Reaction`_
 ```javascript
 import { observable, listener } from "lobx";
 
-const firstName = observable("Alice");
-const lastName = observable("Smith");
+const firstName = observable.box("Alice");
+const lastName = observable.box("Smith");
 const l = listener(() => console.log("observable chaged!"));
 l.track(() => firstName.get());
 firstName.set("Bob"); // logs "observable changed!";
@@ -300,7 +300,7 @@ _mobx equivalent: `isolateGlobalState`_
 import { graph, observable, listener } from "lobx";
 
 const newGraph = graph();
-const o = observable(0, { graph: newGraph });
+const o = observable.box(0, { graph: newGraph });
 autorun(() => o.get());
 o.set(o.get() + 1); // will not react as the listener node created by autorun and the observable live on different graphs
 autorun(() => o.get(), { graph: newGraph });

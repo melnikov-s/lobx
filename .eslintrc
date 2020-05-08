@@ -1,21 +1,24 @@
 {
-  "extends": ["plugin:@typescript-eslint/recommended", "prettier"],
-  "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "prettier"],
-  "settings": {
-    "import/parsers": {
-      "@typescript-eslint/parser": [".ts", ".tsx"]
-    },
-    "import/resolver": {
-      "typescript": {}
-    }
-  },
-  "rules": {
-    "@typescript-eslint/no-empty-interface": 0,
-    "prettier/prettier": 2,
-    "@typescript-eslint/indent": 0,
-    "@typescript-eslint/no-use-before-define": 0,
-    "@typescript-eslint/no-non-null-assertion": 0,
-    "@typescript-eslint/no-inferrable-types": 0
-  }
+	"extends": ["plugin:@typescript-eslint/recommended", "prettier"],
+	"parser": "@typescript-eslint/parser",
+	"plugins": ["@typescript-eslint", "prettier"],
+	"settings": {
+		"import/parsers": {
+			"@typescript-eslint/parser": [".ts", ".tsx"]
+		},
+		"import/resolver": {
+			"typescript": {}
+		}
+	},
+	"rules": {
+		"prefer-spread": 0,
+		"prefer-rest-params": 0,
+		"@typescript-eslint/no-this-alias": 0,
+		"@typescript-eslint/no-empty-interface": 0,
+		"prettier/prettier": 2,
+		"@typescript-eslint/indent": 0,
+		"@typescript-eslint/no-use-before-define": 0,
+		"@typescript-eslint/no-non-null-assertion": 0,
+		"@typescript-eslint/no-inferrable-types": 0
+	}
 }
