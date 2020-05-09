@@ -1,7 +1,8 @@
 import CoreGraph, { ObservableNode } from "../core/graph";
-import { Observable } from "./observable";
-import { Computed } from "./computed";
-import { Atom } from "./atom";
+import { getAdministration, isObservable } from "../core/types/utils/lookup";
+import AtomNode from "../core/nodes/atom";
+import ComputedNode from "../core/nodes/computed";
+import ObservableValue from "../core/types/observableValue";
 
 export type Graph = {
 	isInAction: () => boolean;
@@ -21,43 +22,72 @@ export function getDefaultGraph(): Graph {
 	return (defaultGraph = defaultGraph ?? makeGraph());
 }
 
+export function setDefaultGraph(graph: Graph): void {
+	defaultGraph = graph;
+}
+
 export function resolveGraph(graph: Graph | null | undefined): CoreGraph {
 	return (graph ?? getDefaultGraph()) as CoreGraph;
 }
 
-type GraphOptions = { graph?: Graph };
-
 export function action<T extends unknown[], U>(
-	func: (...args: T) => U,
-	opts?: GraphOptions
+	func: (...args: T) => U
 ): (...args: T) => U {
 	return function(this: unknown, ...args: T): U {
-		return runInAction(() => func.apply(this, args), opts) as U;
+		return runInAction(() => func.apply(this, args)) as U;
 	};
 }
 
-export function isObserved(
-	observable: Observable<unknown> | Computed<unknown> | Atom<unknown>,
-	{ graph = defaultGraph }: GraphOptions = {}
-): boolean {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const o: any = observable;
+export function isObserved(observable: unknown, graph = defaultGraph): boolean {
+	if (observable instanceof AtomNode || observable instanceof ComputedNode) {
+		return graph.isObserved(observable as ObservableNode);
+	} else if (observable instanceof ObservableValue) {
+		return graph.isObserved(observable.atom);
+	} else if (isObservable(observable)) {
+		const adm = getAdministration(observable as object);
+		return graph.isObserved(adm.atom);
+	}
 
-	return o.graph === graph && graph.isObserved(o);
+	return false;
 }
 
-export function isInAction(opts?: GraphOptions): boolean {
-	return resolveGraph(opts?.graph).isInAction();
+export function isInAction(): boolean {
+	return getDefaultGraph().isInAction();
 }
 
-export function isTracking(opts?: GraphOptions): boolean {
-	return resolveGraph(opts?.graph).isTracking();
+export function isTracking(): boolean {
+	return getDefaultGraph().isTracking();
 }
 
-export function runInAction<T>(fn: () => T, opts?: GraphOptions): T {
-	return resolveGraph(opts?.graph).runAction(fn);
+export function runInAction<T>(fn: () => T): T {
+	return getDefaultGraph().runAction(fn);
 }
 
-export function untracked<T>(fn: () => T, opts?: GraphOptions): T {
-	return resolveGraph(opts?.graph).untracked(fn);
+export function untracked<T>(fn: () => T): T {
+	return getDefaultGraph().untracked(fn);
+}
+
+export function getObservableSource<T extends object>(obj: T): T {
+	const adm = getAdministration(obj);
+	return adm?.source;
+}
+
+export function forceChange<T extends object>(...args: T[]): void {
+	for (let i = 0; i < args.length; i++) {
+		const adm = getAdministration(args[i]);
+		if (!adm) {
+			throw new Error(`lobx: forceChange called on an invalid object`);
+		}
+		adm.forceChange();
+	}
+}
+
+export function forceObserve<T extends object>(...args: T[]): void {
+	for (let i = 0; i < args.length; i++) {
+		const adm = getAdministration(args[i]);
+		if (!adm) {
+			throw new Error(`lobx: forceObserve called on an invalid object`);
+		}
+		adm.forceObserve();
+	}
 }

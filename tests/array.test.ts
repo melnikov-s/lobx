@@ -6,7 +6,7 @@ import {
 	trace,
 	isObservable,
 	getObservableSource
-} from "../../src";
+} from "../src";
 
 const array = (obj: any[] = []): any[] => {
 	return observable(obj);

@@ -4,10 +4,7 @@ export default class ListenerNode<T> implements Listener {
 	readonly nodeType = nodeTypes.listener;
 	readonly observing: Set<ObservableNode> = new Set();
 
-	constructor(
-		private readonly graph: Graph,
-		private readonly callback: () => void
-	) {}
+	constructor(readonly graph: Graph, private readonly callback: () => void) {}
 
 	dispose(): void {
 		this.graph.remove(this);

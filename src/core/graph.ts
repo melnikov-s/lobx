@@ -11,11 +11,11 @@ then re-execute and recreates a new path.
 
 Below is the general shape of the graph:
 
-                 observers occupy the top of the graph
+                 atoms occupy the top of the graph
                  and have no dependencies
  +------------+  +------------+  +-------------+
  |            |  |            |  |             |
- |  observer  |  |  observer  |  |  observer   |
+ | atom       |  |  atom      |  |  atom       |
  |            |  |            |  |             |
  |            |  |            |  |             |
  +--+---+--+--+  +-----+------+  +-------+----++
@@ -65,29 +65,24 @@ Below is the general shape of the graph:
 
 export const nodeTypes = {
 	atom: 1,
-	observable: 2,
-	computed: 3,
-	listener: 4
+	computed: 2,
+	listener: 3
 } as const;
 
 interface Observable {
 	observers: Set<ObserverNode>;
 	onBecomeObserved?: () => void;
 	onBecomeUnobserved?: () => void;
+	graph: Graph;
 }
 
 interface Observer {
 	observing: Set<ObservableNode>;
+	graph: Graph;
 }
 
 export interface Atom<T = unknown> extends Observable {
 	nodeType: typeof nodeTypes.atom;
-	equals(a: T): boolean;
-}
-
-export interface ObservableValue<T = unknown> extends Observable {
-	nodeType: typeof nodeTypes.observable;
-	value: T | null;
 	equals(a: T): boolean;
 }
 
@@ -105,7 +100,7 @@ export interface Listener extends Observer {
 }
 
 export type ObserverNode = Computed | Listener;
-export type ObservableNode = Computed | ObservableValue | Atom;
+export type ObservableNode = Computed | Atom;
 export type Node = ObserverNode | ObservableNode;
 
 export default class Graph {
@@ -135,7 +130,6 @@ export default class Graph {
 
 		switch (node.nodeType) {
 			case nodeTypes.atom:
-			case nodeTypes.observable:
 				changed =
 					this.changedObservables.has(node) &&
 					!node.equals(this.changedObservables.get(node));
@@ -200,7 +194,10 @@ export default class Graph {
 	}
 
 	isObserved(node: ObservableNode): boolean {
-		return node.observers.size > 0 || this.potentialUnObserved.has(node);
+		return (
+			node.graph === this &&
+			(node.observers.size > 0 || this.potentialUnObserved.has(node))
+		);
 	}
 
 	isPotentialyStale(node: Computed<unknown>): boolean {

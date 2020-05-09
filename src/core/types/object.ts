@@ -2,32 +2,26 @@ import Atom from "../nodes/atom";
 import Graph from "../graph";
 import {
 	getAdministration,
-	linkAdministration,
-	AtomMap,
 	getObservable,
-	getObservableSource,
-	Administration
-} from "./types";
+	getObservableSource
+} from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "../trace";
 import { isPropertyKey } from "../../utils";
+import Administration from "./utils/Administration";
+import AtomMap from "./utils/AtomMap";
 
-export class ObservableObjectAdministration<T extends object>
-	implements Administration {
+export class ObservableObjectAdministration<
+	T extends object
+> extends Administration<T> {
 	keysAtom: Atom;
 	hasMap: AtomMap<PropertyKey>;
 	values: AtomMap<PropertyKey>;
-	source: T;
-	proxy: T;
-	graph: Graph;
 
 	constructor(source: T = {} as T, graph: Graph) {
-		this.source = source;
-		linkAdministration(this.source, this);
-		this.proxy = new Proxy(this.source, objectProxyTraps) as T;
+		super(source, graph, objectProxyTraps);
 		this.keysAtom = new Atom(graph);
 		this.hasMap = new AtomMap(graph);
 		this.values = new AtomMap(graph);
-		this.graph = graph;
 	}
 
 	read(key: keyof T): void {
@@ -36,6 +30,8 @@ export class ObservableObjectAdministration<T extends object>
 		} else if (this.graph.isTracking()) {
 			this.hasMap.reportObserved(key);
 		}
+
+		this.atom.reportObserved();
 	}
 
 	write(key: keyof T, newValue: T[keyof T]): void {
@@ -53,6 +49,7 @@ export class ObservableObjectAdministration<T extends object>
 				}
 
 				this.values.reportChanged(key);
+				this.flushChange();
 			});
 
 			had
@@ -64,6 +61,7 @@ export class ObservableObjectAdministration<T extends object>
 	has(key: PropertyKey): boolean {
 		if (this.graph.isTracking()) {
 			this.hasMap.reportObserved(key);
+			this.atom.reportObserved();
 		}
 
 		return key in this.source;
@@ -79,6 +77,7 @@ export class ObservableObjectAdministration<T extends object>
 			this.keysAtom.reportChanged();
 			this.values.delete(key);
 			this.hasMap.reportChanged(key);
+			this.flushChange();
 		});
 
 		notifyDelete(this.proxy, oldValue, key);

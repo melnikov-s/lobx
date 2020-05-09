@@ -15,7 +15,7 @@ export default class ComputedNode<T> implements Computed<T> {
 	value: T | null = null;
 
 	constructor(
-		private readonly graph: Graph,
+		readonly graph: Graph,
 		private readonly derive: () => T,
 		private readonly comparator: (a: T, b: T) => boolean = defaultEquals,
 		private keepAlive: boolean = false,

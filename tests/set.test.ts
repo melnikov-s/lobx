@@ -1,4 +1,4 @@
-import { autorun, observable, isObservable, trace } from "../../src/index";
+import { autorun, observable, isObservable, trace } from "../src/index";
 
 const set = <T>(obj: Set<T> = new Set()): Set<T> => {
 	return observable(obj);

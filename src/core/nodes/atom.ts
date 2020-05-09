@@ -5,16 +5,14 @@ export default class AtomNode<T = unknown> implements Atom<T> {
 	readonly observers: Set<ObserverNode> = new Set();
 
 	constructor(
-		private readonly graph: Graph,
+		readonly graph: Graph,
 		public readonly onBecomeObserved?: () => void,
 		public readonly onBecomeUnobserved?: () => void,
 		private readonly comparator?: (a: T) => boolean
 	) {}
 
 	reportChanged(value?: T): void {
-		if (this.observers.size > 0) {
-			this.graph.reportChanged(this, value);
-		}
+		this.graph.reportChanged(this, value);
 	}
 
 	reportObserved(): boolean {

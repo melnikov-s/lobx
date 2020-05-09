@@ -1,30 +1,23 @@
 import Graph from "../graph";
 import Atom from "../nodes/atom";
 import {
-	AtomMap,
 	getObservable,
 	getObservableSource,
-	getAdministration,
-	linkAdministration,
-	Administration
-} from "./types";
+	getAdministration
+} from "./utils/lookup";
 import { notifyAdd, notifyDelete } from "../trace";
+import Administration from "./utils/Administration";
+import AtomMap from "./utils/AtomMap";
 
-export class ObservableSetAdministration<T>
-	implements Set<T>, Administration<Set<T>> {
-	source: Set<T>;
+export class ObservableSetAdministration<T> extends Administration<Set<T>>
+	implements Set<T> {
 	hasMap: AtomMap<T>;
 	keysAtom: Atom;
-	graph: Graph;
-	proxy: Set<T>;
 
 	constructor(source: Set<T> = new Set(), graph: Graph) {
-		this.source = source;
+		super(source, graph, setProxyTraps);
 		this.hasMap = new AtomMap(graph);
 		this.keysAtom = new Atom(graph);
-		this.graph = graph;
-		this.proxy = new Proxy(this.source, setProxyTraps) as Set<T>;
-		linkAdministration(this.proxy, this);
 	}
 
 	clear(): void {
@@ -38,6 +31,7 @@ export class ObservableSetAdministration<T>
 		thisArg?: unknown
 	): void {
 		this.keysAtom.reportObserved();
+		this.atom.reportObserved();
 		this.source.forEach(value => {
 			const observed = getObservable(value, this.graph);
 			callbackFn.call(thisArg, observed, observed, this);
@@ -46,6 +40,7 @@ export class ObservableSetAdministration<T>
 
 	get size(): number {
 		this.keysAtom.reportObserved();
+		this.atom.reportObserved();
 		return this.source.size;
 	}
 
@@ -87,6 +82,7 @@ export class ObservableSetAdministration<T>
 
 		if (this.graph.isTracking()) {
 			this.hasMap.reportObserved(target);
+			this.atom.reportObserved();
 		}
 
 		return this.source.has(target);
@@ -115,6 +111,7 @@ export class ObservableSetAdministration<T>
 
 	values(): IterableIterator<T> {
 		this.keysAtom.reportObserved();
+		this.atom.reportObserved();
 
 		let nextIndex = 0;
 		const observableValues = Array.from(this.source.values()).map(o =>

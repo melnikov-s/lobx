@@ -4,7 +4,7 @@ import {
 	observable,
 	runInAction,
 	trace
-} from "../../src/index";
+} from "../src/index";
 
 function object(obj: object = {}): Record<string, any> {
 	return observable(obj);

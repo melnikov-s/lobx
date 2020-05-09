@@ -1,15 +1,13 @@
 import Atom from "../nodes/atom";
 import Graph from "../graph";
-
 import {
-	AtomMap,
 	getObservable,
 	getObservableSource,
-	getAdministration,
-	linkAdministration,
-	Administration
-} from "./types";
+	getAdministration
+} from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "../trace";
+import Administration from "./utils/Administration";
+import AtomMap from "./utils/AtomMap";
 
 class ObservableValueMap<K, V> {
 	map: Map<K, V>;
@@ -64,25 +62,17 @@ class ObservableValueMap<K, V> {
 	}
 }
 
-export class ObservableMapAdministration<K, V>
-	implements Map<K, V>, Administration<Map<K, V>> {
+export class ObservableMapAdministration<K, V> extends Administration<Map<K, V>>
+	implements Map<K, V> {
 	data: ObservableValueMap<K, V>;
 	hasMap: AtomMap<K>;
 	keysAtom: Atom;
-	graph: Graph;
-	proxy: Map<K, V>;
 
 	constructor(source: Map<K, V> = new Map(), graph: Graph) {
-		this.data = new ObservableValueMap(source, graph);
+		super(source, graph, mapProxyTraps);
+		this.data = new ObservableValueMap(this.source, graph);
 		this.hasMap = new AtomMap(graph);
 		this.keysAtom = new Atom(graph);
-		this.graph = graph;
-		this.proxy = new Proxy(this.source, mapProxyTraps) as Map<K, V>;
-		linkAdministration(this.proxy, this);
-	}
-
-	get source(): Map<K, V> {
-		return this.data.map;
 	}
 
 	has(key: K): boolean {
@@ -90,6 +80,7 @@ export class ObservableMapAdministration<K, V>
 
 		if (this.graph.isTracking()) {
 			this.hasMap.reportObserved(targetKey);
+			this.atom.reportObserved();
 		}
 
 		return this.data.has(targetKey);
@@ -106,6 +97,7 @@ export class ObservableMapAdministration<K, V>
 			this.graph.runAction(() => {
 				this.data.set(targetKey, targetValue);
 				if (!hasKey) {
+					this.flushChange();
 					this.hasMap.reportChanged(targetKey);
 					this.keysAtom.reportChanged();
 				}
@@ -126,6 +118,7 @@ export class ObservableMapAdministration<K, V>
 			const oldValue = this.data.peek(targetKey);
 
 			this.graph.runAction(() => {
+				this.flushChange();
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(targetKey);
 				this.data.delete(targetKey);
@@ -146,6 +139,7 @@ export class ObservableMapAdministration<K, V>
 
 	keys(): IterableIterator<K> {
 		this.keysAtom.reportObserved();
+		this.atom.reportObserved();
 
 		let nextIndex = 0;
 		const observableKeys = Array.from(this.data.keys()).map(o =>
@@ -209,6 +203,7 @@ export class ObservableMapAdministration<K, V>
 		thisArg?: unknown
 	): void {
 		this.keysAtom.reportObserved();
+		this.atom.reportObserved();
 		this.data.forEach((_, key) =>
 			callback.call(thisArg, this.get(key)!, key, this)
 		);
@@ -222,6 +217,7 @@ export class ObservableMapAdministration<K, V>
 
 	get size(): number {
 		this.keysAtom.reportObserved();
+		this.atom.reportObserved();
 		return this.data.size;
 	}
 

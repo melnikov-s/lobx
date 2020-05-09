@@ -1,26 +1,15 @@
 import Graph from "../graph";
-import Atom from "../nodes/atom";
 import {
 	getAdministration,
-	linkAdministration,
 	getObservable,
-	getObservableSource,
-	Administration
-} from "./types";
+	getObservableSource
+} from "./utils/lookup";
 import { notifyArrayUpdate, notifySpliceArray } from "../trace";
+import Administration from "./utils/Administration";
 
-export class ObservableArrayAdministration<T> implements Administration<T[]> {
-	atom: Atom;
-	source: T[];
-	proxy: T[];
-	graph: Graph;
-
+export class ObservableArrayAdministration<T> extends Administration<T[]> {
 	constructor(source: T[] = [], graph: Graph) {
-		this.atom = new Atom(graph);
-		this.source = source;
-		this.proxy = new Proxy(this.source, arrayTraps) as T[];
-		this.graph = graph;
-		linkAdministration(this.proxy, this);
+		super(source, graph, arrayTraps);
 	}
 
 	get(index: number): T | undefined {

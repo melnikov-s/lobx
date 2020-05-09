@@ -36,7 +36,7 @@ describe("graph tests", () => {
 		const o = observable.box(0, opts);
 		const o2 = observable.box(1, opts);
 		expect(count).toBe(0);
-		l.track(() => o.get() + untracked(() => o2.get(), opts));
+		l.track(() => o.get() + g.untracked(() => o2.get()));
 		o.set(1);
 		expect(count).toBe(1);
 		o2.set(2);
@@ -104,7 +104,7 @@ describe("graph tests", () => {
 			() => {
 				c.get();
 				a.reportObserved();
-				expect(isTracking({ graph: g })).toBe(true);
+				expect(g.isTracking()).toBe(true);
 				count++;
 			},
 			{ graph: g }
@@ -115,28 +115,22 @@ describe("graph tests", () => {
 		a.reportChanged();
 		expect(count).toBe(3);
 		expect(isObserved(o)).toBe(false);
-		expect(isObserved(o, { graph: g })).toBe(true);
+		expect(isObserved(o, g)).toBe(true);
 	});
 
 	it("can isolate actions to a new graph", () => {
 		const g = graph();
 
-		runInAction(
-			() => {
-				expect(isInAction({ graph: g })).toBe(true);
-			},
-			{ graph: g }
-		);
+		g.runAction(() => {
+			expect(g.isInAction()).toBe(true);
+		});
 
-		runInAction(
-			() => {
-				expect(isInAction()).toBe(false);
-			},
-			{ graph: g }
-		);
+		g.runAction(() => {
+			expect(isInAction()).toBe(false);
+		});
 
 		runInAction(() => {
-			expect(isInAction({ graph: g })).toBe(false);
+			expect(g.isInAction()).toBe(false);
 		});
 	});
 

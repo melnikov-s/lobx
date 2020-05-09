@@ -4,8 +4,8 @@ import {
 	isObservable,
 	reaction,
 	trace
-} from "../../src/index";
-import { getAdministration } from "../../src/core/types/types";
+} from "../src/index";
+import { getAdministration } from "../src/core/types/utils/lookup";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 

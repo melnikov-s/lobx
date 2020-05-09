@@ -1,10 +1,9 @@
-import ObservableNode from "../core/nodes/observable";
+import ObservableValue from "../core/types/observableValue";
 import { resolveGraph, Graph } from "./graph";
 import { defaultEquals, isNonPrimitive } from "../utils";
-import { getObservable } from "../core/types/types";
+import { getObservable } from "../core/types/utils/lookup";
 
 export type Observable<T> = {
-	readonly comparator: <T>(a: T, b: T) => boolean;
 	equals: (value: T) => boolean;
 	get: () => T;
 	set: (newValue: T) => T;
@@ -18,12 +17,12 @@ type Options = {
 };
 
 function observableBox<T>(initialValue: T, opts?: Options): Observable<T> {
-	return new ObservableNode<T>(
-		resolveGraph(opts?.graph),
+	return new ObservableValue<T>(
 		initialValue,
-		opts?.equals,
+		resolveGraph(opts?.graph),
 		opts?.onBecomeObserved,
-		opts?.onBecomeUnobserved
+		opts?.onBecomeUnobserved,
+		opts?.equals
 	);
 }
 

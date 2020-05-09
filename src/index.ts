@@ -14,7 +14,7 @@ import graph, {
 	untracked,
 	getDefaultGraph
 } from "./api/graph";
-import { getObservableSource, isObservable } from "./core/types/types";
+import { getObservableSource, isObservable } from "./core/types/utils/lookup";
 import { trace } from "./core/trace";
 
 export {
