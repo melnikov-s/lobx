@@ -371,11 +371,7 @@ export default class Graph {
 
 		this.inAction = true;
 
-		try {
-			return this.transaction(fn);
-		} finally {
-			this.inAction = false;
-		}
+		return this.transaction(fn);
 	}
 
 	transaction<T>(fn: () => T): T {
@@ -383,8 +379,10 @@ export default class Graph {
 		let isRootTransaction = false;
 
 		if (!this.inTransaction) {
-			// make transactions untracked
-			this.runStack.push(null);
+			// make transactions untracked if we're in an action
+			if (this.inAction) {
+				this.runStack.push(null);
+			}
 			this.inTransaction = true;
 			isRootTransaction = true;
 		}
@@ -398,7 +396,9 @@ export default class Graph {
 			// clean up and trigger all affected reactions
 			if (isRootTransaction) {
 				const updatedListeners: Listener[] = [];
-				this.runStack.pop();
+				if (this.inAction) {
+					this.runStack.pop();
+				}
 
 				try {
 					// loop through all the affected listeners and filter out
@@ -412,6 +412,7 @@ export default class Graph {
 					});
 				} finally {
 					this.inTransaction = false;
+					this.inAction = false;
 					this.queuedListeners.clear();
 					this.changedObservables.clear();
 
