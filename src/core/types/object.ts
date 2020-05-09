@@ -42,7 +42,7 @@ export class ObservableObjectAdministration<
 		if (!had || oldValue !== targetValue) {
 			this.source[key] = targetValue;
 
-			this.graph.runAction(() => {
+			this.graph.transaction(() => {
 				if (!had) {
 					this.keysAtom.reportChanged();
 					this.hasMap.reportChanged(key);
@@ -72,7 +72,7 @@ export class ObservableObjectAdministration<
 
 		const oldValue = this.source[key];
 		delete this.source[key];
-		this.graph.runAction(() => {
+		this.graph.transaction(() => {
 			this.values.reportChanged(key);
 			this.keysAtom.reportChanged();
 			this.values.delete(key);

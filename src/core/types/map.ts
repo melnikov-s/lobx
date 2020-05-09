@@ -94,7 +94,7 @@ export class ObservableMapAdministration<K, V> extends Administration<Map<K, V>>
 		let oldValue: V | undefined;
 
 		if (!hasKey || (oldValue = this.data.peek(targetKey)) !== targetValue) {
-			this.graph.runAction(() => {
+			this.graph.transaction(() => {
 				this.data.set(targetKey, targetValue);
 				if (!hasKey) {
 					this.flushChange();
@@ -117,7 +117,7 @@ export class ObservableMapAdministration<K, V> extends Administration<Map<K, V>>
 		if (this.data.has(targetKey)) {
 			const oldValue = this.data.peek(targetKey);
 
-			this.graph.runAction(() => {
+			this.graph.transaction(() => {
 				this.flushChange();
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(targetKey);
@@ -210,7 +210,7 @@ export class ObservableMapAdministration<K, V> extends Administration<Map<K, V>>
 	}
 
 	clear(): void {
-		this.graph.runAction(() => {
+		this.graph.transaction(() => {
 			this.data.forEach((_, key) => this.delete(key));
 		});
 	}

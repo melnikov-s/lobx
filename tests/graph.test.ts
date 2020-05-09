@@ -1,6 +1,7 @@
 import {
 	observable,
 	isInAction,
+	enforceActions,
 	runInAction,
 	autorun,
 	computed,
@@ -121,11 +122,11 @@ describe("graph tests", () => {
 	it("can isolate actions to a new graph", () => {
 		const g = graph();
 
-		g.runAction(() => {
+		g.runInAction(() => {
 			expect(g.isInAction()).toBe(true);
 		});
 
-		g.runAction(() => {
+		g.runInAction(() => {
 			expect(isInAction()).toBe(false);
 		});
 
@@ -159,5 +160,53 @@ describe("graph tests", () => {
 			})
 		);
 		expect(count).toBe(4);
+	});
+
+	it("will prevent modification of observables outside of actions when actions are enforced", () => {
+		const g = graph();
+
+		const o = observable.box(0, { graph: g });
+		g.enforceActions(true);
+
+		//allowed
+		expect(() => o.set(1)).not.toThrow();
+
+		const u = autorun(() => o.get(), { graph: g });
+		expect(() => o.set(2)).toThrow();
+
+		u();
+		expect(() => o.set(1)).not.toThrow();
+	});
+
+	it("(global) will prevent modification of observables outside of actions when actions are enforced", () => {
+		const o = observable.box(0);
+		enforceActions(true);
+
+		//allowed
+		expect(() => o.set(1)).not.toThrow();
+
+		const u = autorun(() => o.get());
+		expect(() => o.set(2)).toThrow();
+
+		u();
+		expect(() => o.set(1)).not.toThrow();
+		enforceActions(false);
+	});
+
+	it("enforce actions allows for initialization within a computed", () => {
+		const o = observable.box(0);
+		enforceActions(true);
+
+		const c = computed(() => {
+			const obj = observable({ o: undefined });
+
+			obj.o = o.get();
+
+			return obj;
+		});
+
+		expect(() => c.get()).not.toThrow();
+		expect(autorun(() => c.get())).not.toThrow();
+		enforceActions(false);
 	});
 });

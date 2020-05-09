@@ -21,7 +21,7 @@ export class ObservableSetAdministration<T> extends Administration<Set<T>>
 	}
 
 	clear(): void {
-		this.graph.runAction(() => {
+		this.graph.transaction(() => {
 			this.source.forEach(value => this.delete(value));
 		});
 	}
@@ -49,7 +49,7 @@ export class ObservableSetAdministration<T> extends Administration<Set<T>>
 
 		if (!this.source.has(target)) {
 			this.source.add(target);
-			this.graph.runAction(() => {
+			this.graph.transaction(() => {
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(target);
 			});
@@ -65,7 +65,7 @@ export class ObservableSetAdministration<T> extends Administration<Set<T>>
 
 		if (this.source.has(target)) {
 			this.source.delete(target);
-			this.graph.runAction(() => {
+			this.graph.transaction(() => {
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(target);
 			});

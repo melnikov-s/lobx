@@ -5,10 +5,12 @@ import ComputedNode from "../core/nodes/computed";
 import ObservableValue from "../core/types/observableValue";
 
 export type Graph = {
+	enforceActions: (enforce: boolean) => void;
 	isInAction: () => boolean;
 	isObserved: (node: ObservableNode) => boolean;
 	isTracking: () => boolean;
-	runAction: <T>(fn: () => T) => T;
+	runInAction: <T>(fn: () => T) => T;
+	transaction: <T>(fn: () => T) => T;
 	untracked: <T>(fn: () => T) => T;
 };
 
@@ -38,6 +40,10 @@ export function action<T extends unknown[], U>(
 	};
 }
 
+export function enforceActions(enforce: boolean): void {
+	return getDefaultGraph().enforceActions(enforce);
+}
+
 export function isObserved(observable: unknown, graph = defaultGraph): boolean {
 	if (observable instanceof AtomNode || observable instanceof ComputedNode) {
 		return graph.isObserved(observable as ObservableNode);
@@ -59,8 +65,12 @@ export function isTracking(): boolean {
 	return getDefaultGraph().isTracking();
 }
 
+export function transaction<T>(fn: () => T): T {
+	return getDefaultGraph().runInAction(fn);
+}
+
 export function runInAction<T>(fn: () => T): T {
-	return getDefaultGraph().runAction(fn);
+	return getDefaultGraph().runInAction(fn);
 }
 
 export function untracked<T>(fn: () => T): T {

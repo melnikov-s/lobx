@@ -12,7 +12,9 @@ export default class AtomNode<T = unknown> implements Atom<T> {
 	) {}
 
 	reportChanged(value?: T): void {
-		this.graph.reportChanged(this, value);
+		if (this.graph.isObserved(this)) {
+			this.graph.reportChanged(this, value);
+		}
 	}
 
 	reportObserved(): boolean {

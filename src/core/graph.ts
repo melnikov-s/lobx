@@ -105,6 +105,8 @@ export type Node = ObserverNode | ObservableNode;
 
 export default class Graph {
 	private changedObservables: Map<Node, unknown> = new Map();
+	private inTransaction = false;
+	private actionsEnforced = false;
 	private inAction = false;
 	private updatingListeners = false;
 	private invokedComputed: Set<Computed<unknown>> = new Set();
@@ -114,7 +116,7 @@ export default class Graph {
 	private runStack: (ObserverNode | null)[] = [];
 
 	// clean up any unobserved computed nodes that were cached for the
-	// duration of an action or derivation
+	// duration of a transaction or derivation
 	private clearInvokedComputed(): void {
 		this.invokedComputed.forEach(c => {
 			if (c.observers.size === 0 && !c.isKeepAlive()) {
@@ -124,7 +126,7 @@ export default class Graph {
 		this.invokedComputed.clear();
 	}
 
-	// determine if a node has changed it's value during an action
+	// determine if a node has changed it's value during a transaction
 	private hasChanged(node: Node): boolean {
 		let changed = false;
 
@@ -159,14 +161,14 @@ export default class Graph {
 		return changed;
 	}
 
-	// propagate a change to an observable down the graph during an action
+	// propagate a change to an observable down the graph during a transaction
 	// in order to mark any affected computed nodes as a potentially stale
 	// and collect all dependent listeners
 	private propagateChange(node: ObservableNode): void {
 		node.observers.forEach(childNode => {
 			if (childNode.nodeType === nodeTypes.computed) {
 				// if this is the first time this computed node was changed within
-				// an action we collect its value for later comparison
+				// a transaction we collect its value for later comparison
 				// at this point the computed value should never be dirty
 				if (!this.changedObservables.has(childNode)) {
 					this.changedObservables.set(childNode, childNode.value);
@@ -178,7 +180,7 @@ export default class Graph {
 					this.propagateChange(childNode);
 				}
 			} else {
-				// store all affected listeners for potential invocation when action
+				// store all affected listeners for potential invocation when transaction
 				// is complete
 				this.queuedListeners.add(childNode as Listener);
 			}
@@ -187,6 +189,10 @@ export default class Graph {
 
 	private get topOfRunStack(): ObserverNode | null {
 		return this.runStack[this.runStack.length - 1] || null;
+	}
+
+	enforceActions(enforce: boolean): void {
+		this.actionsEnforced = enforce;
 	}
 
 	isInAction(): boolean {
@@ -251,14 +257,20 @@ export default class Graph {
 			);
 		}
 
-		// if we're not currently in an action start a new action
-		if (!this.inAction) {
-			this.runAction(() => this.reportChanged(node, oldValue));
+		if (this.actionsEnforced && !this.inAction) {
+			throw new Error(
+				"lobx: strict actions are enforced. Attempted to modify an observed observable outside of an action"
+			);
+		}
+
+		// if we're not currently in a transaction start a new one
+		if (!this.inTransaction) {
+			this.transaction(() => this.reportChanged(node, oldValue));
 
 			return;
 		}
 
-		// keep track of the old value to ensure it changed when the action
+		// keep track of the old value to ensure it changed when the transaction
 		// is completed
 		if (!this.changedObservables.has(node)) {
 			this.changedObservables.set(node, oldValue);
@@ -323,11 +335,11 @@ export default class Graph {
 			this.runStack.pop();
 
 			if (this.runStack.length === 0) {
-				// if we're not in action we can clean up any derived computeds that are not
+				// if we're not in a transaction we can clean up any derived computeds that are not
 				// observed but were cached for the duration of the derivation.
-				// if we're in an action, that clean up will be performed after the action
+				// if we're in an transaction, that clean up will be performed after the transaction
 				// is completed.
-				if (!this.inAction) {
+				if (!this.inTransaction) {
 					this.clearInvokedComputed();
 				}
 
@@ -350,25 +362,41 @@ export default class Graph {
 		return value;
 	}
 
-	runAction<T>(fn: () => T): T {
-		// used to keep track of the root action in case an action is invoked within another
-		let isRootAction = false;
+	// run a some mutations in an action. This will simply set a flag and call a transaction.
+	// The flag is only applicable when enforcedActions are turned on.
+	runInAction<T>(fn: () => T): T {
+		if (this.inAction) {
+			return this.transaction(fn);
+		}
 
-		if (!this.inAction) {
-			// make actions untracked
+		this.inAction = true;
+
+		try {
+			return this.transaction(fn);
+		} finally {
+			this.inAction = false;
+		}
+	}
+
+	transaction<T>(fn: () => T): T {
+		// used to keep track of the root transaction in case one is invoked within another
+		let isRootTransaction = false;
+
+		if (!this.inTransaction) {
+			// make transactions untracked
 			this.runStack.push(null);
-			this.inAction = true;
-			isRootAction = true;
+			this.inTransaction = true;
+			isRootTransaction = true;
 		}
 
 		let result: T;
 
 		try {
-			// run the action
+			// run the transaction
 			result = fn();
 		} finally {
 			// clean up and trigger all affected reactions
-			if (isRootAction) {
+			if (isRootTransaction) {
 				const updatedListeners: Listener[] = [];
 				this.runStack.pop();
 
@@ -383,7 +411,7 @@ export default class Graph {
 						}
 					});
 				} finally {
-					this.inAction = false;
+					this.inTransaction = false;
 					this.queuedListeners.clear();
 					this.changedObservables.clear();
 
@@ -403,11 +431,11 @@ export default class Graph {
 						updatedListeners.forEach(l => l.react());
 					} finally {
 						this.updatingListeners = false;
-						// we might have re-enetered an action from firing our listeners.
-						// we only want to clean up our computed if this was the root action
+						// we might have re-enetered a transaction from firing our listeners.
+						// we only want to clean up our computed if this was the root transaction
 						if (rootUpdatingListeners) {
 							// clean up any unobserved computed that were cached for the duration
-							// of this action.
+							// of this transaction.
 							this.clearInvokedComputed();
 						}
 					}

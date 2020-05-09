@@ -7,6 +7,7 @@ import reaction from "./api/reaction";
 import graph, {
 	Graph,
 	action,
+	enforceActions,
 	isInAction,
 	isTracking,
 	runInAction,
@@ -24,6 +25,7 @@ export {
 	autorun,
 	computed,
 	Computed,
+	enforceActions,
 	getDefaultGraph,
 	getObservableSource,
 	graph,

@@ -25,7 +25,7 @@ export default class Administration<T extends object = object> {
 
 	protected flushChange(): void {
 		if (this.forceObservedAtoms.length) {
-			this.graph.runAction(() => {
+			this.graph.transaction(() => {
 				for (let i = 0; i < this.forceObservedAtoms.length; i++) {
 					this.forceObservedAtoms[i].reportChanged();
 				}
