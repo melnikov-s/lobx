@@ -3,6 +3,7 @@ import { ObservableMapAdministration } from "../map";
 import { ObservableSetAdministration } from "../set";
 import { ObservableObjectAdministration } from "../object";
 import { ObservableArrayAdministration } from "../array";
+import { ObservableDateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
 
 export function getAdministration<T extends object>(
@@ -12,7 +13,9 @@ export function getAdministration<T extends object>(
 	: T extends Map<infer K, infer V>
 	? ObservableMapAdministration<K, V>
 	: T extends Array<infer R>
-	? ObservableArrayAdministration<R> // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	? ObservableArrayAdministration<R>
+	: T extends Date
+	? ObservableDateAdministration // eslint-disable-next-line @typescript-eslint/no-explicit-any
 	: ObservableObjectAdministration<any> {
 	return getAdm(obj)! as ReturnType<typeof getAdministration>;
 }
@@ -38,31 +41,30 @@ export function getObservable<T>(value: T, graph: Graph): T {
 		return value;
 	}
 
-	switch (typeof value) {
-		case "function":
-		case "object": {
-			const obj = (value as unknown) as object;
+	if (typeof value === "object" || typeof value === "function") {
+		const obj = (value as unknown) as object;
 
-			let Adm: new (
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				obj: any,
-				graph: Graph
-			) => Administration = ObservableObjectAdministration;
+		let Adm: new (
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			obj: any,
+			graph: Graph
+		) => Administration = ObservableObjectAdministration;
 
-			if (Array.isArray(obj)) {
-				Adm = ObservableArrayAdministration;
-			} else if (obj instanceof Map) {
-				Adm = ObservableMapAdministration;
-			} else if (obj instanceof Set) {
-				Adm = ObservableSetAdministration;
-			}
-
-			const adm = new Adm(obj, graph);
-			return (adm.proxy as unknown) as T;
+		if (Array.isArray(obj)) {
+			Adm = ObservableArrayAdministration;
+		} else if (obj instanceof Map || obj instanceof WeakMap) {
+			Adm = ObservableMapAdministration;
+		} else if (obj instanceof Set || obj instanceof WeakSet) {
+			Adm = ObservableSetAdministration;
+		} else if (obj instanceof Date) {
+			Adm = ObservableDateAdministration;
 		}
-		default:
-			return value;
+
+		const adm = new Adm(obj, graph);
+		return (adm.proxy as unknown) as T;
 	}
+
+	return value;
 }
 
 export function isObservable(obj: unknown): boolean {
