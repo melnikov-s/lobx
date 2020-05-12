@@ -143,15 +143,17 @@ const setProxyTraps: ProxyHandler<Set<unknown>> = {
 	get<T>(target: Set<T>, name: string | number | symbol, proxy: Set<T>) {
 		const adm = getAdministration(proxy);
 
-		if (name === "size") {
+		if (name === "size" && "size" in target) {
 			return adm.size;
 		}
 
-		if (setMethods.hasOwnProperty(name)) {
+		const val = target[name];
+
+		if (setMethods.hasOwnProperty(name) && typeof val === "function") {
 			return setMethods[name];
 		}
 
-		return target[name];
+		return val;
 	}
 };
 

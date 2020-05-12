@@ -236,19 +236,21 @@ const mapProxyTraps: ProxyHandler<Map<unknown, unknown>> = {
 	) {
 		const adm = getAdministration(proxy);
 
-		if (name === "size") {
+		if (name === "size" && "size" in target) {
 			return adm.size;
 		}
 
-		if (mapMethods.hasOwnProperty(name)) {
+		const val = target[name];
+
+		if (name in mapMethods && typeof val === "function") {
 			return mapMethods[name];
 		}
 
-		return target[name];
+		return val;
 	}
 };
 
-const mapMethods = {};
+const mapMethods = Object.create(null);
 
 [
 	"clear",

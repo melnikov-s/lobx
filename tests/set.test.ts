@@ -4,6 +4,12 @@ const set = <T>(obj: Set<T> = new Set()): Set<T> => {
 	return observable(obj);
 };
 
+const weakSet = <T extends object>(
+	obj: WeakSet<T> = new WeakSet()
+): WeakSet<T> => {
+	return observable(obj);
+};
+
 const keys = <T>(set: Set<T>): T[] => {
 	return Array.from(set.keys());
 };
@@ -310,4 +316,33 @@ test("set equality for observed and target objects", () => {
 test("instanceof Set", () => {
 	const s = set();
 	expect(s instanceof Set).toBe(true);
+});
+
+test("WeakSet is reactive", () => {
+	const s = weakSet();
+
+	const target = {};
+	let count = 0;
+
+	autorun(() => {
+		count++;
+		s.has(target);
+	});
+
+	s.add(target);
+	expect(count).toBe(2);
+	expect(s.has(target)).toBe(true);
+});
+
+test("WeakSet does not report to have Set methods", () => {
+	const s = weakSet();
+	expect("size" in s).toBe(false);
+	expect((s as any).size).toBe(undefined);
+	expect("forEach" in s).toBe(false);
+	expect((s as any).forEach).toBe(undefined);
+});
+
+test("instanceof WeakSet", () => {
+	const s = weakSet();
+	expect(s instanceof WeakSet).toBe(true);
 });
