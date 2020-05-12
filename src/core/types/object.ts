@@ -24,8 +24,18 @@ export class ObservableObjectAdministration<
 		this.values = new AtomMap(graph);
 	}
 
+	private get(key: keyof T): T[keyof T] {
+		return Reflect.get(this.source, key, this.proxy);
+	}
+
+	private set(key: keyof T, value: T[keyof T]): void {
+		this.graph.transaction(() => {
+			Reflect.set(this.source, key, value, this.proxy);
+		});
+	}
+
 	read(key: keyof T): void {
-		if (this.source.hasOwnProperty(key)) {
+		if (key in this.source) {
 			this.values.reportObserved(key);
 		} else if (this.graph.isTracking()) {
 			this.hasMap.reportObserved(key);
@@ -35,12 +45,12 @@ export class ObservableObjectAdministration<
 	}
 
 	write(key: keyof T, newValue: T[keyof T]): void {
-		const had = this.source.hasOwnProperty(key);
-		const oldValue: T[keyof T] = this.source[key];
+		const had = key in this.source;
+		const oldValue: T[keyof T] = this.get(key);
 		const targetValue = getObservableSource(newValue);
 
 		if (!had || oldValue !== targetValue) {
-			this.source[key] = targetValue;
+			this.set(key, targetValue);
 
 			this.graph.transaction(() => {
 				if (!had) {
@@ -68,9 +78,9 @@ export class ObservableObjectAdministration<
 	}
 
 	remove(key: keyof T): void {
-		if (!this.source.hasOwnProperty(key)) return;
+		if (!(key in this.source)) return;
 
-		const oldValue = this.source[key];
+		const oldValue = this.get(key);
 		delete this.source[key];
 		this.graph.transaction(() => {
 			this.values.reportChanged(key);
@@ -90,6 +100,18 @@ export class ObservableObjectAdministration<
 }
 
 const objectProxyTraps: ProxyHandler<object> = {
+	construct(target: Function, args: unknown[]) {
+		const adm = getAdministration(target);
+
+		const instance = Reflect.construct(target, args);
+
+		return getObservable(instance, adm.graph);
+	},
+	apply(target: Function, thisArg: unknown, args: unknown[]) {
+		const adm = getAdministration(target);
+
+		return adm.graph.transaction(() => Reflect.apply(target, thisArg, args));
+	},
 	has<T extends object>(target: T, name: PropertyKey) {
 		if (name === "constructor") return true;
 		const adm = getAdministration(target);
@@ -103,7 +125,7 @@ const objectProxyTraps: ProxyHandler<object> = {
 
 		if (isPropertyKey(name)) adm.read(name);
 
-		return getObservable(target[name], adm.graph);
+		return getObservable(Reflect.get(target, name, adm.proxy), adm.graph);
 	},
 	set<T extends object>(target: T, name: keyof T, value: T[keyof T]) {
 		if (!isPropertyKey(name)) return false;
