@@ -1,7 +1,17 @@
-import { observable, computed, autorun, atom, runInAction } from "../src";
+import {
+	observable,
+	computed,
+	autorun,
+	atom,
+	runInAction,
+	onBecomeObserved,
+	onBecomeUnobserved
+} from "../src";
 
-const createValueAtom = (v, onBecomeObserved?, onBecomeUnobserved?) => {
-	const n = atom({ onBecomeObserved, onBecomeUnobserved });
+const createValueAtom = (v, onBecomeObservedCb?, onBecomeUnobservedCb?) => {
+	const n = atom();
+	onBecomeObservedCb && onBecomeObserved(n, onBecomeObservedCb);
+	onBecomeUnobservedCb && onBecomeUnobserved(n, onBecomeUnobservedCb);
 	let value = v;
 
 	return {
@@ -115,63 +125,6 @@ test("will not trigger listeners unless 'reportChanged' is called", () => {
 	});
 
 	expect(count).toBe(1);
-});
-
-// from mobx
-test("ensure onBecomeObserved and onBecomeUnobserved are only called when needed", () => {
-	let start = 0;
-	let stop = 0;
-	let runs = 0;
-
-	const a = atom({
-		onBecomeObserved: () => start++,
-		onBecomeUnobserved: () => stop++
-	});
-	expect(a.reportObserved()).toEqual(false);
-
-	expect(start).toBe(0);
-	expect(stop).toBe(0);
-
-	let d = autorun(() => {
-		runs++;
-		expect(a.reportObserved()).toBe(true);
-		expect(start).toBe(1);
-		expect(a.reportObserved()).toBe(true);
-		expect(start).toBe(1);
-	});
-
-	expect(runs).toBe(1);
-	expect(start).toBe(1);
-	expect(stop).toBe(0);
-	a.reportChanged();
-	expect(runs).toBe(2);
-	expect(start).toBe(1);
-	expect(stop).toBe(0);
-
-	d();
-	expect(runs).toBe(2);
-	expect(start).toBe(1);
-	expect(stop).toBe(1);
-
-	expect(a.reportObserved()).toBe(false);
-	expect(start).toBe(1);
-	expect(stop).toBe(1);
-
-	d = autorun(() => {
-		expect(a.reportObserved()).toBe(true);
-		expect(start).toBe(2);
-		a.reportObserved();
-		expect(start).toBe(2);
-	});
-
-	expect(start).toBe(2);
-	expect(stop).toBe(1);
-	a.reportChanged();
-	expect(start).toBe(2);
-	expect(stop).toBe(1);
-
-	d();
-	expect(stop).toBe(2);
 });
 
 test("unoptimizable subscriptions are diffed correctly", () => {

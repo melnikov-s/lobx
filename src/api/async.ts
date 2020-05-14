@@ -1,5 +1,5 @@
 import { getAdministration } from "../core/types/utils/lookup";
-import { ObservablePromiseAdministration } from "../core/types/promise";
+import { PromiseAdministration } from "../core/types/promise";
 import { Graph, resolveGraph } from "./graph";
 
 export function asyncAction<T>(
@@ -13,11 +13,7 @@ export function asyncAction<T>(
 			"lobx: this promise has already been wrapped with `asyncTransaction`"
 		);
 	} else if (!adm) {
-		adm = new ObservablePromiseAdministration(
-			p,
-			resolveGraph(opts?.graph),
-			true
-		);
+		adm = new PromiseAdministration(p, resolveGraph(opts?.graph), true);
 	}
 
 	return adm.proxy as Promise<T>;
@@ -34,7 +30,7 @@ export function asyncTransaction<T>(
 			"lobx: this promise has already been wrapped with `asyncAction`"
 		);
 	} else if (!adm) {
-		adm = new ObservablePromiseAdministration(p, resolveGraph(opts?.graph));
+		adm = new PromiseAdministration(p, resolveGraph(opts?.graph));
 	}
 
 	return adm.proxy as Promise<T>;

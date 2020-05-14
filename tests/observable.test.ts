@@ -64,43 +64,6 @@ test("accepts a comparator function", () => {
 	expect(countReaction).toBe(2);
 });
 
-test("accepts a onBecomeObserved/onBecomeUnobserved callbacks", () => {
-	let countObserved = 0;
-	let countUnObserved = 0;
-
-	const onBecomeObserved = () => countObserved++;
-	const onBecomeUnobserved = () => countUnObserved++;
-
-	const o = observable.box(0, { onBecomeObserved, onBecomeUnobserved });
-
-	expect(countObserved).toBe(0);
-	expect(countUnObserved).toBe(0);
-
-	const u = autorun(() => {
-		o.get();
-	});
-
-	expect(countObserved).toBe(1);
-	expect(countUnObserved).toBe(0);
-
-	u();
-
-	expect(countObserved).toBe(1);
-	expect(countUnObserved).toBe(1);
-
-	const u2 = autorun(() => {
-		o.get();
-	});
-
-	expect(countObserved).toBe(2);
-	expect(countUnObserved).toBe(1);
-
-	u2();
-
-	expect(countObserved).toBe(2);
-	expect(countUnObserved).toBe(2);
-});
-
 test("can't observe primitive values", () => {
 	expect(() => observable(1 as any)).toThrowError();
 	expect(() => observable("" as any)).toThrowError();
@@ -108,8 +71,7 @@ test("can't observe primitive values", () => {
 	expect(() => observable(Symbol() as any)).toThrowError();
 });
 
-//from mobx
-test("nested observables", () => {
+test("[mobx-test] nested observables", () => {
 	const factor = observable.box(0);
 	const price = observable.box(100);
 	let totalCalcs = 0;
@@ -142,8 +104,7 @@ test("nested observables", () => {
 	expect(totalCalcs).toBe(5);
 });
 
-//from mobx
-test("multiple view dependencies", function() {
+test("[mobx-test] multiple view dependencies", function() {
 	let bCalcs = 0;
 	let dCalcs = 0;
 	const a = observable.box(1);

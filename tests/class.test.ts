@@ -224,6 +224,68 @@ test("properties can be configured to be observable", () => {
 	expect(count).toBe(2);
 });
 
+test("properties can be configured to be observable refs", () => {
+	const C = observable.configure(
+		{
+			value: type.observable({ ref: true })
+		},
+		class {
+			value = {};
+		}
+	);
+
+	let count = 0;
+	const o = new C();
+
+	autorun(() => {
+		count++;
+		o.value;
+	});
+
+	o.value = {};
+	expect(count).toBe(2);
+	expect(isObservable(o.value)).toBe(false);
+});
+
+test("properties can be re-configured", () => {
+	type Value = { valueA: number; valueB: number; comp: number };
+	const C = observable.configure(
+		{
+			value: type.observable.configure<Value>({
+				valueA: type.observable,
+				comp: type.computed
+			})
+		},
+		class {
+			value = {
+				valueA: 1,
+				valueB: 2,
+				count: 0,
+				get comp() {
+					this.count++;
+					return this.valueA * 2;
+				}
+			};
+		}
+	);
+
+	let count = 0;
+	const o = new C();
+
+	autorun(() => {
+		count++;
+		o.value.comp;
+	});
+
+	expect(isObservable(o.value)).toBe(true);
+	expect(o.value.count).toBe(1);
+	expect(o.value.comp).toBe(2);
+	o.value.valueA = 2;
+	expect(count).toBe(2);
+	expect(o.value.comp).toBe(4);
+	expect(o.value.count).toBe(2);
+});
+
 test("properties can be configured to be computed", () => {
 	const C = observable.configure(
 		{
@@ -263,7 +325,7 @@ test("properties can be configured to be computed refs", () => {
 	const C = observable.configure(
 		{
 			comp: type.computed,
-			compRef: type.computedRef,
+			compRef: type.computed({ ref: true }),
 			value: type.observable
 		},
 		class {
@@ -356,7 +418,7 @@ test("properties can be configured to be async actions", async () => {
 		{
 			valueA: type.observable,
 			valueB: type.observable,
-			action: type.asyncAction
+			action: type.action({ async: true })
 		},
 		class {
 			valueA = 1;
@@ -401,7 +463,7 @@ test("async actions don't require returning promises", () => {
 		{
 			valueA: type.observable,
 			valueB: type.observable,
-			action: type.asyncAction
+			action: type.action({ async: true })
 		},
 		class {
 			valueA = 1;

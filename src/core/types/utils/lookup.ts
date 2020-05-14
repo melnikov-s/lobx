@@ -1,31 +1,28 @@
 import Graph from "../../graph";
-import { ObservableMapAdministration } from "../map";
-import { ObservableSetAdministration } from "../set";
-import { ObservableObjectAdministration, propertyType } from "../object";
-import { ObservableArrayAdministration } from "../array";
-import { ObservableDateAdministration } from "../date";
+import { MapAdministration } from "../map";
+import { SetAdministration } from "../set";
+import { ObjectAdministration, Configuration } from "../object";
+import { ArrayAdministration } from "../array";
+import { DateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
-import {
-	ObservablePromiseAdministration,
-	ObservablePromiseConstructorAdministration
-} from "../promise";
+import { PromiseAdministration, PromiseCtorAdministration } from "../promise";
 import { getGlobal } from "../../../utils";
 
 export function getAdministration<T extends object>(
 	obj: T
 ): T extends Set<infer S>
-	? ObservableSetAdministration<S>
+	? SetAdministration<S>
 	: T extends Map<infer K, infer V>
-	? ObservableMapAdministration<K, V>
+	? MapAdministration<K, V>
 	: T extends Array<infer R>
-	? ObservableArrayAdministration<R>
+	? ArrayAdministration<R>
 	: T extends Date
-	? ObservableDateAdministration
+	? DateAdministration
 	: T extends Promise<unknown>
-	? ObservablePromiseAdministration
+	? PromiseAdministration
 	: T extends typeof Promise
-	? ObservablePromiseConstructorAdministration // eslint-disable-next-line @typescript-eslint/no-explicit-any
-	: ObservableObjectAdministration<any> {
+	? PromiseCtorAdministration
+	: ObjectAdministration<any> {
 	return getAdm(obj)! as ReturnType<typeof getAdministration>;
 }
 
@@ -42,11 +39,8 @@ const observablePromiseMap: WeakMap<Graph, typeof Promise> = new WeakMap();
 function getObservablePromiseCtor(graph: Graph): typeof Promise {
 	let ObservablePromise = observablePromiseMap.get(graph);
 	if (!ObservablePromise) {
-		ObservablePromise = new ObservablePromiseConstructorAdministration(
-			Promise,
-			graph,
-			true
-		).proxy;
+		ObservablePromise = new PromiseCtorAdministration(Promise, graph, true)
+			.proxy;
 		observablePromiseMap.set(graph, ObservablePromise);
 	}
 
@@ -99,7 +93,7 @@ export function getAction<T extends Function>(
 }
 
 export function getObservableWithConfig<T extends object>(
-	config: Partial<Record<keyof T, keyof typeof propertyType>>,
+	config: Configuration<T>,
 	target: T,
 	graph: Graph
 ): T {
@@ -109,11 +103,15 @@ export function getObservableWithConfig<T extends object>(
 		);
 	}
 
-	const adm = new ObservableObjectAdministration(target, graph, config as any);
+	const adm = new ObjectAdministration(target, graph, config as any);
 	return adm.proxy;
 }
 
-export function getObservable<T>(value: T, graph: Graph): T {
+export function getObservable<T>(
+	value: T,
+	graph: Graph,
+	config?: Configuration<T>
+): T {
 	const adm = getAdm(value);
 
 	if (adm) {
@@ -131,20 +129,23 @@ export function getObservable<T>(value: T, graph: Graph): T {
 	if (typeof value === "object" || typeof value === "function") {
 		const obj = (value as unknown) as object;
 
+		if (config) {
+			return (getObservableWithConfig(config, obj, graph) as unknown) as T;
+		}
+
 		let Adm: new (
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			obj: any,
 			graph: Graph
-		) => Administration = ObservableObjectAdministration;
+		) => Administration = ObjectAdministration;
 
 		if (Array.isArray(obj)) {
-			Adm = ObservableArrayAdministration;
+			Adm = ArrayAdministration;
 		} else if (obj instanceof Map || obj instanceof WeakMap) {
-			Adm = ObservableMapAdministration;
+			Adm = MapAdministration;
 		} else if (obj instanceof Set || obj instanceof WeakSet) {
-			Adm = ObservableSetAdministration;
+			Adm = SetAdministration;
 		} else if (obj instanceof Date) {
-			Adm = ObservableDateAdministration;
+			Adm = DateAdministration;
 		} else if (typeof obj === "object") {
 			const proto = Object.getPrototypeOf(obj);
 			if (

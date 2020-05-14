@@ -13,35 +13,104 @@ import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 import ComputedNode from "../nodes/computed";
 
-export const propertyType = {
-	observable: "observable",
-	computed: "computed",
-	computedRef: "computedRef",
-	action: "action",
-	asyncAction: "asyncAction"
+export type Configuration<T> = Partial<
+	Record<keyof T, ObservableOptions | ComputedOptions | ActionOptions>
+>;
+
+type Types = "observable" | "computed" | "action";
+
+type ObservableOptions = {
+	type: "observable";
+	ref: boolean;
+};
+
+type ObservableOptionsConfig = ObservableOptions & {
+	configuration: Configuration<unknown>;
+};
+
+type ComputedOptions = { type: "computed"; ref: boolean };
+type ActionOptions = { type: "action"; async: boolean };
+
+type ConfigOption<
+	T extends ObservableOptions | ComputedOptions | ActionOptions
+> = Partial<Omit<T, "type">>;
+
+type CallableOption<
+	T extends ObservableOptions | ComputedOptions | ActionOptions
+> = T &
+	(T extends ObservableOptions
+		? { configure: <S>(c: Configuration<S>) => T }
+		: {}) &
+	((options: ConfigOption<T>) => T);
+
+type PropertyOptions = {
+	observable: CallableOption<ObservableOptions>;
+	computed: CallableOption<ComputedOptions>;
+	action: CallableOption<ActionOptions>;
+};
+
+const defaultObservable: ObservableOptions = {
+	type: "observable",
+	ref: false
+};
+const defaultComputed: ComputedOptions = { type: "computed", ref: false };
+const defaultAction: ActionOptions = { type: "action", async: false };
+
+const observableType: CallableOption<ObservableOptions> = Object.assign(
+	function(options: ConfigOption<ObservableOptions>): ObservableOptions {
+		return {
+			...defaultObservable,
+			...options,
+			type: "observable"
+		};
+	},
+	defaultObservable,
+	{
+		configure: <T>(c: Configuration<T>): ObservableOptions => {
+			return {
+				type: "observable",
+				configuration: c,
+				ref: false
+			} as ObservableOptions;
+		}
+	}
+);
+
+const computedType: CallableOption<ComputedOptions> = Object.assign(function(
+	options: ConfigOption<ComputedOptions>
+): ComputedOptions {
+	return { ...defaultComputed, ...options, type: "computed" };
+},
+defaultComputed);
+
+const actionType: CallableOption<ActionOptions> = Object.assign(function(
+	options: ConfigOption<ActionOptions>
+): ActionOptions {
+	return { ...defaultAction, ...options, type: "action" };
+},
+defaultAction);
+
+export const propertyType: {
+	[key in Types]: PropertyOptions[key];
+} = {
+	observable: observableType,
+	computed: computedType,
+	action: actionType
 } as const;
 
-export class ObservableObjectAdministration<
-	T extends object
-> extends Administration<T> {
+export class ObjectAdministration<T extends object> extends Administration<T> {
 	keysAtom: Atom;
 	hasMap: AtomMap<PropertyKey>;
-	values: AtomMap<PropertyKey>;
+	valuesMap: AtomMap<PropertyKey>;
 	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
-	config: Partial<Record<keyof T, keyof typeof propertyType>> | undefined;
-	instanceConfig:
-		| Partial<Record<keyof T, keyof typeof propertyType>>
-		| undefined;
+	config: Configuration<T> | undefined;
+	instanceConfig: Configuration<T> | undefined;
 
-	constructor(
-		source: T = {} as T,
-		graph: Graph,
-		config?: Record<keyof T, keyof typeof propertyType>
-	) {
+	constructor(source: T = {} as T, graph: Graph, config?: Configuration<T>) {
 		super(source, graph, objectProxyTraps);
 		this.keysAtom = new Atom(graph);
 		this.hasMap = new AtomMap(graph);
-		this.values = new AtomMap(graph);
+		this.valuesMap = new AtomMap(graph);
 		if (typeof source === "function") {
 			this.instanceConfig = config;
 		} else {
@@ -70,32 +139,38 @@ export class ObservableObjectAdministration<
 			return this.get(key);
 		}
 
-		const type = this.config?.[key] ?? propertyType.observable;
+		const config = this.config?.[key] ?? propertyType.observable;
 
-		switch (type) {
-			case propertyType.observable:
-			case propertyType.action:
-			case propertyType.asyncAction: {
+		switch (config.type) {
+			case propertyType.observable.type:
+			case propertyType.action.type: {
 				if (key in this.source) {
-					this.values.reportObserved(key);
+					this.valuesMap.reportObserved(key);
 				} else if (this.graph.isTracking()) {
 					this.hasMap.reportObserved(key);
 				}
 
 				this.atom.reportObserved();
 
-				if (type === propertyType.observable) {
-					return getObservable(this.get(key), this.graph);
+				if (config.type === propertyType.observable.type) {
+					if ((config as ObservableOptions).ref) {
+						return this.get(key);
+					}
+
+					return getObservable(
+						this.get(key),
+						this.graph,
+						((config as unknown) as ObservableOptionsConfig).configuration
+					);
 				}
 
 				return getAction(
 					(this.get(key) as unknown) as Function,
 					this.graph,
-					type === propertyType.asyncAction
+					(config as ActionOptions).async
 				);
 			}
-			case propertyType.computed:
-			case propertyType.computedRef: {
+			case propertyType.computed.type: {
 				if (!this.computedMap) this.computedMap = new Map();
 				let computedNode = this.computedMap.get(key);
 				if (!computedNode) {
@@ -116,12 +191,12 @@ export class ObservableObjectAdministration<
 					this.computedMap.set(key, computedNode);
 				}
 
-				return type === propertyType.computedRef
+				return (config as ComputedOptions).ref
 					? computedNode.get()
 					: getObservable(computedNode.get(), this.graph);
 			}
 			default:
-				throw new Error(`lobx: unknown type ${type} passed to configure`);
+				throw new Error(`lobx: unknown type passed to configure`);
 		}
 	}
 
@@ -139,7 +214,7 @@ export class ObservableObjectAdministration<
 					this.hasMap.reportChanged(key);
 				}
 
-				this.values.reportChanged(key);
+				this.valuesMap.reportChanged(key);
 				this.flushChange();
 			});
 
@@ -164,9 +239,9 @@ export class ObservableObjectAdministration<
 		const oldValue = this.get(key);
 		delete this.source[key];
 		this.graph.transaction(() => {
-			this.values.reportChanged(key);
+			this.valuesMap.reportChanged(key);
 			this.keysAtom.reportChanged();
-			this.values.delete(key);
+			this.valuesMap.delete(key);
 			this.hasMap.reportChanged(key);
 			this.flushChange();
 		});

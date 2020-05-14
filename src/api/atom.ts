@@ -8,14 +8,7 @@ export type Atom<T = unknown> = {
 
 export default function<T = unknown>(opts?: {
 	graph?: Graph;
-	onBecomeObserved?: () => void;
-	onBecomeUnobserved?: () => void;
 	equals?: (v: T) => boolean;
 }): Atom<T> {
-	return new AtomNode(
-		resolveGraph(opts?.graph),
-		opts?.onBecomeObserved,
-		opts?.onBecomeUnobserved,
-		opts?.equals
-	);
+	return new AtomNode(resolveGraph(opts?.graph), opts?.equals);
 }

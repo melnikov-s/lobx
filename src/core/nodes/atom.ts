@@ -6,8 +6,6 @@ export default class AtomNode<T = unknown> implements Atom<T> {
 
 	constructor(
 		readonly graph: Graph,
-		public readonly onBecomeObserved?: () => void,
-		public readonly onBecomeUnobserved?: () => void,
 		private readonly comparator?: (a: T) => boolean
 	) {}
 

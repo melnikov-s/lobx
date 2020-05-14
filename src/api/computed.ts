@@ -16,17 +16,13 @@ export default function<T>(
 		equals?: (a: T, b: T) => boolean;
 		keepAlive?: boolean;
 		context?: unknown;
-		onBecomeObserved?: () => void;
-		onBecomeUnobserved?: () => void;
 	}
-): Computed<T> {
+): ComputedNode<T> {
 	return new ComputedNode(
 		resolveGraph(opts?.graph),
 		fn,
 		opts?.equals,
 		opts?.keepAlive,
-		opts?.context,
-		opts?.onBecomeObserved,
-		opts?.onBecomeUnobserved
+		opts?.context
 	);
 }

@@ -1,7 +1,7 @@
 import ListenerNode from "../core/nodes/listener";
 import { resolveGraph, Graph } from "./graph";
 
-export type Listener<T> = {
+export type Listener<T = unknown> = {
 	dispose: () => void;
 	track: (trackFn: () => void | T) => void | T;
 };

@@ -177,37 +177,6 @@ test("can execute an action within an action", () => {
 	expect(countA).toBe(2);
 });
 
-//from mobx
-test("action in autorun does keep / make computed values alive", () => {
-	let calls = 0;
-	const myComputed = computed(() => calls++);
-	const callComputedTwice = () => {
-		myComputed.get();
-		myComputed.get();
-	};
-
-	const runWithMemoizing = fun => {
-		autorun(fun)();
-	};
-
-	callComputedTwice();
-	expect(calls).toBe(2);
-
-	runWithMemoizing(callComputedTwice);
-	expect(calls).toBe(3);
-
-	callComputedTwice();
-	expect(calls).toBe(5);
-
-	runWithMemoizing(function() {
-		runInAction(callComputedTwice);
-	});
-	expect(calls).toBe(6);
-
-	callComputedTwice();
-	expect(calls).toBe(8);
-});
-
 test("computed values are cached in actions even when unonbserved", () => {
 	let calls = 0;
 
@@ -314,4 +283,34 @@ test("computed can throw within an action", () => {
 
 	expect(count).toBe(2);
 	expect(c.get()).toBe(10);
+});
+
+test("[mobx-test] action in autorun does keep / make computed values alive", () => {
+	let calls = 0;
+	const myComputed = computed(() => calls++);
+	const callComputedTwice = () => {
+		myComputed.get();
+		myComputed.get();
+	};
+
+	const runWithMemoizing = fun => {
+		autorun(fun)();
+	};
+
+	callComputedTwice();
+	expect(calls).toBe(2);
+
+	runWithMemoizing(callComputedTwice);
+	expect(calls).toBe(3);
+
+	callComputedTwice();
+	expect(calls).toBe(5);
+
+	runWithMemoizing(function() {
+		runInAction(callComputedTwice);
+	});
+	expect(calls).toBe(6);
+
+	callComputedTwice();
+	expect(calls).toBe(8);
 });

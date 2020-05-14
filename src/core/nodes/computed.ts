@@ -19,9 +19,7 @@ export default class ComputedNode<T> implements Computed<T> {
 		private readonly derive: () => T,
 		private readonly comparator: (a: T, b: T) => boolean = defaultEquals,
 		private keepAlive: boolean = false,
-		private readonly context?: unknown,
-		public readonly onBecomeObserved?: () => void,
-		public readonly onBecomeUnobserved?: () => void
+		private readonly context?: unknown
 	) {}
 
 	// clear out any cached value and force the dirty flag

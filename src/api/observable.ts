@@ -3,9 +3,11 @@ import { resolveGraph, Graph } from "./graph";
 import { defaultEquals, isNonPrimitive } from "../utils";
 import {
 	getObservable,
-	getObservableWithConfig
+	getObservableWithConfig,
+	isObservable
 } from "../core/types/utils/lookup";
-import { propertyType } from "../core/types/object";
+import { Configuration } from "../core/types/object";
+import { getAdministration } from "../core/types/utils/Administration";
 
 export type Observable<T> = {
 	equals: (value: T) => boolean;
@@ -16,33 +18,29 @@ export type Observable<T> = {
 type Options = {
 	equals?: typeof defaultEquals;
 	graph?: Graph;
-	onBecomeObserved?: () => void;
-	onBecomeUnobserved?: () => void;
 };
 
 function observableBox<T>(initialValue: T, opts?: Options): Observable<T> {
 	return new ObservableValue<T>(
 		initialValue,
 		resolveGraph(opts?.graph),
-		opts?.onBecomeObserved,
-		opts?.onBecomeUnobserved,
 		opts?.equals
 	);
 }
 
 function observableConfigure<T extends object>(
-	config: Partial<Record<keyof T, keyof typeof propertyType>>,
+	config: Configuration<T>,
 	target: T,
 	opts?: Options
 ): T;
 function observableConfigure<T extends new (args: unknown[]) => unknown>(
-	config: Partial<Record<keyof InstanceType<T>, keyof typeof propertyType>>,
+	config: Configuration<InstanceType<T>>,
 	target: T,
 	opts?: Options
 ): T;
 
 function observableConfigure<T extends object>(
-	config: Partial<Record<keyof T, keyof typeof propertyType>>,
+	config: Configuration<T>,
 	target: T,
 	opts?: Options
 ): T {

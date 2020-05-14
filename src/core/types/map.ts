@@ -62,7 +62,7 @@ class ObservableValueMap<K, V> {
 	}
 }
 
-export class ObservableMapAdministration<K, V> extends Administration<Map<K, V>>
+export class MapAdministration<K, V> extends Administration<Map<K, V>>
 	implements Map<K, V> {
 	data: ObservableValueMap<K, V>;
 	hasMap: AtomMap<K>;
@@ -73,6 +73,7 @@ export class ObservableMapAdministration<K, V> extends Administration<Map<K, V>>
 		this.data = new ObservableValueMap(this.source, graph);
 		this.hasMap = new AtomMap(graph);
 		this.keysAtom = new Atom(graph);
+		this.valuesMap = this.data.atomMap;
 	}
 
 	has(key: K): boolean {
@@ -171,7 +172,6 @@ export class ObservableMapAdministration<K, V> extends Administration<Map<K, V>>
 				const { done, value } = keys.next();
 				return {
 					done,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					value: done ? (undefined as any) : self.get(value)
 				};
 			}
@@ -190,8 +190,7 @@ export class ObservableMapAdministration<K, V> extends Administration<Map<K, V>>
 				return {
 					done,
 					value: done
-						? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-						  (undefined as any)
+						? (undefined as any)
 						: ([value, self.get(value)!] as [K, V])
 				};
 			}
@@ -225,7 +224,7 @@ export class ObservableMapAdministration<K, V> extends Administration<Map<K, V>>
 		return this.entries();
 	}
 
-	[Symbol.toStringTag]: "Map" = "Map";
+	[Symbol.toStringTag]: string;
 }
 
 const mapProxyTraps: ProxyHandler<Map<unknown, unknown>> = {

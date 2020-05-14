@@ -19,7 +19,7 @@ export default class AtomMap<K> {
 		isNonPrimitive(key) ? this.weakMap?.delete(key) : this.map?.delete(key);
 	}
 
-	reportObserved(key: K): void {
+	getOrCreate(key: K): Atom {
 		let entry: Atom | undefined = this.get(key);
 
 		if (!entry) {
@@ -32,13 +32,20 @@ export default class AtomMap<K> {
 			} else {
 				this.map = this.map ?? new Map();
 
-				entry = new Atom(this.graph, undefined, () => this.map?.delete(key));
+				entry = new Atom(this.graph);
+				this.graph.onBecomeUnobserved(entry, () => {
+					this.map?.delete(key);
+				});
 
 				this.map.set(key, entry);
 			}
 		}
 
-		entry.reportObserved();
+		return entry;
+	}
+
+	reportObserved(key: K): void {
+		this.getOrCreate(key).reportObserved();
 	}
 
 	reportChanged(key: K): void {

@@ -2,9 +2,7 @@ import Administration from "./utils/Administration";
 import Graph from "../graph";
 import { getAdministration, patchPromise } from "./utils/lookup";
 
-export class ObservablePromiseConstructorAdministration extends Administration<
-	typeof Promise
-> {
+export class PromiseCtorAdministration extends Administration<typeof Promise> {
 	readonly useAction: boolean;
 
 	constructor(source: typeof Promise, graph: Graph, useAction = false) {
@@ -18,13 +16,11 @@ const promiseConstructorProxyTraps: ProxyHandler<typeof Promise> = {
 		const adm = getAdministration(target);
 		const instance = Reflect.construct(target, args);
 
-		return new ObservablePromiseAdministration(instance, adm.graph, true).proxy;
+		return new PromiseAdministration(instance, adm.graph, true).proxy;
 	}
 };
 
-export class ObservablePromiseAdministration extends Administration<
-	Promise<unknown>
-> {
+export class PromiseAdministration extends Administration<Promise<unknown>> {
 	readonly useAction: boolean;
 
 	constructor(source: Promise<unknown>, graph: Graph, useAction = false) {
@@ -43,7 +39,7 @@ const promiseMethods = Object.create(null);
 		): unknown {
 			const adm = getAdministration(this)!;
 
-			return new ObservablePromiseAdministration(
+			return new PromiseAdministration(
 				adm.source[method].apply(
 					adm.source,
 					args.map(fn => {

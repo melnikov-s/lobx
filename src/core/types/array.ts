@@ -7,7 +7,7 @@ import {
 import { notifyArrayUpdate, notifySpliceArray } from "../trace";
 import Administration from "./utils/Administration";
 
-export class ObservableArrayAdministration<T> extends Administration<T[]> {
+export class ArrayAdministration<T> extends Administration<T[]> {
 	constructor(source: T[] = [], graph: Graph) {
 		super(source, graph, arrayTraps);
 	}
@@ -95,7 +95,6 @@ export class ObservableArrayAdministration<T> extends Administration<T[]> {
 	): T[] {
 		return this.source.splice.apply(
 			this.source,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			[index, deleteCount].concat(newItems as any) as any
 		);
 	}

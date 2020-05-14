@@ -1,7 +1,7 @@
 import Administration, { getAdministration } from "./utils/Administration";
 import Graph from "../graph";
 
-export class ObservableDateAdministration extends Administration<Date> {
+export class DateAdministration extends Administration<Date> {
 	constructor(source: Date, graph: Graph) {
 		super(source, graph, dateProxyTraps);
 	}

@@ -1,5 +1,6 @@
 import Graph from "../../graph";
 import Atom from "../../nodes/atom";
+import AtomMap from "./AtomMap";
 
 const administrationMap: WeakMap<object, Administration> = new WeakMap();
 
@@ -12,6 +13,7 @@ export default class Administration<T extends object = object> {
 	source: T;
 	graph: Graph;
 	atom: Atom;
+	valuesMap?: AtomMap<unknown>;
 	private forceObservedAtoms: Atom[] = [];
 
 	constructor(source: T, graph: Graph, proxyTraps: object) {
@@ -42,5 +44,35 @@ export default class Administration<T extends object = object> {
 		const atom = new Atom(this.graph);
 		this.forceObservedAtoms.push(atom);
 		atom.reportObserved();
+	}
+
+	onBecomeObserved(callback: () => void, key: unknown): () => void {
+		let atom: Atom = this.atom;
+
+		if (key) {
+			if (!this.valuesMap) {
+				throw new Error(
+					"lobx: onBecomeObserved not with key not supported on this type."
+				);
+			}
+
+			atom = this.valuesMap.getOrCreate(key);
+		}
+		return this.graph.onBecomeObserved(this.atom, callback);
+	}
+
+	onBecomeUnobserved(callback: () => void, key: unknown): () => void {
+		let atom: Atom = this.atom;
+
+		if (key) {
+			if (!this.valuesMap) {
+				throw new Error(
+					"lobx: onBecomeUnobserved not with key not supported on this type."
+				);
+			}
+
+			atom = this.valuesMap.getOrCreate(key);
+		}
+		return this.graph.onBecomeUnobserved(atom, callback);
 	}
 }

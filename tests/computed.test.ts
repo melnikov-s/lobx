@@ -6,7 +6,9 @@ import {
 	computed,
 	Observable,
 	Computed,
-	isObserved
+	isObserved,
+	onBecomeObserved,
+	onBecomeUnobserved
 } from "../src";
 
 test("can return a computed value", () => {
@@ -622,108 +624,6 @@ test("can unobserve a keepAlive computed manually", () => {
 	expect(c1.isDirty()).toBe(false);
 });
 
-test("computed calls `onBecomeObserved` / `onBecomeUnobserved` after completed action", () => {
-	let oObserved = 0;
-	let oUnobserved = 0;
-	let c1Observed = 0;
-	let c1Unobserved = 0;
-	let c2Observed = 0;
-	let c2Unobserved = 0;
-
-	const o = observable.box(1, {
-		onBecomeObserved: () => oObserved++,
-		onBecomeUnobserved: () => oUnobserved++
-	});
-	const c1 = computed(
-		() => {
-			return o.get() * 2;
-		},
-		{
-			onBecomeObserved: () => c1Observed++,
-			onBecomeUnobserved: () => c1Unobserved++
-		}
-	);
-	const c2 = computed(() => c1.get() * 2, {
-		onBecomeObserved: () => c2Observed++,
-		onBecomeUnobserved: () => c2Unobserved++
-	});
-
-	runInAction(() => {
-		o.set(2);
-		expect(c2.get()).toBe(8);
-	});
-
-	expect(oObserved).toBe(1);
-	expect(oUnobserved).toBe(1);
-	expect(c1Observed).toBe(1);
-	expect(c1Unobserved).toBe(1);
-	expect(c2Observed).toBe(0);
-	expect(c2Unobserved).toBe(0);
-});
-
-test("computed calls `onBecomeObserved` / `onBecomeUnobserved` in a computed derivation", () => {
-	let count = 0;
-	const o = observable.box(1, {
-		onBecomeObserved: () => count++,
-		onBecomeUnobserved: () => count++
-	});
-	const c1 = computed(
-		() => {
-			return o.get() * 2;
-		},
-		{ onBecomeObserved: () => count++, onBecomeUnobserved: () => count++ }
-	);
-
-	const c2 = computed(
-		() => {
-			return o.get();
-		},
-		{ onBecomeObserved: () => count++, onBecomeUnobserved: () => count++ }
-	);
-
-	const c3 = computed(() => c1.get() * 2 > 0 && c2.get(), {
-		onBecomeObserved: () => count++,
-		onBecomeUnobserved: () => count++,
-		keepAlive: true
-	});
-
-	expect(c3.get()).toBe(1);
-	o.set(0);
-	expect(c3.get()).toBe(false);
-
-	expect(count).toBe(4);
-});
-
-test("calls unBecomeObserved/onBecomeUnobserved to nodes observed by keepAlive computed", () => {
-	let count = 0;
-	let deriveCount = 0;
-	const o = observable.box(1, {
-		onBecomeObserved: () => count++,
-		onBecomeUnobserved: () => count++
-	});
-	const c = computed(
-		() => {
-			deriveCount++;
-			return o.get() * 2;
-		},
-		{
-			keepAlive: true,
-			onBecomeObserved: () => count++,
-			onBecomeUnobserved: () => count++
-		}
-	);
-
-	// derive the computed first so that it's cached
-	c.get();
-
-	expect(count).toBe(1);
-	const u = autorun(() => c.get()); // should be observed now
-	u();
-
-	expect(count).toBe(3);
-	expect(deriveCount).toBe(1);
-});
-
 test("can provide a custom equals function", () => {
 	let countA = 0;
 	let countB = 0;
@@ -796,84 +696,27 @@ test("sets the conext of the executing computed", () => {
 	expect(c.get()).toBe(1);
 });
 
-test("accepts a onBecomeObserved/onBecomeUnobserved callbacks", () => {
-	let countObserved = 0;
-	let countUnObserved = 0;
-
-	const onBecomeObserved = () => countObserved++;
-	const onBecomeUnobserved = () => countUnObserved++;
-
-	const o = observable.box(0);
-	const c = computed(() => o.get(), { onBecomeObserved, onBecomeUnobserved });
-
-	expect(countObserved).toBe(0);
-	expect(countUnObserved).toBe(0);
-
-	const u = autorun(() => {
-		c.get();
-	});
-
-	expect(countObserved).toBe(1);
-	expect(countUnObserved).toBe(0);
-
-	u();
-
-	expect(countObserved).toBe(1);
-	expect(countUnObserved).toBe(1);
-
-	const u2 = autorun(() => {
-		c.get();
-	});
-
-	expect(countObserved).toBe(2);
-	expect(countUnObserved).toBe(1);
-
-	u2();
-
-	expect(countObserved).toBe(2);
-	expect(countUnObserved).toBe(2);
-
-	const bool = observable.box(true);
-
-	autorun(() => {
-		bool.get() && c.get();
-	});
-
-	expect(countObserved).toBe(3);
-	expect(countUnObserved).toBe(2);
-
-	bool.set(false);
-
-	expect(countObserved).toBe(3);
-	expect(countUnObserved).toBe(3);
-
-	bool.set(true);
-
-	expect(countObserved).toBe(4);
-	expect(countUnObserved).toBe(3);
-});
-
 test("can change keepAlive once computed has been created", () => {
-	let onBecomeUnobserved = 0;
-	let onBecomeObserved = 0;
-	const o = observable.box(1, {
-		onBecomeObserved: () => onBecomeObserved++,
-		onBecomeUnobserved: () => onBecomeUnobserved++
-	});
+	let onBecomeUnobservedCount = 0;
+	let onBecomeObservedCount = 0;
+	const o = observable.box(1);
+
+	onBecomeObserved(o, () => onBecomeObservedCount++);
+	onBecomeUnobserved(o, () => onBecomeUnobservedCount++);
 	const c = computed(() => o.get(), { keepAlive: true });
 
-	expect(onBecomeObserved).toBe(0);
-	expect(onBecomeUnobserved).toBe(0);
+	expect(onBecomeObservedCount).toBe(0);
+	expect(onBecomeUnobservedCount).toBe(0);
 
 	c.get();
-	expect(onBecomeObserved).toBe(1);
-	expect(onBecomeUnobserved).toBe(0);
+	expect(onBecomeObservedCount).toBe(1);
+	expect(onBecomeUnobservedCount).toBe(0);
 
 	expect(c.isDirty()).toBe(false);
 	expect(isObserved(o)).toBe(true);
 	c.setKeepAlive(false);
-	expect(onBecomeObserved).toBe(1);
-	expect(onBecomeUnobserved).toBe(1);
+	expect(onBecomeObservedCount).toBe(1);
+	expect(onBecomeUnobservedCount).toBe(1);
 	expect(c.isDirty()).toBe(true);
 	expect(isObserved(o)).toBe(false);
 	c.get();
@@ -885,8 +728,7 @@ test("can change keepAlive once computed has been created", () => {
 	expect(isObserved(o)).toBe(true);
 });
 
-//from mobx
-test("computed values believe NaN === NaN", () => {
+test("[mobx-test] computed values believe NaN === NaN", () => {
 	const a = observable.box(2);
 	const b = observable.box(3);
 	const c = computed(function() {
@@ -907,8 +749,7 @@ test("computed values believe NaN === NaN", () => {
 	expect(buf).toEqual([NaN, 6]);
 });
 
-//from mobx
-test("lazy evaluation", function() {
+test("[mobx-test] lazy evaluation", function() {
 	let bCalcs = 0;
 	let cCalcs = 0;
 	let dCalcs = 0;
@@ -983,8 +824,7 @@ test("lazy evaluation", function() {
 	expect(observerChanges).toBe(1);
 });
 
-//from mobx
-test("change count optimization", function() {
+test("[mobx-test] change count optimization", function() {
 	let bCalcs = 0;
 	let cCalcs = 0;
 	const a = observable.box(3);
@@ -1012,8 +852,7 @@ test("change count optimization", function() {
 	expect(cCalcs).toBe(1);
 });
 
-//from mobx
-test("observables removed", function() {
+test("[mobx-test] observables removed", function() {
 	let calcs = 0;
 	const a = observable.box(1);
 	const b = observable.box(2);

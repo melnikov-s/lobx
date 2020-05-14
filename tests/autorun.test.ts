@@ -47,8 +47,7 @@ test("does not run the callback when unsubscribed", () => {
 	expect(count).toBe(2);
 });
 
-// from mobx
-test("autoruns created in autoruns should kick off", () => {
+test("[mobx-test] autoruns created in autoruns should kick off", () => {
 	const x = observable.box(3);
 	const x2 = [];
 	let d;
