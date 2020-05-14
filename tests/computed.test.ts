@@ -162,7 +162,7 @@ test("will not allow changing observable values within a computed", () => {
 			() => c1.get(),
 			() => {}
 		)
-	).toThrow();
+	).toThrowError();
 });
 
 test("will allow creating new observable values within a computed", () => {
@@ -223,7 +223,7 @@ test("will throw if an observable created within a computed is re-used", () => {
 
 	expect(count).toBe(1);
 
-	expect(() => o2.set(10)).toThrow();
+	expect(() => o2.set(10)).toThrowError();
 });
 
 test("can use an observable that was created in another computed", () => {
@@ -459,7 +459,7 @@ test("can recover from computed error", () => {
 		}
 	});
 
-	expect(() => autorun(() => c1.get())).toThrow();
+	expect(() => autorun(() => c1.get())).toThrowError();
 	o1.set(false);
 	expect(c1.get()).toBe(2);
 });

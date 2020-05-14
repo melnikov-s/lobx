@@ -1,7 +1,11 @@
 import ObservableValue from "../core/types/observableValue";
 import { resolveGraph, Graph } from "./graph";
 import { defaultEquals, isNonPrimitive } from "../utils";
-import { getObservable } from "../core/types/utils/lookup";
+import {
+	getObservable,
+	getObservableWithConfig
+} from "../core/types/utils/lookup";
+import { propertyType } from "../core/types/object";
 
 export type Observable<T> = {
 	equals: (value: T) => boolean;
@@ -26,6 +30,27 @@ function observableBox<T>(initialValue: T, opts?: Options): Observable<T> {
 	);
 }
 
+function observableConfigure<T extends object>(
+	config: Partial<Record<keyof T, keyof typeof propertyType>>,
+	target: T,
+	opts?: Options
+): T;
+function observableConfigure<T extends new (args: unknown[]) => unknown>(
+	config: Partial<Record<keyof InstanceType<T>, keyof typeof propertyType>>,
+	target: T,
+	opts?: Options
+): T;
+
+function observableConfigure<T extends object>(
+	config: Partial<Record<keyof T, keyof typeof propertyType>>,
+	target: T,
+	opts?: Options
+): T {
+	return getObservableWithConfig(config, target, resolveGraph(opts?.graph));
+}
+
+// TOOD: support onbecomeobserved/ onbecomeunobserved
+// further todo: it needs to be callback with an unsubscribe like mobx
 function observable<T extends object>(object: T, opts?: Options): T {
 	if (isNonPrimitive(object)) {
 		return getObservable(object, resolveGraph(opts?.graph));
@@ -37,5 +62,9 @@ function observable<T extends object>(object: T, opts?: Options): T {
 }
 
 observable.box = observableBox;
+observable.configure = observableConfigure;
 
-export default observable as typeof observable & { box: typeof observableBox };
+export default observable as typeof observable & {
+	box: typeof observableBox;
+	configure: typeof observableConfigure;
+};

@@ -171,7 +171,7 @@ test("will prevent modification of observables outside of actions when actions a
 	expect(() => o.set(1)).not.toThrow();
 
 	const u = autorun(() => o.get(), { graph: g });
-	expect(() => o.set(2)).toThrow();
+	expect(() => o.set(2)).toThrowError();
 
 	u();
 	expect(() => o.set(1)).not.toThrow();
@@ -185,7 +185,7 @@ test("(global) will prevent modification of observables outside of actions when 
 	expect(() => o.set(1)).not.toThrow();
 
 	const u = autorun(() => o.get());
-	expect(() => o.set(2)).toThrow();
+	expect(() => o.set(2)).toThrowError();
 
 	u();
 	expect(() => o.set(1)).not.toThrow();

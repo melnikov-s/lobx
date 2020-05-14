@@ -17,9 +17,13 @@ import graph, {
 } from "./api/graph";
 import { getObservableSource, isObservable } from "./core/types/utils/lookup";
 import { trace } from "./core/trace";
+import { asyncAction, asyncTransaction } from "./api/async";
+import { propertyType } from "./core/types/object";
 
 export {
 	action,
+	asyncAction,
+	asyncTransaction,
 	atom,
 	Atom,
 	autorun,
@@ -40,5 +44,6 @@ export {
 	reaction,
 	runInAction,
 	trace,
+	propertyType as type,
 	untracked
 };

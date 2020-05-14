@@ -13,3 +13,38 @@ export function isPropertyKey(val: PropertyKey): boolean {
 		typeof val === "symbol"
 	);
 }
+
+export function getPropertyDescriptor(
+	obj: object,
+	key: PropertyKey
+): PropertyDescriptor | undefined {
+	let node = obj;
+	while (node) {
+		const desc = Object.getOwnPropertyDescriptor(node, key);
+		if (desc) {
+			return desc;
+		}
+
+		node = Object.getPrototypeOf(node);
+	}
+
+	return undefined;
+}
+
+declare const window: any;
+declare const self: any;
+
+const mockGlobal = {};
+
+export function getGlobal(): any {
+	if (typeof window !== "undefined") {
+		return window;
+	}
+	if (typeof global !== "undefined") {
+		return global;
+	}
+	if (typeof self !== "undefined") {
+		return self;
+	}
+	return mockGlobal;
+}

@@ -102,10 +102,10 @@ test("accepts a onBecomeObserved/onBecomeUnobserved callbacks", () => {
 });
 
 test("can't observe primitive values", () => {
-	expect(() => observable(1 as any)).toThrow();
-	expect(() => observable("" as any)).toThrow();
-	expect(() => observable(false as any)).toThrow();
-	expect(() => observable(Symbol() as any)).toThrow();
+	expect(() => observable(1 as any)).toThrowError();
+	expect(() => observable("" as any)).toThrowError();
+	expect(() => observable(false as any)).toThrowError();
+	expect(() => observable(Symbol() as any)).toThrowError();
 });
 
 //from mobx

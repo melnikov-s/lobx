@@ -3,12 +3,23 @@ import Graph from "../graph";
 import {
 	getAdministration,
 	getObservable,
-	getObservableSource
+	getObservableSource,
+	getAction,
+	getObservableWithConfig
 } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "../trace";
-import { isPropertyKey } from "../../utils";
+import { isPropertyKey, getPropertyDescriptor } from "../../utils";
 import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
+import ComputedNode from "../nodes/computed";
+
+export const propertyType = {
+	observable: "observable",
+	computed: "computed",
+	computedRef: "computedRef",
+	action: "action",
+	asyncAction: "asyncAction"
+} as const;
 
 export class ObservableObjectAdministration<
 	T extends object
@@ -16,12 +27,26 @@ export class ObservableObjectAdministration<
 	keysAtom: Atom;
 	hasMap: AtomMap<PropertyKey>;
 	values: AtomMap<PropertyKey>;
+	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
+	config: Partial<Record<keyof T, keyof typeof propertyType>> | undefined;
+	instanceConfig:
+		| Partial<Record<keyof T, keyof typeof propertyType>>
+		| undefined;
 
-	constructor(source: T = {} as T, graph: Graph) {
+	constructor(
+		source: T = {} as T,
+		graph: Graph,
+		config?: Record<keyof T, keyof typeof propertyType>
+	) {
 		super(source, graph, objectProxyTraps);
 		this.keysAtom = new Atom(graph);
 		this.hasMap = new AtomMap(graph);
 		this.values = new AtomMap(graph);
+		if (typeof source === "function") {
+			this.instanceConfig = config;
+		} else {
+			this.config = config;
+		}
 	}
 
 	private get(key: keyof T): T[keyof T] {
@@ -34,14 +59,70 @@ export class ObservableObjectAdministration<
 		});
 	}
 
-	read(key: keyof T): void {
-		if (key in this.source) {
-			this.values.reportObserved(key);
-		} else if (this.graph.isTracking()) {
-			this.hasMap.reportObserved(key);
+	private isUnconfigured(key: PropertyKey): boolean {
+		return !!(
+			this.config && !Object.prototype.hasOwnProperty.call(this.config, key)
+		);
+	}
+
+	read(key: keyof T): unknown {
+		if (this.isUnconfigured(key)) {
+			return this.get(key);
 		}
 
-		this.atom.reportObserved();
+		const type = this.config?.[key] ?? propertyType.observable;
+
+		switch (type) {
+			case propertyType.observable:
+			case propertyType.action:
+			case propertyType.asyncAction: {
+				if (key in this.source) {
+					this.values.reportObserved(key);
+				} else if (this.graph.isTracking()) {
+					this.hasMap.reportObserved(key);
+				}
+
+				this.atom.reportObserved();
+
+				if (type === propertyType.observable) {
+					return getObservable(this.get(key), this.graph);
+				}
+
+				return getAction(
+					(this.get(key) as unknown) as Function,
+					this.graph,
+					type === propertyType.asyncAction
+				);
+			}
+			case propertyType.computed:
+			case propertyType.computedRef: {
+				if (!this.computedMap) this.computedMap = new Map();
+				let computedNode = this.computedMap.get(key);
+				if (!computedNode) {
+					const descriptor = getPropertyDescriptor(this.source, key)!;
+					if (typeof descriptor?.get !== "function") {
+						throw new Error(
+							"lobx computed values are only supported on getters"
+						);
+					}
+					computedNode = new ComputedNode(
+						this.graph,
+						descriptor.get,
+						undefined,
+						false,
+						this.proxy
+					);
+
+					this.computedMap.set(key, computedNode);
+				}
+
+				return type === propertyType.computedRef
+					? computedNode.get()
+					: getObservable(computedNode.get(), this.graph);
+			}
+			default:
+				throw new Error(`lobx: unknown type ${type} passed to configure`);
+		}
 	}
 
 	write(key: keyof T, newValue: T[keyof T]): void {
@@ -69,7 +150,7 @@ export class ObservableObjectAdministration<
 	}
 
 	has(key: PropertyKey): boolean {
-		if (this.graph.isTracking()) {
+		if (this.graph.isTracking() && !this.isUnconfigured(key)) {
 			this.hasMap.reportObserved(key);
 			this.atom.reportObserved();
 		}
@@ -105,7 +186,9 @@ const objectProxyTraps: ProxyHandler<object> = {
 
 		const instance = Reflect.construct(target, args);
 
-		return getObservable(instance, adm.graph);
+		return adm.instanceConfig
+			? getObservableWithConfig(adm.instanceConfig, instance, adm.graph)
+			: getObservable(instance, adm.graph);
 	},
 	apply(target: Function, thisArg: unknown, args: unknown[]) {
 		const adm = getAdministration(target);
@@ -123,9 +206,11 @@ const objectProxyTraps: ProxyHandler<object> = {
 		if (name === "constructor") return target[name];
 		const adm = getAdministration(target);
 
-		if (isPropertyKey(name)) adm.read(name);
+		if (isPropertyKey(name)) {
+			return adm.read(name);
+		}
 
-		return getObservable(Reflect.get(target, name, adm.proxy), adm.graph);
+		return Reflect.get(target, name, adm.proxy);
 	},
 	set<T extends object>(target: T, name: keyof T, value: T[keyof T]) {
 		if (!isPropertyKey(name)) return false;

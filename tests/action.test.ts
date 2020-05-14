@@ -308,7 +308,7 @@ test("computed can throw within an action", () => {
 			o.set(0);
 			c.get();
 		} catch (e) {}
-		expect(() => c.get()).toThrow();
+		expect(() => c.get()).toThrowError();
 		o.set(10);
 	});
 
