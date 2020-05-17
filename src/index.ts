@@ -15,8 +15,7 @@ import graph, {
 	isObserved,
 	untracked,
 	getDefaultGraph,
-	onBecomeObserved,
-	onBecomeUnobserved
+	onObservedStateChange
 } from "./api/graph";
 import { getObservableSource, isObservable } from "./core/types/utils/lookup";
 import { trace } from "./core/trace";
@@ -44,8 +43,7 @@ export {
 	Listener,
 	observable,
 	Observable,
-	onBecomeObserved,
-	onBecomeUnobserved,
+	onObservedStateChange,
 	reaction,
 	runInAction,
 	trace,

@@ -35,10 +35,14 @@ export default class AtomMap<K> {
 				this.map = this.map ?? new Map();
 
 				entry = new Atom(this.graph);
-				this.autoCleanup &&
-					this.graph.onBecomeUnobserved(entry, () => {
-						this.map?.delete(key);
+				if (this.autoCleanup) {
+					const unsub = this.graph.onObservedStateChange(entry, observing => {
+						if (!observing) {
+							this.map?.delete(key);
+							unsub();
+						}
 					});
+				}
 
 				this.map.set(key, entry);
 			}

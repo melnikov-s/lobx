@@ -4,14 +4,14 @@ import {
 	autorun,
 	atom,
 	runInAction,
-	onBecomeObserved,
-	onBecomeUnobserved
+	onObservedStateChange
 } from "../src";
 
 const createValueAtom = (v, onBecomeObservedCb?, onBecomeUnobservedCb?) => {
 	const n = atom();
-	onBecomeObservedCb && onBecomeObserved(n, onBecomeObservedCb);
-	onBecomeUnobservedCb && onBecomeUnobserved(n, onBecomeUnobservedCb);
+	onObservedStateChange(n, observing => {
+		observing ? onBecomeObservedCb?.() : onBecomeUnobservedCb?.();
+	});
 	let value = v;
 
 	return {

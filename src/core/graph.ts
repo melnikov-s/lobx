@@ -112,10 +112,9 @@ export default class Graph {
 	private potentialStale: Set<Computed<unknown>> = new Set();
 	private queuedListeners: Set<Listener> = new Set();
 	private runStack: (ObserverNode | null)[] = [];
-	private onObservedCallbacks: Map<ObservableNode, Set<() => void>> = new Map();
-	private onUnobservedCallbacks: Map<
+	private onObservedStateChangeCallbacks: Map<
 		ObservableNode,
-		Set<() => void>
+		Set<(observing: boolean) => void>
 	> = new Map();
 
 	// clean up any unobserved computed nodes that were cached for the
@@ -162,6 +161,15 @@ export default class Graph {
 		}
 
 		return changed;
+	}
+
+	private notifyObservedState(
+		observable: ObservableNode,
+		observing: boolean
+	): void {
+		this.onObservedStateChangeCallbacks
+			.get(observable)
+			?.forEach(f => f(observing));
 	}
 
 	// propagate a change to an observable down the graph during a transaction
@@ -217,11 +225,14 @@ export default class Graph {
 		return this.topOfRunStack != null;
 	}
 
-	onBecomeObserved(node: ObservableNode, callback: () => void): () => void {
-		let callbacks = this.onObservedCallbacks.get(node);
+	onObservedStateChange(
+		node: ObservableNode,
+		callback: (observing: boolean) => void
+	): () => void {
+		let callbacks = this.onObservedStateChangeCallbacks.get(node);
 		if (!callbacks) {
 			callbacks = new Set();
-			this.onObservedCallbacks.set(node, callbacks);
+			this.onObservedStateChangeCallbacks.set(node, callbacks);
 		}
 
 		callbacks.add(callback);
@@ -229,24 +240,7 @@ export default class Graph {
 		return (): void => {
 			callbacks!.delete(callback);
 			if (callbacks!.size === 0) {
-				this.onObservedCallbacks.delete(node);
-			}
-		};
-	}
-
-	onBecomeUnobserved(node: ObservableNode, callback: () => void): () => void {
-		let callbacks = this.onUnobservedCallbacks.get(node);
-		if (!callbacks) {
-			callbacks = new Set();
-			this.onUnobservedCallbacks.set(node, callbacks);
-		}
-
-		callbacks.add(callback);
-
-		return (): void => {
-			callbacks!.delete(callback);
-			if (callbacks!.size === 0) {
-				this.onUnobservedCallbacks.delete(node);
+				this.onObservedStateChangeCallbacks.delete(node);
 			}
 		};
 	}
@@ -266,7 +260,7 @@ export default class Graph {
 				if (o.nodeType === nodeTypes.computed && !o.isKeepAlive()) {
 					this.remove(o, true);
 				} else {
-					this.onUnobservedCallbacks.get(o)?.forEach(f => f());
+					this.notifyObservedState(o, false);
 				}
 			}
 		});
@@ -280,7 +274,7 @@ export default class Graph {
 
 		if (node.nodeType === nodeTypes.computed) {
 			node.clear();
-			wasObserved && this.onUnobservedCallbacks.get(node)?.forEach(f => f());
+			wasObserved && this.notifyObservedState(node, false);
 		}
 	}
 
@@ -326,7 +320,7 @@ export default class Graph {
 		if (topOfRunStack && !topOfRunStack.observing.has(node)) {
 			// if this is the first time an observable is being observed ...
 			if (!this.isObserved(node)) {
-				this.onObservedCallbacks.get(node)?.forEach(f => f());
+				this.notifyObservedState(node, true);
 			}
 
 			// create two-way link between observer and observable
@@ -388,7 +382,7 @@ export default class Graph {
 						if (observable.nodeType === nodeTypes.computed) {
 							this.remove(observable);
 						} else {
-							this.onUnobservedCallbacks.get(observable)?.forEach(f => f());
+							this.notifyObservedState(observable, false);
 						}
 					}
 				});

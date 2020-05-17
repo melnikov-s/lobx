@@ -1,13 +1,24 @@
 import {
 	atom,
 	observable,
-	onBecomeObserved,
-	onBecomeUnobserved,
+	onObservedStateChange,
 	autorun,
 	computed,
 	runInAction
 } from "../src";
 
+const onBecomeObserved = (o, ...args: any[]) =>
+	onObservedStateChange(
+		o,
+		args[1] ? args[0] : observing => observing && args[0](),
+		args[1] ? observing => observing && args[1]() : undefined
+	);
+const onBecomeUnobserved = (o, ...args: any[]) =>
+	onObservedStateChange(
+		o,
+		args[1] ? args[0] : observing => !observing && args[0](),
+		args[1] ? observing => !observing && args[1]() : undefined
+	);
 const objectCase = () => ({
 	obj: observable({ value: 1, valueAlt: 2 }),
 	existingKey: "value",
@@ -380,6 +391,30 @@ test("observable box accepts a onBecomeObserved/onBecomeUnobserved callbacks", (
 
 	expect(countObserved).toBe(2);
 	expect(countUnObserved).toBe(2);
+});
+
+test("onObservedStateChange can be unsubed within the callback", () => {
+	const o = observable.box(1);
+	let count = 0;
+	const unsub = onObservedStateChange(o, () => {
+		count++;
+		if (count === 4) {
+			unsub();
+		}
+	});
+
+	const u = autorun(() => o.get());
+	expect(count).toBe(1);
+	u();
+	expect(count).toBe(2);
+	const u2 = autorun(() => o.get());
+	expect(count).toBe(3);
+	u2();
+	expect(count).toBe(4);
+	const u3 = autorun(() => o.get());
+	expect(count).toBe(4);
+	u3();
+	expect(count).toBe(4);
 });
 
 test("[mobx-test] ensure onBecomeObserved and onBecomeUnobserved are only called when needed", () => {

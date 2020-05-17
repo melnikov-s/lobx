@@ -46,7 +46,10 @@ export default class Administration<T extends object = object> {
 		atom.reportObserved();
 	}
 
-	onBecomeObserved(callback: () => void, key: unknown): () => void {
+	onObservedStateChange(
+		callback: (observing: boolean) => void,
+		key: unknown
+	): () => void {
 		let atom: Atom = this.atom;
 
 		if (key) {
@@ -58,21 +61,6 @@ export default class Administration<T extends object = object> {
 
 			atom = this.valuesMap.getOrCreate(key);
 		}
-		return this.graph.onBecomeObserved(atom, callback);
-	}
-
-	onBecomeUnobserved(callback: () => void, key: unknown): () => void {
-		let atom: Atom = this.atom;
-
-		if (key) {
-			if (!this.valuesMap) {
-				throw new Error(
-					"lobx: onBecomeUnobserved not with key not supported on this type."
-				);
-			}
-
-			atom = this.valuesMap.getOrCreate(key);
-		}
-		return this.graph.onBecomeUnobserved(atom, callback);
+		return this.graph.onObservedStateChange(atom, callback);
 	}
 }

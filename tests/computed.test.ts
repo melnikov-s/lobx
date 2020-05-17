@@ -7,8 +7,7 @@ import {
 	Observable,
 	Computed,
 	isObserved,
-	onBecomeObserved,
-	onBecomeUnobserved
+	onObservedStateChange
 } from "../src";
 
 test("can return a computed value", () => {
@@ -701,8 +700,13 @@ test("can change keepAlive once computed has been created", () => {
 	let onBecomeObservedCount = 0;
 	const o = observable.box(1);
 
-	onBecomeObserved(o, () => onBecomeObservedCount++);
-	onBecomeUnobserved(o, () => onBecomeUnobservedCount++);
+	onObservedStateChange(o, observing => {
+		if (observing) {
+			onBecomeObservedCount++;
+		} else {
+			onBecomeUnobservedCount++;
+		}
+	});
 	const c = computed(() => o.get(), { keepAlive: true });
 
 	expect(onBecomeObservedCount).toBe(0);

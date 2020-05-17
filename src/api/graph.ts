@@ -112,19 +112,19 @@ type KeyType<T> = T extends Set<infer R>
 	? K
 	: string | number | symbol;
 
-export function onBecomeObserved<T extends object>(
+export function onObservedStateChange<T extends object>(
 	obj: T,
 	key: KeyType<T>,
-	callback: () => void
+	callback: (observing: boolean) => void
 ): () => void;
-export function onBecomeObserved<T extends object>(
+export function onObservedStateChange<T extends object>(
 	obj: T,
-	callback: () => void
+	callback: (observing: boolean) => void
 ): () => void;
-export function onBecomeObserved<T extends object>(
+export function onObservedStateChange<T extends object>(
 	obj: T,
 	keyOrCallback: unknown | (() => void),
-	callback?: () => void
+	callback?: (observing: boolean) => void
 ): () => void {
 	const cb =
 		typeof keyOrCallback === "function"
@@ -139,64 +139,23 @@ export function onBecomeObserved<T extends object>(
 	) {
 		if (key) {
 			throw new Error(
-				`lobx: onBecomeObserved key param not supported for observable box or computed value`
+				`lobx: onObservedStateChange key param not supported for observable box or computed value`
 			);
 		}
 
-		return obj.graph.onBecomeObserved((obj as any).atom || (obj as any), cb);
-	}
-
-	if (!isObservable(obj)) {
-		throw new Error(
-			`lobx: onBecomeObserved can only be called on observable values`
+		return obj.graph.onObservedStateChange(
+			(obj as any).atom || (obj as any),
+			cb
 		);
 	}
-	const adm = getAdministration(obj);
-
-	return adm.onBecomeObserved(cb, key);
-}
-
-export function onBecomeUnobserved<T extends object>(
-	obj: T,
-	key: KeyType<T>,
-	callback: () => void
-): () => void;
-export function onBecomeUnobserved<T extends object>(
-	obj: T,
-	callback: () => void
-): () => void;
-export function onBecomeUnobserved<T extends object>(
-	obj: T,
-	keyOrCallback: unknown | (() => void),
-	callback?: () => void
-): () => void {
-	const cb =
-		typeof keyOrCallback === "function"
-			? (keyOrCallback as () => void)
-			: callback!;
-	const key = callback ? keyOrCallback : undefined;
-
-	if (
-		obj instanceof ObservableValue ||
-		obj instanceof ComputedNode ||
-		obj instanceof AtomNode
-	) {
-		if (key) {
-			throw new Error(
-				`lobx: onBecomeUnobserved key param not supported for observable box or computed value`
-			);
-		}
-
-		return obj.graph.onBecomeUnobserved((obj as any).atom || (obj as any), cb);
-	}
 
 	if (!isObservable(obj)) {
 		throw new Error(
-			`lobx: onBecomeUnobserved can only be called on observable values`
+			`lobx: onObservedStateChange can only be called on observable values`
 		);
 	}
 
 	const adm = getAdministration(obj);
 
-	return adm.onBecomeUnobserved(cb, key);
+	return adm.onObservedStateChange(cb, key);
 }
