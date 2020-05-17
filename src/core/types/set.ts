@@ -11,12 +11,12 @@ import AtomMap from "./utils/AtomMap";
 
 export class SetAdministration<T> extends Administration<Set<T>>
 	implements Set<T> {
-	valuesMap: AtomMap<T>;
+	hasMap: AtomMap<T>;
 	keysAtom: Atom;
 
 	constructor(source: Set<T> = new Set(), graph: Graph) {
 		super(source, graph, setProxyTraps);
-		this.valuesMap = new AtomMap(graph);
+		this.hasMap = new AtomMap(graph, true);
 		this.keysAtom = new Atom(graph);
 	}
 
@@ -51,7 +51,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 			this.source.add(target);
 			this.graph.transaction(() => {
 				this.keysAtom.reportChanged();
-				this.valuesMap.reportChanged(target);
+				this.hasMap.reportChanged(target);
 			});
 
 			notifyAdd(this.proxy, target);
@@ -67,7 +67,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 			this.source.delete(target);
 			this.graph.transaction(() => {
 				this.keysAtom.reportChanged();
-				this.valuesMap.reportChanged(target);
+				this.hasMap.reportChanged(target);
 			});
 
 			notifyDelete(this.proxy, target);
@@ -81,7 +81,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 		const target = getObservableSource(value);
 
 		if (this.graph.isTracking()) {
-			this.valuesMap.reportObserved(target);
+			this.hasMap.reportObserved(target);
 			this.atom.reportObserved();
 		}
 

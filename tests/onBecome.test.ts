@@ -8,41 +8,40 @@ import {
 	runInAction
 } from "../src";
 
-const ObjectCase = {
-	name: "Object",
-	obj: observable({ value: 1 }),
-	get getterA() {
-		return this.obj.value;
+const objectCase = () => ({
+	obj: observable({ value: 1, valueAlt: 2 }),
+	existingKey: "value",
+	existingKeyAlt: "valueAlt",
+	notExistingKey: "noValue",
+	get(k = this.existingKey) {
+		return this.obj[k];
 	},
-	get getterB() {
-		return "value" in this.obj;
+	add(k, v) {
+		this.obj[k] = v;
 	}
-};
+});
+objectCase.label = "object";
 
-const ArrayCase = {
-	name: "Array",
+const arrayCase = () => ({
 	obj: observable([1, 2, 3]),
-	get getterA() {
-		return this.obj.forEach(() => {});
-	},
-	get getterB() {
+	get() {
 		return this.obj[0];
 	}
-};
+});
+arrayCase.label = "array";
 
-const SetCase = {
-	name: "Set",
+const setCase = () => ({
 	obj: observable(new Set([1, 2, 3])),
-	get getterA() {
-		return this.obj.has(4);
-	},
-	get getterB() {
-		return this.obj.has(2);
+	existingKey: 1,
+	existingKeyAlt: 2,
+	notExistingKey: 4,
+	get() {
+		return this.obj.forEach(() => {});
 	}
-};
+});
+setCase.label = "set";
 
-const MapCase = {
-	name: "Map",
+const mapCase = () => ({
 	obj: observable(
 		new Map([
 			[1, 1],
@@ -50,77 +49,156 @@ const MapCase = {
 			[3, 3]
 		])
 	),
-	get getterA() {
-		return this.obj.has(4);
+	existingKey: 1,
+	existingKeyAlt: 2,
+	notExistingKey: 4,
+	get(k = this.existingKey) {
+		return this.obj.get(k);
 	},
-	get getterB() {
-		return this.obj.get(2);
+	add(k, v) {
+		this.obj.set(k, v);
 	}
-};
+});
+mapCase.label = "map";
 
-const DateCase = {
-	name: "Date",
+const dateCase = () => ({
 	obj: observable(new Date()),
-	get getterA() {
+	get() {
 		return this.obj.getDate();
-	},
-	get getterB() {
-		return this.obj.toDateString();
 	}
-};
+});
+dateCase.label = "date";
 
-[ObjectCase, ArrayCase, SetCase, MapCase, DateCase].forEach(testCase => {
-	test(`onBecomeObserved on ${testCase.name}`, () => {
+[objectCase, arrayCase, setCase, mapCase, dateCase].forEach(TestCase => {
+	test(`onBecomeObserved on ${TestCase.label}`, () => {
+		const testCase = TestCase();
 		let count = 0;
 
 		const u = onBecomeObserved(testCase.obj, () => count++);
 		expect(count).toBe(0);
 
-		const u1 = autorun(() => testCase.getterA);
+		const u1 = autorun(() => testCase.get());
 		expect(count).toBe(1);
-		const u2 = autorun(() => testCase.getterA);
+		const u2 = autorun(() => testCase.get());
 		expect(count).toBe(1);
 		u1();
 		u2();
-		const u3 = autorun(() => testCase.getterB);
+		const u3 = autorun(() => testCase.get());
 		expect(count).toBe(2);
 		u3();
-		testCase.getterB;
+		testCase.get();
 		expect(count).toBe(2);
 		u();
 		const u4 = autorun(() => {
-			testCase.getterA;
-			testCase.getterB;
+			testCase.get();
+			testCase.get();
 		});
 		expect(count).toBe(2);
-		u4();
 	});
 
-	test(`onBecomeUnobserved on ${testCase.name}`, () => {
+	test(`onBecomeUnobserved on ${TestCase.label}`, () => {
+		const testCase = TestCase();
 		let count = 0;
 
 		const u = onBecomeUnobserved(testCase.obj, () => count++);
 		expect(count).toBe(0);
 
-		const u1 = autorun(() => testCase.getterA);
+		const u1 = autorun(() => testCase.get());
 		expect(count).toBe(0);
-		const u2 = autorun(() => testCase.getterA);
+		const u2 = autorun(() => testCase.get());
 		expect(count).toBe(0);
 		u1();
 		expect(count).toBe(0);
 		u2();
 		expect(count).toBe(1);
-		const u3 = autorun(() => testCase.getterB);
+		const u3 = autorun(() => testCase.get());
 		expect(count).toBe(1);
 		u3();
 		expect(count).toBe(2);
 		u();
 		const u4 = autorun(() => {
-			testCase.getterA;
-			testCase.getterB;
+			testCase.get();
+			testCase.get();
 		});
 		u4();
 		expect(count).toBe(2);
+	});
+});
+
+[objectCase, mapCase].forEach(TestCase => {
+	test(`onBecomeObserved on ${TestCase.label} with existing key`, () => {
+		const testCase = TestCase();
+		let count = 0;
+		onBecomeObserved(testCase.obj, testCase.existingKey, () => {
+			count++;
+		});
+		expect(count).toBe(0);
+		autorun(() => testCase.get(testCase.existingKeyAlt));
+		expect(count).toBe(0);
+		const u2 = autorun(() => testCase.get(testCase.existingKey));
+		expect(count).toBe(1);
+		u2();
+		expect(count).toBe(1);
+		autorun(() => testCase.get(testCase.existingKey));
+		expect(count).toBe(2);
+	});
+
+	test(`onBecomeObserved on ${TestCase.label} with non-existing key`, () => {
+		const testCase = TestCase();
+		let count = 0;
+		onBecomeObserved(testCase.obj, testCase.notExistingKey, () => {
+			count++;
+		});
+		expect(count).toBe(0);
+		autorun(() => testCase.get(testCase.existingKey));
+		expect(count).toBe(0);
+		const u2 = autorun(() => testCase.get(testCase.notExistingKey));
+		expect(count).toBe(0);
+		testCase.add(testCase.notExistingKey, 1);
+		expect(count).toBe(1);
+		u2();
+		expect(count).toBe(1);
+		autorun(() => testCase.get(testCase.notExistingKey));
+		expect(count).toBe(2);
+	});
+
+	test(`onBecomeUnobserved on ${TestCase.label} with existing key`, () => {
+		const testCase = TestCase();
+		let count = 0;
+		onBecomeUnobserved(testCase.obj, testCase.existingKey, () => {
+			count++;
+		});
+		expect(count).toBe(0);
+		const u1 = autorun(() => testCase.get(testCase.existingKeyAlt));
+		u1();
+		expect(count).toBe(0);
+		const u2 = autorun(() => testCase.get(testCase.existingKey));
+		expect(count).toBe(0);
+		u2();
+		expect(count).toBe(1);
+		const u3 = autorun(() => testCase.get(testCase.existingKey));
+		expect(count).toBe(1);
+		u3();
+		expect(count).toBe(2);
+	});
+
+	test(`onBecomeUnobserved on ${TestCase.label} with non-existing key`, () => {
+		const testCase = TestCase();
+		let count = 0;
+		onBecomeUnobserved(testCase.obj, testCase.notExistingKey, () => {
+			count++;
+		});
+		expect(count).toBe(0);
+		const u1 = autorun(() => testCase.get(testCase.existingKey));
+		u1();
+		expect(count).toBe(0);
+		const u2 = autorun(() => testCase.get(testCase.notExistingKey));
+		u2();
+		expect(count).toBe(0);
+		const u3 = autorun(() => testCase.get(testCase.notExistingKey));
+		testCase.add(testCase.notExistingKey, 1);
+		u3();
+		expect(count).toBe(1);
 	});
 });
 

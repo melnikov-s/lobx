@@ -109,7 +109,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	constructor(source: T = {} as T, graph: Graph, config?: Configuration<T>) {
 		super(source, graph, objectProxyTraps);
 		this.keysAtom = new Atom(graph);
-		this.hasMap = new AtomMap(graph);
+		this.hasMap = new AtomMap(graph, true);
 		this.valuesMap = new AtomMap(graph);
 		if (typeof source === "function") {
 			this.instanceConfig = config;

@@ -3,11 +3,9 @@ import { resolveGraph, Graph } from "./graph";
 import { defaultEquals, isNonPrimitive } from "../utils";
 import {
 	getObservable,
-	getObservableWithConfig,
-	isObservable
+	getObservableWithConfig
 } from "../core/types/utils/lookup";
 import { Configuration } from "../core/types/object";
-import { getAdministration } from "../core/types/utils/Administration";
 
 export type Observable<T> = {
 	equals: (value: T) => boolean;
@@ -47,8 +45,6 @@ function observableConfigure<T extends object>(
 	return getObservableWithConfig(config, target, resolveGraph(opts?.graph));
 }
 
-// TOOD: support onbecomeobserved/ onbecomeunobserved
-// further todo: it needs to be callback with an unsubscribe like mobx
 function observable<T extends object>(object: T, opts?: Options): T {
 	if (isNonPrimitive(object)) {
 		return getObservable(object, resolveGraph(opts?.graph));

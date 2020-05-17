@@ -58,7 +58,7 @@ export default class Administration<T extends object = object> {
 
 			atom = this.valuesMap.getOrCreate(key);
 		}
-		return this.graph.onBecomeObserved(this.atom, callback);
+		return this.graph.onBecomeObserved(atom, callback);
 	}
 
 	onBecomeUnobserved(callback: () => void, key: unknown): () => void {

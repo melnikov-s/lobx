@@ -6,9 +6,11 @@ export default class AtomMap<K> {
 	private map: Map<unknown, Atom> | undefined;
 	private weakMap: WeakMap<object, Atom> | undefined;
 	private graph: Graph;
+	private readonly autoCleanup: boolean;
 
-	constructor(graph: Graph) {
+	constructor(graph: Graph, autoCleanup: boolean = false) {
 		this.graph = graph;
+		this.autoCleanup = autoCleanup;
 	}
 
 	get(key: unknown): Atom | undefined {
@@ -33,9 +35,10 @@ export default class AtomMap<K> {
 				this.map = this.map ?? new Map();
 
 				entry = new Atom(this.graph);
-				this.graph.onBecomeUnobserved(entry, () => {
-					this.map?.delete(key);
-				});
+				this.autoCleanup &&
+					this.graph.onBecomeUnobserved(entry, () => {
+						this.map?.delete(key);
+					});
 
 				this.map.set(key, entry);
 			}

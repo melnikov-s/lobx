@@ -71,7 +71,7 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 	constructor(source: Map<K, V> = new Map(), graph: Graph) {
 		super(source, graph, mapProxyTraps);
 		this.data = new ObservableValueMap(this.source, graph);
-		this.hasMap = new AtomMap(graph);
+		this.hasMap = new AtomMap(graph, true);
 		this.keysAtom = new Atom(graph);
 		this.valuesMap = this.data.atomMap;
 	}
