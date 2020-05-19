@@ -4,8 +4,7 @@ import {
 	getAdministration,
 	getObservable,
 	getObservableSource,
-	getAction,
-	getObservableWithConfig
+	getAction
 } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "../trace";
 import { isPropertyKey, getPropertyDescriptor } from "../../utils";
@@ -53,7 +52,7 @@ const defaultObservable: ObservableOptions = {
 	type: "observable",
 	ref: false
 };
-const defaultComputed: ComputedOptions = { type: "computed", ref: false };
+const defaultComputed: ComputedOptions = { type: "computed", ref: true };
 const defaultAction: ActionOptions = { type: "action", async: false };
 
 const observableType: CallableOption<ObservableOptions> = Object.assign(
@@ -104,18 +103,13 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	valuesMap: AtomMap<PropertyKey>;
 	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
 	config: Configuration<T> | undefined;
-	instanceConfig: Configuration<T> | undefined;
 
 	constructor(source: T = {} as T, graph: Graph, config?: Configuration<T>) {
 		super(source, graph, objectProxyTraps);
 		this.keysAtom = new Atom(graph);
 		this.hasMap = new AtomMap(graph, true);
 		this.valuesMap = new AtomMap(graph);
-		if (typeof source === "function") {
-			this.instanceConfig = config;
-		} else {
-			this.config = config;
-		}
+		this.config = config;
 	}
 
 	private get(key: keyof T): T[keyof T] {
@@ -261,9 +255,7 @@ const objectProxyTraps: ProxyHandler<object> = {
 
 		const instance = Reflect.construct(target, args);
 
-		return adm.instanceConfig
-			? getObservableWithConfig(adm.instanceConfig, instance, adm.graph)
-			: getObservable(instance, adm.graph);
+		return getObservable(instance, adm.graph);
 	},
 	apply(target: Function, thisArg: unknown, args: unknown[]) {
 		const adm = getAdministration(target);

@@ -42,7 +42,7 @@ function observableConfigure<T extends object>(
 	target: T,
 	opts?: Options
 ): T {
-	return getObservableWithConfig(config, target, resolveGraph(opts?.graph));
+	return getObservableWithConfig(target, resolveGraph(opts?.graph), config);
 }
 
 function observable<T extends object>(object: T, opts?: Options): T {

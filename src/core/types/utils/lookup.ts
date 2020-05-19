@@ -6,7 +6,7 @@ import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
 import { PromiseAdministration, PromiseCtorAdministration } from "../promise";
-import { getGlobal } from "../../../utils";
+import { getGlobal, getParentConstructor } from "../../../utils";
 
 export function getAdministration<T extends object>(
 	obj: T
@@ -27,6 +27,10 @@ export function getAdministration<T extends object>(
 }
 
 const actionsMap: WeakMap<Function, Function> = new WeakMap();
+const constructorConfigMap: WeakMap<
+	Function,
+	Configuration<unknown>
+> = new WeakMap();
 
 export function getObservableSource<T>(obj: T): T {
 	const adm = getAdm(obj);
@@ -93,9 +97,9 @@ export function getAction<T extends Function>(
 }
 
 export function getObservableWithConfig<T extends object>(
-	config: Configuration<T>,
 	target: T,
-	graph: Graph
+	graph: Graph,
+	config: Configuration<T>
 ): T {
 	if (getAdm(target)) {
 		throw new Error(
@@ -103,7 +107,23 @@ export function getObservableWithConfig<T extends object>(
 		);
 	}
 
-	const adm = new ObjectAdministration(target, graph, config as any);
+	let finalConfig: Configuration<T> | undefined = config;
+
+	if (typeof target === "function" && !constructorConfigMap.has(target)) {
+		finalConfig = config!;
+		let constructor = target as Function | undefined;
+		while ((constructor = getParentConstructor(constructor))) {
+			const config = constructorConfigMap.get(constructor);
+			if (config) {
+				finalConfig = { ...config, ...finalConfig };
+			}
+		}
+
+		constructorConfigMap.set(target, finalConfig);
+		finalConfig = undefined; // config is for instances not for ctor
+	}
+
+	const adm = new ObjectAdministration(target, graph, finalConfig as any);
 	return adm.proxy;
 }
 
@@ -130,7 +150,7 @@ export function getObservable<T>(
 		const obj = (value as unknown) as object;
 
 		if (config) {
-			return (getObservableWithConfig(config, obj, graph) as unknown) as T;
+			return (getObservableWithConfig(obj, graph, config) as unknown) as T;
 		}
 
 		let Adm: new (
@@ -153,8 +173,17 @@ export function getObservable<T>(
 				new Set([Number, Boolean, String, Error, Promise, RegExp]).has(
 					proto.constructor
 				)
-			)
+			) {
 				return value;
+			}
+
+			if (constructorConfigMap.has(proto?.constructor)) {
+				return (getObservableWithConfig(
+					obj,
+					graph,
+					constructorConfigMap.get(proto?.constructor)!
+				) as unknown) as T;
+			}
 		}
 
 		const adm = new Adm(obj, graph);

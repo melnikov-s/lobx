@@ -192,7 +192,7 @@ test("observable returns the configured class", () => {
 	expect(observable(C)).toBe(OC);
 });
 
-test("observable returns the configured instance", () => {
+test("observable returns the configured instance with proxied constructor", () => {
 	const C = observable.configure({}, class {});
 	const c = new C();
 	expect(observable(getObservableSource(c))).toBe(c);
@@ -247,7 +247,7 @@ test("properties can be configured to be observable refs", () => {
 	expect(isObservable(o.value)).toBe(false);
 });
 
-test("properties can be re-configured", () => {
+test("properties can be further configured", () => {
 	type Value = { valueA: number; valueB: number; comp: number };
 	const C = observable.configure(
 		{
@@ -325,7 +325,7 @@ test("properties can be configured to be computed refs", () => {
 	const C = observable.configure(
 		{
 			comp: type.computed,
-			compRef: type.computed({ ref: true }),
+			compNonRef: type.computed({ ref: false }),
 			value: type.observable
 		},
 		class {
@@ -337,7 +337,7 @@ test("properties can be configured to be computed refs", () => {
 				return { value: this.value * 2 };
 			}
 
-			get compRef() {
+			get compNonRef() {
 				this.count++;
 				return { value: this.value * 2 };
 			}
@@ -349,7 +349,7 @@ test("properties can be configured to be computed refs", () => {
 
 	autorun(() => {
 		o.comp;
-		o.compRef;
+		o.compNonRef;
 		count++;
 	});
 
@@ -360,9 +360,9 @@ test("properties can be configured to be computed refs", () => {
 	expect(count).toBe(2);
 
 	expect(o.comp).toEqual({ value: 4 });
-	expect(o.compRef).toEqual({ value: 4 });
-	expect(isObservable(o.comp)).toBe(true);
-	expect(isObservable(o.compRef)).toBe(false);
+	expect(o.compNonRef).toEqual({ value: 4 });
+	expect(isObservable(o.comp)).toBe(false);
+	expect(isObservable(o.compNonRef)).toBe(true);
 });
 
 test("properties can be configured to be actions", () => {
@@ -573,4 +573,102 @@ test("configure with inherited class (super)", () => {
 	expect(c.value).toBe(3);
 	expect(c.comp).toBe(6);
 	enforceActions(false);
+});
+
+test("observable returns the configured instance", () => {
+	class C {
+		observable = {};
+		nonObservable = {};
+	}
+
+	observable.configure(
+		{
+			observable: type.observable
+		},
+		C
+	);
+
+	const c = observable(new C());
+	expect(isObservable(c.observable)).toBe(true);
+	expect(isObservable(c.nonObservable)).toBe(false);
+});
+
+test("types are inherited by prototype on configured constructors", () => {
+	class BaseA {
+		baseAObservable = {};
+		baseAOverwrite = {};
+	}
+
+	observable.configure(
+		{
+			baseAObservable: type.observable
+		},
+		BaseA
+	);
+
+	class BaseB extends BaseA {
+		baseBObservable = {};
+		baseBNonObservable = {};
+	}
+
+	observable.configure(
+		{
+			baseAOverwrite: type.observable,
+			baseBObservable: type.observable
+		},
+		BaseB
+	);
+
+	class C extends BaseB {
+		cObservable = {};
+	}
+
+	observable.configure({ cObservable: type.observable }, C);
+
+	const c = observable(new C());
+
+	expect(isObservable(c.baseAObservable)).toBe(true);
+	expect(isObservable(c.baseAOverwrite)).toBe(true);
+	expect(isObservable(c.baseBNonObservable)).toBe(false);
+	expect(isObservable(c.baseBObservable)).toBe(true);
+	expect(isObservable(c.cObservable)).toBe(true);
+});
+
+test("types are not inherited by prototype on non-configured constructors", () => {
+	class BaseA {
+		baseAObservable = {};
+		baseNonObservable = {};
+	}
+
+	observable.configure(
+		{
+			baseAObservable: type.observable
+		},
+		BaseA
+	);
+
+	class BaseB extends BaseA {
+		baseBObservable = {};
+		baseBNonObservable = {};
+	}
+
+	observable.configure(
+		{
+			baseBObservable: type.observable
+		},
+		BaseB
+	);
+
+	class C extends BaseB {
+		cObservable = {};
+	}
+
+	const c = observable(new C());
+
+	// all true as we ignore all other configured objects
+	expect(isObservable(c.baseAObservable)).toBe(true);
+	expect(isObservable(c.baseNonObservable)).toBe(true);
+	expect(isObservable(c.baseBNonObservable)).toBe(true);
+	expect(isObservable(c.baseBObservable)).toBe(true);
+	expect(isObservable(c.cObservable)).toBe(true);
 });

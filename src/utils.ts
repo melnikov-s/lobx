@@ -48,3 +48,9 @@ export function getGlobal(): any {
 	}
 	return mockGlobal;
 }
+
+export function getParentConstructor(
+	Ctor: Function | undefined
+): Function | undefined {
+	return Ctor?.prototype && Object.getPrototypeOf(Ctor.prototype)?.constructor;
+}
