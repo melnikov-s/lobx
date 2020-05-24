@@ -69,11 +69,26 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 	keysAtom: Atom;
 
 	constructor(source: Map<K, V> = new Map(), graph: Graph) {
-		super(source, graph, mapProxyTraps);
+		super(source, graph);
 		this.data = new ObservableValueMap(this.source, graph);
 		this.hasMap = new AtomMap(graph, true);
 		this.keysAtom = new Atom(graph);
 		this.valuesMap = this.data.atomMap;
+		this.proxyTraps.get = (_, name) => this.proxyGet(name);
+	}
+
+	private proxyGet(name: string | number | symbol): unknown {
+		if (name === "size" && "size" in this.source) {
+			return this.size;
+		}
+
+		const val = this.source[name];
+
+		if (name in mapMethods && typeof val === "function") {
+			return mapMethods[name];
+		}
+
+		return val;
 	}
 
 	has(key: K): boolean {
@@ -226,28 +241,6 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 
 	[Symbol.toStringTag]: string;
 }
-
-const mapProxyTraps: ProxyHandler<Map<unknown, unknown>> = {
-	get<K, V>(
-		target: Map<K, V>,
-		name: string | number | symbol,
-		proxy: Map<K, V>
-	) {
-		const adm = getAdministration(proxy);
-
-		if (name === "size" && "size" in target) {
-			return adm.size;
-		}
-
-		const val = target[name];
-
-		if (name in mapMethods && typeof val === "function") {
-			return mapMethods[name];
-		}
-
-		return val;
-	}
-};
 
 const mapMethods = Object.create(null);
 

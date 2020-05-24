@@ -3,7 +3,22 @@ import Graph from "../graph";
 
 export class DateAdministration extends Administration<Date> {
 	constructor(source: Date, graph: Graph) {
-		super(source, graph, dateProxyTraps);
+		super(source, graph);
+		this.proxyTraps.get = (_, name) => this.proxyGet(name);
+	}
+
+	private proxyGet(name: string | number | symbol): unknown {
+		if (typeof this.source[name] === "function") {
+			if (typeof name === "string" && name.startsWith("set")) {
+				addDateSetMethod(name);
+			} else {
+				addDateGetMethod(name);
+			}
+
+			return dateMethods[name];
+		}
+
+		return this.source[name];
 	}
 }
 
@@ -27,19 +42,3 @@ function addDateGetMethod(method: string | number | symbol): void {
 			return adm.source[method].apply(adm.source, arguments);
 		};
 }
-
-const dateProxyTraps: ProxyHandler<Date> = {
-	get(target: Date, name: string | number | symbol) {
-		if (typeof target[name] === "function") {
-			if (typeof name === "string" && name.startsWith("set")) {
-				addDateSetMethod(name);
-			} else {
-				addDateGetMethod(name);
-			}
-
-			return dateMethods[name];
-		}
-
-		return target[name];
-	}
-};

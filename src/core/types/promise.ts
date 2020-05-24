@@ -6,26 +6,33 @@ export class PromiseCtorAdministration extends Administration<typeof Promise> {
 	readonly useAction: boolean;
 
 	constructor(source: typeof Promise, graph: Graph, useAction = false) {
-		super(source, graph, promiseConstructorProxyTraps);
+		super(source, graph);
 		this.useAction = useAction;
+		this.proxyTraps.construct = (_, args) => this.proxyConstruct(args);
+	}
+
+	private proxyConstruct(args: unknown[]): Promise<unknown> {
+		const instance = Reflect.construct(this.source, args);
+
+		return new PromiseAdministration(instance, this.graph, true).proxy;
 	}
 }
-
-const promiseConstructorProxyTraps: ProxyHandler<typeof Promise> = {
-	construct(target: typeof Promise, args: unknown[]) {
-		const adm = getAdministration(target);
-		const instance = Reflect.construct(target, args);
-
-		return new PromiseAdministration(instance, adm.graph, true).proxy;
-	}
-};
 
 export class PromiseAdministration extends Administration<Promise<unknown>> {
 	readonly useAction: boolean;
 
 	constructor(source: Promise<unknown>, graph: Graph, useAction = false) {
-		super(source, graph, promiseProxyTraps);
+		super(source, graph);
 		this.useAction = useAction;
+		this.proxyTraps.get = (_, name) => this.proxyGet(name);
+	}
+
+	private proxyGet(name: string | number | symbol): unknown {
+		if (name in promiseMethods) {
+			return promiseMethods[name];
+		}
+
+		return this.source[name];
 	}
 }
 
@@ -59,13 +66,3 @@ const promiseMethods = Object.create(null);
 		};
 	}
 });
-
-const promiseProxyTraps: ProxyHandler<Promise<unknown>> = {
-	get(target: Promise<unknown>, name: string | number | symbol) {
-		if (name in promiseMethods) {
-			return promiseMethods[name];
-		}
-
-		return target[name];
-	}
-};

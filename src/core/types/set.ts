@@ -15,9 +15,24 @@ export class SetAdministration<T> extends Administration<Set<T>>
 	keysAtom: Atom;
 
 	constructor(source: Set<T> = new Set(), graph: Graph) {
-		super(source, graph, setProxyTraps);
+		super(source, graph);
 		this.hasMap = new AtomMap(graph, true);
 		this.keysAtom = new Atom(graph);
+		this.proxyTraps.get = (_, name) => this.proxyGet(name);
+	}
+
+	private proxyGet(name: string | number | symbol): unknown {
+		if (name === "size" && "size" in this.source) {
+			return this.size;
+		}
+
+		const val = this.source[name];
+
+		if (setMethods.hasOwnProperty(name) && typeof val === "function") {
+			return setMethods[name];
+		}
+
+		return val;
 	}
 
 	clear(): void {
@@ -138,24 +153,6 @@ export class SetAdministration<T> extends Administration<Set<T>>
 
 	[Symbol.toStringTag]: "Set" = "Set";
 }
-
-const setProxyTraps: ProxyHandler<Set<unknown>> = {
-	get<T>(target: Set<T>, name: string | number | symbol, proxy: Set<T>) {
-		const adm = getAdministration(proxy);
-
-		if (name === "size" && "size" in target) {
-			return adm.size;
-		}
-
-		const val = target[name];
-
-		if (setMethods.hasOwnProperty(name) && typeof val === "function") {
-			return setMethods[name];
-		}
-
-		return val;
-	}
-};
 
 const setMethods = {};
 

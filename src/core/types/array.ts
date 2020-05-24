@@ -9,7 +9,43 @@ import Administration from "./utils/Administration";
 
 export class ArrayAdministration<T> extends Administration<T[]> {
 	constructor(source: T[] = [], graph: Graph) {
-		super(source, graph, arrayTraps);
+		super(source, graph);
+		this.proxyTraps.get = (_, name) => this.proxyGet(name);
+		this.proxyTraps.set = (_, name, value) => this.proxySet(name, value);
+	}
+
+	private proxyGet(name: string | number | symbol): unknown {
+		if (name === "length") {
+			return this.getArrayLength();
+		}
+
+		if (typeof name === "number") {
+			return this.get(name);
+		}
+
+		if (typeof name === "string" && String(parseInt(name)) === name) {
+			return this.get(parseInt(name));
+		}
+
+		if (arrayMethods.hasOwnProperty(name)) {
+			return arrayMethods[name as keyof typeof arrayMethods];
+		}
+
+		return this.source[name];
+	}
+
+	private proxySet(name: string | number | symbol, value: T | number): boolean {
+		if (name === "length") {
+			this.setArrayLength(value as number);
+		} else if (typeof name === "number") {
+			this.set(name, value as T);
+		} else if (typeof name === "string" && String(parseInt(name)) === name) {
+			this.set(parseInt(name), value as T);
+		} else {
+			this.source[name] = value;
+		}
+
+		return true;
 	}
 
 	get(index: number): T | undefined {
@@ -99,53 +135,6 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 		);
 	}
 }
-
-const arrayTraps = {
-	get<T>(target: T[], name: string | number | symbol, proxy: T[]): unknown {
-		const adm = getAdministration(proxy);
-		if (name === "length") {
-			return adm.getArrayLength();
-		}
-
-		if (typeof name === "number") {
-			return adm.get(name);
-		}
-
-		if (typeof name === "string" && String(parseInt(name)) === name) {
-			return adm.get(parseInt(name));
-		}
-
-		if (arrayMethods.hasOwnProperty(name)) {
-			return arrayMethods[name as keyof typeof arrayMethods];
-		}
-
-		return target[name];
-	},
-	set<T>(
-		target: T[],
-		name: string | number | symbol,
-		value: T | number,
-		proxy: T[]
-	): boolean {
-		const adm = getAdministration(proxy);
-
-		if (name === "length") {
-			adm.setArrayLength(value as number);
-		} else if (typeof name === "number") {
-			adm.set(name, value as T);
-		} else if (typeof name === "string" && String(parseInt(name)) === name) {
-			adm.set(parseInt(name), value as T);
-		} else {
-			target[name] = value;
-		}
-
-		return true;
-	},
-	preventExtensions(): boolean {
-		throw new Error(`Observable arrays cannot be frozen`);
-		return false;
-	}
-};
 
 const arrayMethods = {
 	concat<T>(this: T[], ...args: Array<T | T[]>): T[] {

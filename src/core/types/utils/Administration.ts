@@ -15,11 +15,17 @@ export default class Administration<T extends object = object> {
 	atom: Atom;
 	valuesMap?: AtomMap<unknown>;
 	private forceObservedAtoms: Atom[] = [];
+	protected proxyTraps: ProxyHandler<T> = {
+		preventExtensions(): boolean {
+			throw new Error(`lobx: observable objects cannot be frozen`);
+			return false;
+		}
+	};
 
-	constructor(source: T, graph: Graph, proxyTraps: object) {
+	constructor(source: T, graph: Graph) {
 		this.atom = new Atom(graph);
 		this.source = source;
-		this.proxy = new Proxy(this.source, proxyTraps) as T;
+		this.proxy = new Proxy(this.source, this.proxyTraps) as T;
 		this.graph = graph;
 		administrationMap.set(this.proxy, this);
 		administrationMap.set(this.source, this);
@@ -55,7 +61,7 @@ export default class Administration<T extends object = object> {
 		if (key) {
 			if (!this.valuesMap) {
 				throw new Error(
-					"lobx: onBecomeObserved not with key not supported on this type."
+					"lobx: onBecomeObserved with key not supported on this type."
 				);
 			}
 

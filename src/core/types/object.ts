@@ -1,11 +1,6 @@
 import Atom from "../nodes/atom";
 import Graph from "../graph";
-import {
-	getAdministration,
-	getObservable,
-	getObservableSource,
-	getAction
-} from "./utils/lookup";
+import { getObservable, getObservableSource, getAction } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "../trace";
 import { isPropertyKey, getPropertyDescriptor } from "../../utils";
 import Administration from "./utils/Administration";
@@ -105,18 +100,81 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	config: Configuration<T> | undefined;
 
 	constructor(source: T = {} as T, graph: Graph, config?: Configuration<T>) {
-		super(source, graph, objectProxyTraps);
+		super(source, graph);
 		this.keysAtom = new Atom(graph);
 		this.hasMap = new AtomMap(graph, true);
 		this.valuesMap = new AtomMap(graph);
 		this.config = config;
+		if (typeof source === "function") {
+			this.proxyTraps.construct = (_, args) => this.proxyConstruct(args);
+			this.proxyTraps.apply = (_, thisArg, args) =>
+				this.proxyApply(thisArg, args);
+		}
+
+		this.proxyTraps.get = (_, name) => this.proxyGet(name);
+		this.proxyTraps.set = (_, name, value) => this.proxySet(name, value);
+		this.proxyTraps.has = (_, name) => this.proxyHas(name);
+		this.proxyTraps.deleteProperty = (_, name) =>
+			this.proxyDeleteProperty(name);
+		this.proxyTraps.ownKeys = () => this.proxyOwnKeys();
 	}
 
-	private get(key: keyof T): T[keyof T] {
+	private proxyConstruct(
+		args: unknown[]
+	): T extends new (args: unknown[]) => unknown ? InstanceType<T> : never {
+		const instance = Reflect.construct(this.source as Function, args);
+
+		return getObservable(instance, this.graph);
+	}
+
+	private proxyApply(
+		thisArg: unknown,
+		args: unknown[]
+	): T extends (args: unknown[]) => unknown ? ReturnType<T> : never {
+		return this.graph.transaction(() =>
+			Reflect.apply(this.source as Function, thisArg, args)
+		);
+	}
+
+	private proxyHas(name: PropertyKey): boolean {
+		if (name === "constructor") return true;
+		if (isPropertyKey(name)) return this.has(name);
+		return name in this.source;
+	}
+
+	private proxyGet(name: PropertyKey): unknown {
+		if (name === "constructor") return this.source[name];
+		if (isPropertyKey(name)) {
+			return this.read(name);
+		}
+
+		return Reflect.get(this.source, name, this.proxy);
+	}
+
+	private proxySet(name: PropertyKey, value: T[keyof T]): boolean {
+		if (!isPropertyKey(name)) return false;
+
+		this.write(name, value);
+
+		return true;
+	}
+
+	private proxyDeleteProperty(name: PropertyKey): boolean {
+		if (!isPropertyKey(name)) return false;
+		this.remove(name);
+		return true;
+	}
+
+	private proxyOwnKeys(): (string | number | symbol)[] {
+		this.keysAtom.reportObserved();
+		return Reflect.ownKeys(this.source);
+	}
+
+	private get(key: PropertyKey): T[keyof T] {
 		return Reflect.get(this.source, key, this.proxy);
 	}
 
-	private set(key: keyof T, value: T[keyof T]): void {
+	private set(key: PropertyKey, value: T[keyof T]): void {
 		this.graph.transaction(() => {
 			Reflect.set(this.source, key, value, this.proxy);
 		});
@@ -128,7 +186,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		);
 	}
 
-	read(key: keyof T): unknown {
+	read(key: PropertyKey): unknown {
 		if (this.isUnconfigured(key)) {
 			return this.get(key);
 		}
@@ -194,7 +252,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		}
 	}
 
-	write(key: keyof T, newValue: T[keyof T]): void {
+	write(key: PropertyKey, newValue: T[keyof T]): void {
 		const had = key in this.source;
 		const oldValue: T[keyof T] = this.get(key);
 		const targetValue = getObservableSource(newValue);
@@ -227,7 +285,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		return key in this.source;
 	}
 
-	remove(key: keyof T): void {
+	remove(key: PropertyKey): void {
 		if (!(key in this.source)) return;
 
 		const oldValue = this.get(key);
@@ -248,59 +306,3 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		return Object.keys(this.source);
 	}
 }
-
-const objectProxyTraps: ProxyHandler<object> = {
-	construct(target: Function, args: unknown[]) {
-		const adm = getAdministration(target);
-
-		const instance = Reflect.construct(target, args);
-
-		return getObservable(instance, adm.graph);
-	},
-	apply(target: Function, thisArg: unknown, args: unknown[]) {
-		const adm = getAdministration(target);
-
-		return adm.graph.transaction(() => Reflect.apply(target, thisArg, args));
-	},
-	has<T extends object>(target: T, name: PropertyKey) {
-		if (name === "constructor") return true;
-		const adm = getAdministration(target);
-
-		if (isPropertyKey(name)) return adm.has(name);
-		return name in target;
-	},
-	get<T extends object>(target: T, name: keyof T) {
-		if (name === "constructor") return target[name];
-		const adm = getAdministration(target);
-
-		if (isPropertyKey(name)) {
-			return adm.read(name);
-		}
-
-		return Reflect.get(target, name, adm.proxy);
-	},
-	set<T extends object>(target: T, name: keyof T, value: T[keyof T]) {
-		if (!isPropertyKey(name)) return false;
-
-		const adm = getAdministration(target);
-
-		adm.write(name, value);
-
-		return true;
-	},
-	deleteProperty<T extends object>(target: T, name: keyof T) {
-		if (!isPropertyKey(name)) return false;
-		const adm = getAdministration(target);
-		adm.remove(name);
-		return true;
-	},
-	ownKeys<T extends object>(target: T) {
-		const adm = getAdministration(target);
-		adm.keysAtom.reportObserved();
-		return Reflect.ownKeys(target);
-	},
-	preventExtensions(): boolean {
-		throw new Error(`Dynamic observable objects cannot be frozen`);
-		return false;
-	}
-};
