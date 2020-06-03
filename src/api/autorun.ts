@@ -1,13 +1,13 @@
 import makeListener, { Listener } from "./listener";
 import { Graph } from "./graph";
 
-export default function<T>(
-	callback: (t: Listener<T>) => void,
+export default function(
+	callback: (t: Listener) => void,
 	opts?: { graph?: Graph }
 ): () => void {
 	const boundCallback: () => void = () => callback.call(null, listener);
 
-	const listener = makeListener<T>(() => {
+	const listener = makeListener(() => {
 		listener.track(boundCallback);
 	}, opts);
 

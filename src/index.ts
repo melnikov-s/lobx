@@ -20,7 +20,8 @@ import graph, {
 import { getObservableSource, isObservable } from "./core/types/utils/lookup";
 import { trace } from "./core/trace";
 import { asyncAction, asyncTransaction } from "./api/async";
-import { propertyType } from "./core/types/object";
+import { propertyType, Configuration } from "./core/types/object";
+import { getAdministration } from "./core/types/utils/Administration";
 export {
 	action,
 	asyncAction,
@@ -30,7 +31,9 @@ export {
 	autorun,
 	computed,
 	Computed,
+	Configuration,
 	enforceActions,
+	getAdministration,
 	getDefaultGraph,
 	getObservableSource,
 	graph,

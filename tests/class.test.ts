@@ -224,6 +224,28 @@ test("properties can be configured to be observable", () => {
 	expect(count).toBe(2);
 });
 
+test("unconfigured values are not observed", () => {
+	const C = observable.configure(
+		{},
+		class {
+			value = {};
+		}
+	);
+
+	let count = 0;
+	const o = new C();
+
+	expect(isObservable(o.value)).toBe(false);
+	autorun(() => {
+		count++;
+		o.value;
+		"value" in o;
+	});
+	o.value = {};
+	expect(count).toBe(1);
+	expect(isObservable(o.value)).toBe(false);
+});
+
 test("properties can be configured to be observable refs", () => {
 	const C = observable.configure(
 		{

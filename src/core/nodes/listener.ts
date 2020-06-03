@@ -1,6 +1,6 @@
 import Graph, { Listener, ObservableNode, nodeTypes } from "../graph";
 
-export default class ListenerNode<T> implements Listener {
+export default class ListenerNode implements Listener {
 	readonly nodeType = nodeTypes.listener;
 	readonly observing: Set<ObservableNode> = new Set();
 
@@ -14,7 +14,7 @@ export default class ListenerNode<T> implements Listener {
 		this.callback.call(null);
 	}
 
-	track(trackFn: () => T | void): T | void {
+	track<T>(trackFn: () => T): T {
 		return this.graph.runObserver(this, trackFn);
 	}
 }

@@ -1,48 +1,48 @@
 {
-  "name": "lobx",
-  "version": "0.1.0",
-  "description": "mini mobx observables for your library",
-  "main": "lib/lobx.js",
-  "types": "lib/index.d.ts",
-  "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cover": "jest --coverage",
-    "test:perf": "npm run build:prod && node  node_modules/.bin/jest --testRegex perf.ts",
-    "build": "rollup -c rollup.config.js",
-    "build:prod": "rollup -c rollup.config.js",
-    "lint": "eslint ./src ./tests --ext .ts"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/melnikov-s/lobx.git"
-  },
-  "author": "Sergey Melnikov",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/melnikov-s/lobx/issues"
-  },
-  "homepage": "https://github.com/melnikov-s/lobx#readme",
-  "devDependencies": {
-    "@babel/core": "^7.4.5",
-    "@babel/preset-env": "^7.4.5",
-    "@types/jest": "^24.0.15",
-    "@typescript-eslint/eslint-plugin": "^2.5.0",
-    "@typescript-eslint/parser": "^2.5.0",
-    "babel-loader": "^8.0.6",
-    "eslint": "^6.5.1",
-    "eslint-config-airbnb": "^18.0.1",
-    "eslint-config-prettier": "^6.4.0",
-    "eslint-import-resolver-typescript": "^2.0.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-prettier": "^3.1.1",
-    "jest": "^24.8.0",
-    "mobx": "^5.15.4",
-    "prettier": "^1.19.1",
-    "rollup": "^1.16.2",
-    "rollup-plugin-typescript2": "^0.22.0",
-    "ts-jest": "^24.0.2",
-    "tslib": "^1.10.0",
-    "typescript": "^3.8.3"
-  }
+	"name": "lobx",
+	"version": "0.2.0",
+	"description": "mini mobx observables for your library",
+	"main": "lib/lobx.js",
+	"types": "lib/index.d.ts",
+	"scripts": {
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:cover": "jest --coverage",
+		"test:perf": "npm run build:prod && node  node_modules/.bin/jest --testRegex perf.ts",
+		"build": "rollup -c rollup.config.js",
+		"build:prod": "rollup -c rollup.config.js",
+		"lint": "eslint ./src ./tests --ext .ts"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/melnikov-s/lobx.git"
+	},
+	"author": "Sergey Melnikov",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/melnikov-s/lobx/issues"
+	},
+	"homepage": "https://github.com/melnikov-s/lobx#readme",
+	"devDependencies": {
+		"@babel/core": "^7.4.5",
+		"@babel/preset-env": "^7.4.5",
+		"@types/jest": "^24.0.15",
+		"@typescript-eslint/eslint-plugin": "^2.5.0",
+		"@typescript-eslint/parser": "^2.5.0",
+		"babel-loader": "^8.0.6",
+		"eslint": "^6.5.1",
+		"eslint-config-airbnb": "^18.0.1",
+		"eslint-config-prettier": "^6.4.0",
+		"eslint-import-resolver-typescript": "^2.0.0",
+		"eslint-plugin-import": "^2.18.2",
+		"eslint-plugin-prettier": "^3.1.1",
+		"jest": "^24.8.0",
+		"mobx": "^5.15.4",
+		"prettier": "^1.19.1",
+		"rollup": "^1.16.2",
+		"rollup-plugin-typescript2": "^0.22.0",
+		"ts-jest": "^24.0.2",
+		"tslib": "^1.10.0",
+		"typescript": "^3.8.3"
+	}
 }

@@ -9,18 +9,18 @@ export function getAdministration(obj: unknown): Administration | undefined {
 }
 
 export default class Administration<T extends object = object> {
-	proxy: T;
-	source: T;
-	graph: Graph;
-	atom: Atom;
-	valuesMap?: AtomMap<unknown>;
-	private forceObservedAtoms: Atom[] = [];
-	protected proxyTraps: ProxyHandler<T> = {
+	readonly proxy: T;
+	readonly source: T;
+	readonly graph: Graph;
+	readonly atom: Atom;
+	readonly proxyTraps: ProxyHandler<T> = {
 		preventExtensions(): boolean {
 			throw new Error(`lobx: observable objects cannot be frozen`);
 			return false;
 		}
 	};
+	protected valuesMap?: AtomMap<unknown>;
+	private forceObservedAtoms: Atom[] = [];
 
 	constructor(source: T, graph: Graph) {
 		this.atom = new Atom(graph);

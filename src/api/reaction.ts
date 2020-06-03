@@ -3,13 +3,13 @@ import { Graph } from "./graph";
 
 export default function<T>(
 	track: () => T,
-	callback: (a?: T, listener?: Listener<T>) => void,
+	callback: (a?: T, listener?: Listener) => void,
 	opts?: { graph?: Graph }
 ): () => void {
 	let value: T;
 
-	const listener = makeListener<T>(() => {
-		const newValue = listener.track(track) as T;
+	const listener = makeListener(() => {
+		const newValue = listener.track(track);
 
 		if (newValue !== value) {
 			value = newValue;
@@ -17,7 +17,7 @@ export default function<T>(
 		}
 	}, opts);
 
-	value = listener.track(track) as T;
+	value = listener.track(track);
 
 	return function(): void {
 		listener.dispose();

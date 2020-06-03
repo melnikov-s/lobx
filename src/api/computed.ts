@@ -2,6 +2,7 @@ import ComputedNode from "../core/nodes/computed";
 import { resolveGraph, Graph } from "./graph";
 
 export type Computed<T> = {
+	clear: () => void;
 	equals: (value: T) => boolean;
 	isDirty: () => boolean;
 	isKeepAlive: () => boolean;

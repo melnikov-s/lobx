@@ -253,6 +253,11 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	write(key: PropertyKey, newValue: T[keyof T]): void {
+		if (this.isUnconfigured(key)) {
+			this.set(key, newValue);
+			return;
+		}
+
 		const had = key in this.source;
 		const oldValue: T[keyof T] = this.get(key);
 		const targetValue = getObservableSource(newValue);
@@ -286,7 +291,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	remove(key: PropertyKey): void {
-		if (!(key in this.source)) return;
+		if (!(key in this.source) || this.isUnconfigured(key)) return;
 
 		const oldValue = this.get(key);
 		delete this.source[key];
