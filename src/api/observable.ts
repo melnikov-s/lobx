@@ -5,7 +5,7 @@ import {
 	getObservable,
 	getObservableWithConfig
 } from "../core/types/utils/lookup";
-import { Configuration } from "../core/types/object";
+import { Configuration, ConfigurationGetter } from "../core/types/object";
 
 export type Observable<T> = {
 	equals: (value: T) => boolean;
@@ -26,8 +26,8 @@ function observableBox<T>(initialValue: T, opts?: Options): Observable<T> {
 	);
 }
 
-function observableConfigure<T extends object>(
-	config: Configuration<T>,
+function observableConfigure<T extends object, S extends T>(
+	config: Configuration<T> | ConfigurationGetter<S>,
 	target: T,
 	opts?: Options
 ): T;
@@ -38,7 +38,7 @@ function observableConfigure<T extends new (args: unknown[]) => unknown>(
 ): T;
 
 function observableConfigure<T extends object>(
-	config: Configuration<T>,
+	config: Configuration<T> | ConfigurationGetter<T>,
 	target: T,
 	opts?: Options
 ): T {

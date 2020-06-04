@@ -1,7 +1,11 @@
 import Graph from "../../graph";
 import { MapAdministration } from "../map";
 import { SetAdministration } from "../set";
-import { ObjectAdministration, Configuration } from "../object";
+import {
+	ObjectAdministration,
+	Configuration,
+	ConfigurationGetter
+} from "../object";
 import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
@@ -99,7 +103,7 @@ export function getAction<T extends Function>(
 export function getObservableWithConfig<T extends object>(
 	target: T,
 	graph: Graph,
-	config: Configuration<T>
+	config: Configuration<T> | ConfigurationGetter<T>
 ): T {
 	if (getAdm(target)) {
 		throw new Error(
@@ -107,9 +111,17 @@ export function getObservableWithConfig<T extends object>(
 		);
 	}
 
-	let finalConfig: Configuration<T> | undefined = config;
+	let finalConfig:
+		| Configuration<T>
+		| ConfigurationGetter<T>
+		| undefined = config;
 
 	if (typeof target === "function" && !constructorConfigMap.has(target)) {
+		if (typeof finalConfig === "function") {
+			throw new Error(
+				"lobx: function configuration not supported on constructors/classes"
+			);
+		}
 		finalConfig = config!;
 		let constructor = target as Function | undefined;
 		while ((constructor = getParentConstructor(constructor))) {

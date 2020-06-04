@@ -3,7 +3,9 @@ import {
 	reaction,
 	observable,
 	runInAction,
-	trace
+	trace,
+	type,
+	enforceActions
 } from "../src/index";
 
 function object(obj: object = {}): Record<string, any> {
@@ -543,4 +545,94 @@ test("observable values do not get stored on the original target (Object.assign)
 	expect(target.prop).not.toBe(c);
 	expect(target.prop).toEqual(o.prop);
 	expect(target.prop).toBe(oTarget);
+});
+
+test("observable objects can be configured", () => {
+	enforceActions(true);
+	try {
+		const o = observable.configure(
+			{
+				observableValue: type.observable,
+				comp: type.computed,
+				inc: type.action
+			},
+			{
+				count: 0,
+				observableValue: 0,
+				nonObservableValue: 0,
+				get comp() {
+					this.count++;
+					return this.observableValue * 2;
+				},
+				inc() {
+					this.observableValue++;
+					this.observableValue++;
+				}
+			}
+		);
+
+		let count = 0;
+
+		autorun(() => {
+			o.comp;
+			count++;
+		});
+
+		o.inc();
+		expect(count).toBe(2);
+		expect(o.comp).toBe(4);
+		expect(o.count).toBe(2);
+		o.nonObservableValue++;
+		expect(count).toBe(2);
+	} finally {
+		enforceActions(false);
+	}
+});
+
+test("observable objects can be configured with function", () => {
+	enforceActions(true);
+	try {
+		const o = observable.configure(
+			(name, object) => {
+				expect(object).toBe(o);
+				switch (name) {
+					case "observableValue":
+						return type.observable;
+					case "comp":
+						return type.computed;
+					case "inc":
+						return type.action;
+				}
+			},
+			{
+				count: 0,
+				observableValue: 0,
+				nonObservableValue: 0,
+				get comp() {
+					this.count++;
+					return this.observableValue * 2;
+				},
+				inc() {
+					this.observableValue++;
+					this.observableValue++;
+				}
+			}
+		);
+
+		let count = 0;
+
+		autorun(() => {
+			o.comp;
+			count++;
+		});
+
+		o.inc();
+		expect(count).toBe(2);
+		expect(o.comp).toBe(4);
+		expect(o.count).toBe(2);
+		o.nonObservableValue++;
+		expect(count).toBe(2);
+	} finally {
+		enforceActions(false);
+	}
 });

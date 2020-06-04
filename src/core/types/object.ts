@@ -7,9 +7,18 @@ import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 import ComputedNode from "../nodes/computed";
 
-export type Configuration<T> = Partial<
-	Record<keyof T, ObservableOptions | ComputedOptions | ActionOptions>
->;
+type ConfigurationTypes =
+	| ObservableOptions
+	| ComputedOptions
+	| ActionOptions
+	| undefined;
+
+export type ConfigurationGetter<T> = (
+	name: keyof T,
+	object: T
+) => ConfigurationTypes;
+
+export type Configuration<T> = Partial<Record<keyof T, ConfigurationTypes>>;
 
 type Types = "observable" | "computed" | "action";
 
@@ -98,13 +107,23 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	valuesMap: AtomMap<PropertyKey>;
 	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
 	config: Configuration<T> | undefined;
+	configGetter: ConfigurationGetter<T> | undefined;
 
-	constructor(source: T = {} as T, graph: Graph, config?: Configuration<T>) {
+	constructor(
+		source: T = {} as T,
+		graph: Graph,
+		config?: Configuration<T> | ConfigurationGetter<T>
+	) {
 		super(source, graph);
 		this.keysAtom = new Atom(graph);
 		this.hasMap = new AtomMap(graph, true);
 		this.valuesMap = new AtomMap(graph);
-		this.config = config;
+		if (typeof config === "function") {
+			this.config = {};
+			this.configGetter = config;
+		} else {
+			this.config = config;
+		}
 		if (typeof source === "function") {
 			this.proxyTraps.construct = (_, args) => this.proxyConstruct(args);
 			this.proxyTraps.apply = (_, thisArg, args) =>
@@ -181,9 +200,18 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	private isUnconfigured(key: PropertyKey): boolean {
-		return !!(
-			this.config && !Object.prototype.hasOwnProperty.call(this.config, key)
-		);
+		if (!this.config) {
+			return false;
+		}
+
+		if (
+			this.configGetter &&
+			!Object.prototype.hasOwnProperty.call(this.config, key)
+		) {
+			this.config[key] = this.configGetter(key as keyof T, this.proxy);
+		}
+
+		return !this.config[key];
 	}
 
 	read(key: PropertyKey): unknown {

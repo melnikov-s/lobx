@@ -343,6 +343,26 @@ test("properties can be configured to be computed", () => {
 	expect(o.count).toBe(2);
 });
 
+test("configuration can't be a function on classes", () => {
+	expect(() =>
+		observable.configure(
+			(name, object) => {
+				return undefined;
+			},
+			class {
+				value = 1;
+				nonObserved = 0;
+				count = 0;
+
+				get comp() {
+					this.count++;
+					return this.value * 2;
+				}
+			}
+		)
+	).toThrowError();
+});
+
 test("properties can be configured to be computed refs", () => {
 	const C = observable.configure(
 		{
