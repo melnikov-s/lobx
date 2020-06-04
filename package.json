@@ -1,8 +1,9 @@
 {
 	"name": "lobx",
 	"version": "0.2.0",
-	"description": "mini mobx observables for your library",
+	"description": "a lightweight proxy based alternative to mobx",
 	"main": "lib/lobx.js",
+	"module": "lib/lobx.module.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"test": "jest",
