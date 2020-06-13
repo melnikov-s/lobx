@@ -211,7 +211,10 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			this.config[key] = this.configGetter(key as keyof T, this.proxy);
 		}
 
-		return !this.config[key];
+		return (
+			!Object.prototype.hasOwnProperty.call(this.config, key) ||
+			this.config[key] === undefined
+		);
 	}
 
 	read(key: PropertyKey): unknown {

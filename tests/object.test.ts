@@ -128,6 +128,12 @@ test("observable objects can be configured with function", () => {
 	}
 });
 
+test("can retrieve Object.prototype properties from observable objects", () => {
+	const properties = Object.getOwnPropertyNames(Object.prototype);
+	const o = observable.configure({}, {});
+	expect(() => properties.forEach(n => o[n])).not.toThrow();
+});
+
 test("can only have one observerbale proxy per object", () => {
 	const target = {};
 
