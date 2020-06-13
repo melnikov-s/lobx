@@ -12,6 +12,7 @@ export type Graph = {
 	runInAction: <T>(fn: () => T) => T;
 	transaction: <T>(fn: () => T) => T;
 	untracked: <T>(fn: () => T) => T;
+	onTransactionDone: (callback: () => void) => () => void;
 };
 
 export default function makeGraph(): Graph {
@@ -100,6 +101,10 @@ export function forceObserve<T extends object>(...args: T[]): void {
 		}
 		adm.forceObserve();
 	}
+}
+
+export function onTransactionDone(callback: () => void): () => void {
+	return getDefaultGraph().onTransactionDone(callback);
 }
 
 type KeyType<T> = T extends Set<infer R>

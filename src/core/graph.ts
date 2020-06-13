@@ -116,6 +116,7 @@ export default class Graph {
 		ObservableNode,
 		Set<(observing: boolean) => void>
 	> = new Map();
+	private transactionDoneCbs: Set<() => void> = new Set();
 
 	// clean up any unobserved computed nodes that were cached for the
 	// duration of a transaction or derivation
@@ -242,6 +243,14 @@ export default class Graph {
 			if (callbacks!.size === 0) {
 				this.onObservedStateChangeCallbacks.delete(node);
 			}
+		};
+	}
+
+	onTransactionDone(callback: () => void): () => void {
+		this.transactionDoneCbs.add(callback);
+
+		return (): void => {
+			this.transactionDoneCbs.delete(callback);
 		};
 	}
 
@@ -471,6 +480,8 @@ export default class Graph {
 							this.clearInvokedComputed();
 						}
 					}
+
+					this.transactionDoneCbs.forEach(c => c());
 				}
 			}
 		}

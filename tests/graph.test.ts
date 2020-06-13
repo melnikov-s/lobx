@@ -10,7 +10,9 @@ import {
 	untracked,
 	atom,
 	isObserved,
-	isTracking
+	onTransactionDone,
+	isTracking,
+	action
 } from "../src";
 
 test("can't listen to untracked changes", () => {
@@ -207,4 +209,21 @@ test("enforce actions allows for initialization within a computed", () => {
 	expect(() => c.get()).not.toThrow();
 	expect(autorun(() => c.get())).not.toThrow();
 	enforceActions(false);
+});
+
+test("onTrasactionDone: can hook into a transcation when it is done", () => {
+	const o = observable.box(0);
+	let count = 0;
+	const unsub = onTransactionDone(() => count++);
+	const act = action(() => {
+		runInAction(() => {
+			runInAction(() => {
+				o.set(1);
+			});
+		});
+	});
+	expect(count).toBe(0);
+	act();
+	expect(o.get()).toBe(1);
+	expect(count).toBe(1);
 });
