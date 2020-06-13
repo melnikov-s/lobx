@@ -106,7 +106,6 @@ export default class Graph {
 	private inTransaction = false;
 	private actionsEnforced = false;
 	private inAction = false;
-	private updatingListeners = false;
 	private invokedComputed: Set<Computed<unknown>> = new Set();
 	private potentialUnObserved: Set<ObservableNode> = new Set();
 	private potentialStale: Set<Computed<unknown>> = new Set();
@@ -194,7 +193,10 @@ export default class Graph {
 			} else {
 				// store all affected listeners for potential invocation when transaction
 				// is complete
-				this.queuedListeners.add(childNode as Listener);
+				const listener = childNode as Listener;
+
+				this.queuedListeners.delete(listener);
+				this.queuedListeners.add(listener);
 			}
 		});
 	}
@@ -435,7 +437,6 @@ export default class Graph {
 		} finally {
 			// clean up and trigger all affected reactions
 			if (isRootTransaction) {
-				const updatedListeners: Listener[] = [];
 				if (this.inAction) {
 					this.runStack.pop();
 				}
@@ -444,10 +445,19 @@ export default class Graph {
 					// loop through all the affected listeners and filter out
 					// the listeners whose obesrvables did not produce a new value
 					this.queuedListeners.forEach(l => {
+						// we remove the listener from the queue so that it can be re-added
+						// in the case that a reaction performs a mutation
+						// this.queuedListeners.delete(l);
 						// computed might re-evaluate here in order to determine if a new
 						// value was prodcued
 						if (this.hasChanged(l)) {
-							updatedListeners.push(l);
+							// perform reaction if any of the dependents have changed
+							l.react();
+
+							// after a reaction it's possible that we queued another listener
+							// this can occur if a reaction made a further mutation
+							// if that happens the listener will be added to the `queuedListeners` Set
+							// and will eventually run in this forEach loop.
 						}
 					});
 				} finally {
@@ -463,23 +473,9 @@ export default class Graph {
 					});
 					this.potentialStale.clear();
 
-					let rootUpdatingListeners = false;
-
-					try {
-						// invoke all affected listeners
-						rootUpdatingListeners = !this.updatingListeners;
-						this.updatingListeners = true;
-						updatedListeners.forEach(l => l.react());
-					} finally {
-						this.updatingListeners = false;
-						// we might have re-enetered a transaction from firing our listeners.
-						// we only want to clean up our computed if this was the root transaction
-						if (rootUpdatingListeners) {
-							// clean up any unobserved computed that were cached for the duration
-							// of this transaction.
-							this.clearInvokedComputed();
-						}
-					}
+					// clean up any unobserved computed that were cached for the duration
+					// of this transaction.
+					this.clearInvokedComputed();
 
 					this.transactionDoneCbs.forEach(c => c());
 				}

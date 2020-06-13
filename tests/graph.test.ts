@@ -226,4 +226,7 @@ test("onTrasactionDone: can hook into a transcation when it is done", () => {
 	act();
 	expect(o.get()).toBe(1);
 	expect(count).toBe(1);
+	unsub();
+	act();
+	expect(count).toBe(1);
 });

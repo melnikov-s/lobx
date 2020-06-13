@@ -155,3 +155,50 @@ test("does not react to stale observables", () => {
 	o3.set(4);
 	expect(count).toBe(2);
 });
+
+test("reactions triggering other reactions", () => {
+	let results = [];
+	const o = observable.box(1);
+	const c = computed(() => {
+		results.push("computed");
+		return o.get() * 2;
+	});
+	reaction(
+		() => c.get(),
+		() => {
+			results.push("reaction1 + " + o.get());
+			o.set(2);
+		}
+	);
+
+	reaction(
+		() => c.get(),
+		() => {
+			results.push("reaction2 + " + o.get());
+			o.set(3);
+		}
+	);
+
+	reaction(
+		() => o.get(),
+		() => {
+			results.push("reaction3 + " + o.get());
+		}
+	);
+	expect(results).toEqual(["computed"]);
+	results = [];
+
+	o.set(2);
+
+	expect(results).toEqual([
+		"computed",
+		"reaction1 + 2",
+		"reaction2 + 2",
+		"reaction3 + 3",
+		"computed",
+		"reaction1 + 3",
+		"reaction3 + 2",
+		"computed",
+		"reaction1 + 2"
+	]);
+});
