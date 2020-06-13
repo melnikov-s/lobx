@@ -47,10 +47,10 @@ test("map values are deeply observable", () => {
 test("map keys returns observable objects", () => {
 	const target = {};
 	let ran = false;
-	const s = map();
-	s.set(target, target);
+	const m = map();
+	m.set(target, target);
 
-	Array.from(s.keys()).forEach(t => {
+	Array.from(m.keys()).forEach(t => {
 		ran = true;
 		expect(isObservable(t)).toBe(true);
 	});
@@ -61,15 +61,27 @@ test("map keys returns observable objects", () => {
 test("map values returns observable objects", () => {
 	const target = {};
 	let ran = false;
-	const s = map();
-	s.set(target, target);
+	const m = map();
+	m.set(target, target);
 
-	Array.from(s.values()).forEach(t => {
+	Array.from(m.values()).forEach(t => {
 		ran = true;
 		expect(isObservable(t)).toBe(true);
 	});
 
 	expect(ran).toBe(true);
+});
+
+test("map forEach returns observable key and value", () => {
+	const target = {};
+	const m = map();
+	m.set(target, target);
+	expect(
+		m.forEach((v, k) => {
+			expect(isObservable(k)).toBe(true);
+			expect(isObservable(v)).toBe(true);
+		})
+	);
 });
 
 test("set entries returns observable objects", () => {

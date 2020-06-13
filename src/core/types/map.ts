@@ -219,7 +219,12 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 		this.keysAtom.reportObserved();
 		this.atom.reportObserved();
 		this.data.forEach((_, key) =>
-			callback.call(thisArg, this.get(key)!, key, this)
+			callback.call(
+				thisArg,
+				this.get(key)!,
+				getObservable(key, this.graph),
+				this
+			)
 		);
 	}
 
