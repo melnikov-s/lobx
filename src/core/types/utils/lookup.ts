@@ -10,7 +10,7 @@ import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
 import { PromiseAdministration, PromiseCtorAdministration } from "../promise";
-import { getGlobal, getParentConstructor } from "../../../utils";
+import { getGlobal, getParentConstructor, isPlainObject } from "../../../utils";
 
 export function getAdministration<T extends object>(
 	obj: T
@@ -33,7 +33,7 @@ export function getAdministration<T extends object>(
 const actionsMap: WeakMap<Function, Function> = new WeakMap();
 const constructorConfigMap: WeakMap<
 	Function,
-	Configuration<unknown>
+	Configuration<unknown> | null
 > = new WeakMap();
 
 export function getObservableSource<T>(obj: T): T {
@@ -180,22 +180,24 @@ export function getObservable<T>(
 			Adm = DateAdministration;
 		} else if (typeof obj === "object") {
 			const proto = Object.getPrototypeOf(obj);
-			if (
-				proto &&
-				new Set([Number, Boolean, String, Error, Promise, RegExp]).has(
-					proto.constructor
-				)
-			) {
-				return value;
-			}
 
 			if (constructorConfigMap.has(proto?.constructor)) {
-				return (getObservableWithConfig(
-					obj,
-					graph,
-					constructorConfigMap.get(proto?.constructor)!
-				) as unknown) as T;
+				const config = constructorConfigMap.get(proto?.constructor);
+
+				if (config) {
+					return (getObservableWithConfig(
+						obj,
+						graph,
+						constructorConfigMap.get(proto?.constructor)!
+					) as unknown) as T;
+				}
+			} else if (!isPlainObject(value)) {
+				return value;
 			}
+		} else if (typeof obj === "function") {
+			// allow the observation of non plain objects if their constructor was passed
+			// into observable
+			constructorConfigMap.set(obj, null);
 		}
 
 		const adm = new Adm(obj, graph);

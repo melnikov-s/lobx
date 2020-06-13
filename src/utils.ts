@@ -54,3 +54,9 @@ export function getParentConstructor(
 ): Function | undefined {
 	return Ctor?.prototype && Object.getPrototypeOf(Ctor.prototype)?.constructor;
 }
+
+export function isPlainObject(value: unknown): value is object {
+	if (value === null || typeof value !== "object") return false;
+	const proto = Object.getPrototypeOf(value);
+	return proto === Object.prototype || proto === null;
+}

@@ -701,11 +701,13 @@ test("types are not inherited by prototype on non-configured constructors", () =
 		BaseB
 	);
 
-	class C extends BaseB {
-		cObservable = {};
-	}
+	const C = observable(
+		class C extends BaseB {
+			cObservable = {};
+		}
+	);
 
-	const c = observable(new C());
+	const c = new C();
 
 	// all true as we ignore all other configured objects
 	expect(isObservable(c.baseAObservable)).toBe(true);

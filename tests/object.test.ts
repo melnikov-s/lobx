@@ -5,7 +5,8 @@ import {
 	runInAction,
 	trace,
 	type,
-	enforceActions
+	enforceActions,
+	isObservable
 } from "../src/index";
 
 function object(obj: object = {}): Record<string, any> {
@@ -213,6 +214,21 @@ test("does not respond to no-op", () => {
 	expect(count).toBe(3);
 	x.x = 2;
 	expect(count).toBe(3);
+});
+
+it("does not observe non configured non plain objects", () => {
+	const C = class {};
+	const o = object({ v: new C() });
+	expect(o.v).toBeInstanceOf(C);
+	expect(isObservable(o.v)).toBe(false);
+});
+
+it("observes configured non plain objects", () => {
+	const C = class {};
+	observable.configure({}, C);
+	const o = object({ v: new C() });
+	expect(o.v).toBeInstanceOf(C);
+	expect(isObservable(o.v)).toBe(true);
 });
 
 test("[mobx-test] object crud", function() {
