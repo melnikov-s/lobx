@@ -37,8 +37,8 @@ export default class ComputedNode<T> implements Computed<T> {
 	}
 
 	// computed is dirty and needs to be re-derived if it's interal state is dirty
-	// or if it's marked as potentially stale by the graph. A computed can only
-	// be potentialy stale during an action
+	// or if it's marked as potentially stale by the graph. A computed becomes potentially
+	// stale when one of its dependents has changed.
 	isDirty(): boolean {
 		return this.dirty || this.graph.isPotentialyStale(this);
 	}

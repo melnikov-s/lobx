@@ -1,4 +1,4 @@
-const listenerMap: WeakMap<object, ObservableListener> = new WeakMap();
+const listenerMap: WeakMap<object, ObservableListener<unknown>> = new WeakMap();
 
 export function notifyAdd(obj: object, value: unknown, name?: unknown): void {
 	listenerMap.get(obj)?.notify({
@@ -67,15 +67,15 @@ export function notifySpliceArray<T>(
 	});
 }
 
-export function trace(obj: object, method: MutationListener): () => void {
-	let listener = listenerMap.get(obj);
+export function trace<T>(obj: object, method: MutationListener<T>): () => void {
+	let listener = listenerMap.get(obj) as ObservableListener<unknown>;
 
 	if (!listener) {
-		listener = new ObservableListener();
+		listener = new ObservableListener<unknown>();
 		listenerMap.set(obj, listener);
 	}
 
-	return listener.subscribe(method);
+	return listener.subscribe(method as MutationListener<unknown>);
 }
 
 export type AddEvent<T> = {
@@ -123,16 +123,16 @@ export type MutationEvent<T> =
 	| UpdateArrayEvent<T>
 	| SpliceArrayEvent<T>;
 
-export type MutationListener = <T>(ev: MutationEvent<T>) => void;
-export type HasListener = {
-	listener: ObservableListener;
+export type MutationListener<T> = (ev: MutationEvent<T>) => void;
+export type HasListener<T> = {
+	listener: ObservableListener<T>;
 };
 
-export class ObservableListener {
-	private listeners: MutationListener[] | undefined;
+export class ObservableListener<T> {
+	private listeners: MutationListener<T>[] | undefined;
 	private notifying: boolean = false;
 
-	subscribe(l: MutationListener): () => void {
+	subscribe(l: MutationListener<T>): () => void {
 		let unsubed = false;
 
 		this.listeners = this.listeners || [];
@@ -155,7 +155,7 @@ export class ObservableListener {
 		return this.listeners?.length ?? 0;
 	}
 
-	notify<T>(ev: MutationEvent<T>): void {
+	notify(ev: MutationEvent<T>): void {
 		if (!this.listeners) return;
 
 		this.notifying = true;
