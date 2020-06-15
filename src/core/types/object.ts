@@ -156,13 +156,13 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	private proxyHas(name: PropertyKey): boolean {
-		if (name === "constructor") return true;
+		if (name in Object.prototype) return true;
 		if (isPropertyKey(name)) return this.has(name);
 		return name in this.source;
 	}
 
 	private proxyGet(name: PropertyKey): unknown {
-		if (name === "constructor") return this.source[name];
+		if (name in Object.prototype) return this.source[name];
 		if (isPropertyKey(name)) {
 			return this.read(name);
 		}
