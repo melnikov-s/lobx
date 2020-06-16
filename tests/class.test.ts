@@ -716,3 +716,13 @@ test("types are not inherited by prototype on non-configured constructors", () =
 	expect(isObservable(c.baseBObservable)).toBe(true);
 	expect(isObservable(c.cObservable)).toBe(true);
 });
+
+test("instanceof operator on observable class and object", () => {
+	class C {}
+	const CO = observable(C);
+	const c = new C();
+	const co = new CO();
+	expect(c).toBeInstanceOf(CO);
+	expect(co).toBeInstanceOf(C);
+	expect(co).toBeInstanceOf(CO);
+});

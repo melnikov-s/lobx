@@ -163,6 +163,9 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 	private proxyGet(name: PropertyKey): unknown {
 		if (name in Object.prototype) return this.source[name];
+		if (name === Symbol.hasInstance) {
+			return this.instanceOfCheck.bind(this);
+		}
 		if (isPropertyKey(name)) {
 			return this.read(name);
 		}
@@ -187,6 +190,10 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	private proxyOwnKeys(): (string | number | symbol)[] {
 		this.keysAtom.reportObserved();
 		return Reflect.ownKeys(this.source);
+	}
+
+	private instanceOfCheck(instance: unknown): boolean {
+		return instance instanceof (this.source as Function);
 	}
 
 	private get(key: PropertyKey): T[keyof T] {
