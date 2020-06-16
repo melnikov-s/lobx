@@ -51,7 +51,7 @@ function observable<T extends object>(object: T, opts?: Options): T {
 	}
 
 	throw new Error(
-		`lobx: observable is only for nom primitive values. Got ${typeof object} instead. Use observable.box for primitive values.`
+		`observable is only for nom primitive values. Got ${typeof object} instead. Use observable.box for primitive values.`
 	);
 }
 

@@ -87,7 +87,7 @@ export function forceChange<T extends object>(...args: T[]): void {
 	for (let i = 0; i < args.length; i++) {
 		const adm = getAdministration(args[i]);
 		if (!adm) {
-			throw new Error(`lobx: forceChange called on an invalid object`);
+			throw new Error(`forceChange called on an invalid object`);
 		}
 		adm.forceChange();
 	}
@@ -97,7 +97,7 @@ export function forceObserve<T extends object>(...args: T[]): void {
 	for (let i = 0; i < args.length; i++) {
 		const adm = getAdministration(args[i]);
 		if (!adm) {
-			throw new Error(`lobx: forceObserve called on an invalid object`);
+			throw new Error(`forceObserve called on an invalid object`);
 		}
 		adm.forceObserve();
 	}
@@ -144,7 +144,7 @@ export function onObservedStateChange<T extends object>(
 	) {
 		if (key) {
 			throw new Error(
-				`lobx: onObservedStateChange key param not supported for observable box or computed value`
+				`onObservedStateChange key param not supported for observable box or computed value`
 			);
 		}
 
@@ -156,7 +156,7 @@ export function onObservedStateChange<T extends object>(
 
 	if (!isObservable(obj)) {
 		throw new Error(
-			`lobx: onObservedStateChange can only be called on observable values`
+			`onObservedStateChange can only be called on observable values`
 		);
 	}
 

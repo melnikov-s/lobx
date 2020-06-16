@@ -68,7 +68,7 @@ export function patchPromise<T>(fn: () => T, graph: Graph): T {
 	} finally {
 		if (global.Promise !== ObservablePromise) {
 			throw new Error(
-				"lobx: Fatal error! promise got overwritten during async action"
+				"Fatal error! promise got overwritten during async action"
 			);
 		}
 		global.Promise = oldPromise;
@@ -107,7 +107,7 @@ export function getObservableWithConfig<T extends object>(
 ): T {
 	if (getAdm(target)) {
 		throw new Error(
-			"lobx: can't re-configure an observable that's already been observed"
+			"can't re-configure an observable that's already been observed"
 		);
 	}
 
@@ -119,7 +119,7 @@ export function getObservableWithConfig<T extends object>(
 	if (typeof target === "function" && !constructorConfigMap.has(target)) {
 		if (typeof finalConfig === "function") {
 			throw new Error(
-				"lobx: function configuration not supported on constructors/classes"
+				"function configuration not supported on constructors/classes"
 			);
 		}
 		finalConfig = config!;
@@ -148,7 +148,7 @@ export function getObservable<T>(
 
 	if (adm) {
 		if (adm.graph !== graph) {
-			throw new Error("lobx: observables can only exists on a single graph");
+			throw new Error("observables can only exists on a single graph");
 		}
 
 		return (adm.proxy as unknown) as T;

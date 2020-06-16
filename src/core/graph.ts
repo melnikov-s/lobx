@@ -301,7 +301,7 @@ export default class Graph {
 
 		if (this.actionsEnforced && !this.inAction) {
 			throw new Error(
-				"lobx: strict actions are enforced. Attempted to modify an observed observable outside of an action"
+				"strict actions are enforced. Attempted to modify an observed observable outside of an action"
 			);
 		}
 

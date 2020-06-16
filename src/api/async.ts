@@ -10,7 +10,7 @@ export function asyncAction<T>(
 
 	if (adm && !adm.useAction) {
 		throw new Error(
-			"lobx: this promise has already been wrapped with `asyncTransaction`"
+			"this promise has already been wrapped with `asyncTransaction`"
 		);
 	} else if (!adm) {
 		adm = new PromiseAdministration(p, resolveGraph(opts?.graph), true);
@@ -26,9 +26,7 @@ export function asyncTransaction<T>(
 	let adm = getAdministration(p);
 
 	if (adm && !adm.useAction) {
-		throw new Error(
-			"lobx: this promise has already been wrapped with `asyncAction`"
-		);
+		throw new Error("this promise has already been wrapped with `asyncAction`");
 	} else if (!adm) {
 		adm = new PromiseAdministration(p, resolveGraph(opts?.graph));
 	}

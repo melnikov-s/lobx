@@ -15,7 +15,7 @@ export default class Administration<T extends object = object> {
 	readonly atom: Atom;
 	readonly proxyTraps: ProxyHandler<T> = {
 		preventExtensions(): boolean {
-			throw new Error(`lobx: observable objects cannot be frozen`);
+			throw new Error(`observable objects cannot be frozen`);
 			return false;
 		}
 	};
@@ -61,7 +61,7 @@ export default class Administration<T extends object = object> {
 		if (key) {
 			if (!this.valuesMap) {
 				throw new Error(
-					"lobx: onBecomeObserved with key not supported on this type."
+					"onBecomeObserved with key not supported on this type."
 				);
 			}
 

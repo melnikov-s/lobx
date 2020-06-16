@@ -266,9 +266,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 				if (!computedNode) {
 					const descriptor = getPropertyDescriptor(this.source, key)!;
 					if (typeof descriptor?.get !== "function") {
-						throw new Error(
-							"lobx computed values are only supported on getters"
-						);
+						throw new Error("computed values are only supported on getters");
 					}
 					computedNode = new ComputedNode(
 						this.graph,
@@ -286,7 +284,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 					: getObservable(computedNode.get(), this.graph);
 			}
 			default:
-				throw new Error(`lobx: unknown type passed to configure`);
+				throw new Error(`unknown type passed to configure`);
 		}
 	}
 
