@@ -1,4 +1,10 @@
-import { observable, asyncTransaction, asyncAction, autorun } from "../src";
+import {
+	observable,
+	asyncTransaction,
+	asyncAction,
+	autorun,
+	type
+} from "../src";
 
 function doAsync<T>(resolveWith: T, success = true) {
 	return new Promise((resolve, reject) => {
@@ -171,4 +177,29 @@ function doAsync<T>(resolveWith: T, success = true) {
 
 		expect(count).toBe(3);
 	});
+});
+
+test("instanceof works as expected", async () => {
+	const OldPromise = Promise;
+	const p = new Promise(() => {});
+	let ran = false;
+
+	const o = observable.configure(
+		{
+			test: type.action({ async: true })
+		},
+		{
+			async test() {
+				expect(OldPromise).not.toBe(Promise); // we patched it
+				expect(p).toBeInstanceOf(Promise); // but this still works
+				ran = true;
+			}
+		}
+	);
+
+	expect(Promise).toBe(OldPromise);
+	await o.test();
+	await OldPromise.resolve();
+	expect(ran).toBe(true);
+	expect(Promise).toBe(OldPromise); // it's been restored
 });

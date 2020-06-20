@@ -156,17 +156,17 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	private proxyHas(name: PropertyKey): boolean {
-		if (name in Object.prototype) return true;
-		if (isPropertyKey(name)) return this.has(name);
-		return name in this.source;
+		if (!(name in Object.prototype) && isPropertyKey(name))
+			return this.has(name);
+		return Reflect.has(this.source, name);
 	}
 
 	private proxyGet(name: PropertyKey): unknown {
-		if (name in Object.prototype) return this.source[name];
-		if (name === Symbol.hasInstance) {
-			return this.instanceOfCheck.bind(this);
-		}
-		if (isPropertyKey(name)) {
+		if (
+			!(name in Object.prototype) &&
+			isPropertyKey(name) &&
+			(typeof this.source !== "function" || name !== "prototype")
+		) {
 			return this.read(name);
 		}
 
@@ -190,10 +190,6 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	private proxyOwnKeys(): (string | number | symbol)[] {
 		this.keysAtom.reportObserved();
 		return Reflect.ownKeys(this.source);
-	}
-
-	private instanceOfCheck(instance: unknown): boolean {
-		return instance instanceof (this.source as Function);
 	}
 
 	private get(key: PropertyKey): T[keyof T] {
