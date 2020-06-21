@@ -56,3 +56,13 @@ export {
 	propertyType as type,
 	untracked
 };
+
+export {
+	MutationEvent,
+	AddEvent,
+	UpdateEvent,
+	DeleteEvent,
+	UpdateArrayEvent,
+	SpliceArrayEvent,
+	MutationListener
+} from "./core/trace";

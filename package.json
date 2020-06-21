@@ -1,10 +1,13 @@
 {
 	"name": "lobx",
-	"version": "0.2.0-rc2",
+	"version": "0.2.0-rc3",
 	"description": "a lightweight proxy based alternative to mobx",
 	"main": "lib/lobx.js",
 	"module": "lib/lobx.module.js",
 	"types": "lib/index.d.ts",
+	"files": [
+		"lib/*"
+	],
 	"scripts": {
 		"test": "jest",
 		"test:watch": "jest --watch",
