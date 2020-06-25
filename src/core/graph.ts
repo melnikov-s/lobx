@@ -294,6 +294,13 @@ export default class Graph {
 	// for execution.
 	reportChanged(node: ObservableNode, oldValue?: unknown): void {
 		if (this.runStack.length && !!this.topOfRunStack && this.isObserved(node)) {
+			// we ignore the change if the change occured within the same reaction in
+			// which it was initially observed. This is to allow for creating observables
+			// in reactions and mutating them further.
+			if (node.observers.has(this.topOfRunStack) && node.observers.size === 1) {
+				return;
+			}
+
 			throw new Error(
 				"Can't change an observable during a reaction or within a computed"
 			);

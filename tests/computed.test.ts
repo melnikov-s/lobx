@@ -166,6 +166,22 @@ test("will not allow changing observable values within a computed", () => {
 	).toThrowError();
 });
 
+test("observable values only observed by the computed can change", () => {
+	const c1 = computed(() => {
+		const o1 = observable.box(0);
+		o1.get();
+		o1.set(1);
+		return o1.get();
+	});
+
+	expect(() =>
+		reaction(
+			() => c1.get(),
+			() => {}
+		)
+	).not.toThrow();
+});
+
 test("will allow creating new observable values within a computed", () => {
 	const o1 = observable.box(0);
 	let o2;
