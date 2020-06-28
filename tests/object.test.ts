@@ -9,7 +9,7 @@ import {
 	isObservable
 } from "../src/index";
 
-function object(obj: object = {}): Record<string, any> {
+function object<T extends object>(obj: T = {} as T): Record<string, any> {
 	return observable(obj);
 }
 
@@ -37,6 +37,25 @@ test("observable values do not get stored on the original target (Object.assign)
 	expect(target.prop).not.toBe(c);
 	expect(target.prop).toEqual(o.prop);
 	expect(target.prop).toBe(oTarget);
+});
+
+test("getters on the object become computed", () => {
+	let count = 0;
+	const o = observable({
+		prop: 1,
+		get comp() {
+			count++;
+			return this.prop * 2;
+		}
+	});
+
+	autorun(() => o.comp);
+	expect(o.comp).toBe(2);
+	expect(count).toBe(1);
+	o.prop++;
+	expect(o.comp).toBe(4);
+	o.comp;
+	expect(count).toBe(2);
 });
 
 test("observable objects can be configured", () => {

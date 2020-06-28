@@ -101,18 +101,30 @@ export const propertyType: {
 	action: actionType
 } as const;
 
+function defaultConfigGetter(
+	key: PropertyKey,
+	proxy: object
+): ConfigurationTypes {
+	const descriptor = getPropertyDescriptor(proxy, key);
+	if (descriptor && typeof descriptor.get === "function") {
+		return propertyType.computed;
+	}
+
+	return propertyType.observable;
+}
+
 export class ObjectAdministration<T extends object> extends Administration<T> {
 	keysAtom: Atom;
 	hasMap: AtomMap<PropertyKey>;
 	valuesMap: AtomMap<PropertyKey>;
 	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
-	config: Configuration<T> | undefined;
+	config: Configuration<T>;
 	configGetter: ConfigurationGetter<T> | undefined;
 
 	constructor(
 		source: T = {} as T,
 		graph: Graph,
-		config?: Configuration<T> | ConfigurationGetter<T>
+		config: Configuration<T> | ConfigurationGetter<T> = defaultConfigGetter
 	) {
 		super(source, graph);
 		this.keysAtom = new Atom(graph);
@@ -203,10 +215,6 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	private isUnconfigured(key: PropertyKey): boolean {
-		if (!this.config) {
-			return false;
-		}
-
 		if (
 			this.configGetter &&
 			!Object.prototype.hasOwnProperty.call(this.config, key)
