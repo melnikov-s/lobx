@@ -142,7 +142,8 @@ export function getObservableWithConfig<T extends object>(
 export function getObservable<T>(
 	value: T,
 	graph: Graph,
-	config?: Configuration<T>
+	config?: Configuration<T>,
+	observeNonPlain: boolean = false
 ): T {
 	const adm = getAdm(value);
 
@@ -191,7 +192,7 @@ export function getObservable<T>(
 						constructorConfigMap.get(proto?.constructor)!
 					) as unknown) as T;
 				}
-			} else if (!isPlainObject(value)) {
+			} else if (!isPlainObject(value) && !observeNonPlain) {
 				return value;
 			}
 		} else if (typeof obj === "function") {

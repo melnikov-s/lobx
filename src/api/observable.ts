@@ -44,7 +44,7 @@ function observableConfigure<T extends object>(
 
 function observable<T extends object>(object: T, opts?: Options): T {
 	if (isNonPrimitive(object)) {
-		return getObservable(object, resolveGraph(opts?.graph));
+		return getObservable(object, resolveGraph(opts?.graph), undefined, true);
 	}
 
 	throw new Error(

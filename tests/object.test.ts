@@ -235,14 +235,38 @@ test("does not respond to no-op", () => {
 	expect(count).toBe(3);
 });
 
-it("does not observe non configured non plain objects", () => {
+test("observes non plain objects directly", () => {
+	let count = 0;
+	let countComp = 0;
+	class C {
+		prop = 0;
+		get comp() {
+			countComp++;
+			return this.prop * 2;
+		}
+	}
+	const o = observable(new C());
+	autorun(() => {
+		count++;
+		o.comp;
+	});
+	expect(count).toBe(1);
+	expect(o.comp).toBe(0);
+	expect(countComp).toBe(1);
+	o.prop++;
+	expect(count).toBe(2);
+	expect(o.comp).toBe(2);
+	expect(countComp).toBe(2);
+});
+
+test("does not deeply observe non configured non plain objects", () => {
 	const C = class {};
 	const o = object({ v: new C() });
 	expect(o.v).toBeInstanceOf(C);
 	expect(isObservable(o.v)).toBe(false);
 });
 
-it("observes configured non plain objects", () => {
+test("observes configured non plain objects", () => {
 	const C = class {};
 	observable.configure({}, C);
 	const o = object({ v: new C() });
