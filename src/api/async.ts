@@ -1,5 +1,5 @@
-import { getAdministration } from "../core/types/utils/lookup";
-import { PromiseAdministration } from "../core/types/promise";
+import { getAdministration } from "../types/utils/lookup";
+import { PromiseAdministration } from "../types/promise";
 import { Graph, resolveGraph } from "./graph";
 
 export function asyncAction<T>(

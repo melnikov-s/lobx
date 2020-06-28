@@ -1,5 +1,5 @@
-import Graph from "../../graph";
-import Atom from "../../nodes/atom";
+import Graph from "../../core/graph";
+import Atom from "../../core/nodes/atom";
 import AtomMap from "./AtomMap";
 
 const administrationMap: WeakMap<object, Administration> = new WeakMap();

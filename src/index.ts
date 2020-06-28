@@ -18,11 +18,11 @@ import graph, {
 	onObservedStateChange,
 	onTransactionDone
 } from "./api/graph";
-import { getObservableSource, isObservable } from "./core/types/utils/lookup";
-import { trace } from "./core/trace";
+import { getObservableSource, isObservable } from "./types/utils/lookup";
+import { trace } from "./types/utils/trace";
 import { asyncAction, asyncTransaction } from "./api/async";
-import { propertyType, Configuration } from "./core/types/object";
-import { getAdministration } from "./core/types/utils/Administration";
+import { propertyType, Configuration } from "./types/object";
+import { getAdministration } from "./types/utils/Administration";
 export {
 	action,
 	asyncAction,
@@ -65,4 +65,4 @@ export {
 	UpdateArrayEvent,
 	SpliceArrayEvent,
 	MutationListener
-} from "./core/trace";
+} from "./types/utils/trace";

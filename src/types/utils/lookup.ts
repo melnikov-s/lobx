@@ -1,4 +1,4 @@
-import Graph from "../../graph";
+import Graph from "../../core/graph";
 import { MapAdministration } from "../map";
 import { SetAdministration } from "../set";
 import {
@@ -10,7 +10,7 @@ import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
 import { PromiseAdministration, PromiseCtorAdministration } from "../promise";
-import { getGlobal, getParentConstructor, isPlainObject } from "../../../utils";
+import { getGlobal, getParentConstructor, isPlainObject } from "../../utils";
 
 export function getAdministration<T extends object>(
 	obj: T

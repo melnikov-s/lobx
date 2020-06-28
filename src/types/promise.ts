@@ -1,5 +1,5 @@
 import Administration from "./utils/Administration";
-import Graph from "../graph";
+import Graph from "../core/graph";
 import { getAdministration, patchPromise } from "./utils/lookup";
 
 export class PromiseCtorAdministration extends Administration<typeof Promise> {

@@ -1,6 +1,6 @@
-import Graph from "../graph";
-import { defaultEquals } from "../../utils";
-import Atom from "../nodes/atom";
+import Graph from "../core/graph";
+import { defaultEquals } from "../utils";
+import Atom from "../core/nodes/atom";
 
 export default class ObservableValue<T> {
 	value: T;

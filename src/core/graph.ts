@@ -35,7 +35,7 @@ Below is the general shape of the graph:
     |                 |            +-------+---+-+    +-------+----+
     |                 |                    |   |              |
     |      computed nodes live in the middle of the graph and |
-    |      can be n levels deep, having observers       |
+    |      can be n levels deep, having atoms
     |      and other computed nodes as their dependencies     |
     |                 +----------+---------+   |              |
     |                            |             |              |

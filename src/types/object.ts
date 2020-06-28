@@ -1,11 +1,11 @@
-import Atom from "../nodes/atom";
-import Graph from "../graph";
+import Atom from "../core/nodes/atom";
+import Graph from "../core/graph";
 import { getObservable, getObservableSource, getAction } from "./utils/lookup";
-import { notifyUpdate, notifyAdd, notifyDelete } from "../trace";
-import { isPropertyKey, getPropertyDescriptor } from "../../utils";
+import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/trace";
+import { isPropertyKey, getPropertyDescriptor } from "../utils";
 import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
-import ComputedNode from "../nodes/computed";
+import ComputedNode from "../core/nodes/computed";
 
 type ConfigurationTypes =
 	| ObservableOptions

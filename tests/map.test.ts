@@ -5,7 +5,7 @@ import {
 	reaction,
 	trace
 } from "../src/index";
-import { getAdministration } from "../src/core/types/utils/lookup";
+import { getAdministration } from "../src/types/utils/lookup";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 

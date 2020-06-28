@@ -1,11 +1,8 @@
-import ObservableValue from "../core/types/observableValue";
+import ObservableValue from "../types/observableValue";
 import { resolveGraph, Graph } from "./graph";
 import { defaultEquals, isNonPrimitive } from "../utils";
-import {
-	getObservable,
-	getObservableWithConfig
-} from "../core/types/utils/lookup";
-import { Configuration, ConfigurationGetter } from "../core/types/object";
+import { getObservable, getObservableWithConfig } from "../types/utils/lookup";
+import { Configuration, ConfigurationGetter } from "../types/object";
 
 export type Observable<T> = {
 	equals: (value: T) => boolean;

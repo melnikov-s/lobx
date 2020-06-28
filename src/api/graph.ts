@@ -1,8 +1,8 @@
 import CoreGraph, { ObservableNode } from "../core/graph";
-import { getAdministration, isObservable } from "../core/types/utils/lookup";
+import { getAdministration, isObservable } from "../types/utils/lookup";
 import AtomNode from "../core/nodes/atom";
 import ComputedNode from "../core/nodes/computed";
-import ObservableValue from "../core/types/observableValue";
+import ObservableValue from "../types/observableValue";
 
 export type Graph = {
 	enforceActions: (enforce: boolean) => void;

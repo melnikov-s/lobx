@@ -1,10 +1,10 @@
-import Graph from "../graph";
+import Graph from "../core/graph";
 import {
 	getAdministration,
 	getObservable,
 	getObservableSource
 } from "./utils/lookup";
-import { notifyArrayUpdate, notifySpliceArray } from "../trace";
+import { notifyArrayUpdate, notifySpliceArray } from "./utils/trace";
 import Administration from "./utils/Administration";
 
 export class ArrayAdministration<T> extends Administration<T[]> {

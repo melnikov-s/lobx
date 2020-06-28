@@ -1,11 +1,11 @@
-import Atom from "../nodes/atom";
-import Graph from "../graph";
+import Atom from "../core//nodes/atom";
+import Graph from "../core/graph";
 import {
 	getObservable,
 	getObservableSource,
 	getAdministration
 } from "./utils/lookup";
-import { notifyUpdate, notifyAdd, notifyDelete } from "../trace";
+import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/trace";
 import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 

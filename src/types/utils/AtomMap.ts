@@ -1,6 +1,6 @@
-import Atom from "../../nodes/atom";
-import Graph from "../../graph";
-import { isNonPrimitive } from "../../../utils";
+import Atom from "../../core/nodes/atom";
+import Graph from "../../core/graph";
+import { isNonPrimitive } from "../../utils";
 
 export default class AtomMap<K> {
 	private map: Map<unknown, Atom> | undefined;
