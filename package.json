@@ -1,6 +1,6 @@
 {
 	"name": "lobx",
-	"version": "0.2.0-rc4",
+	"version": "0.2.0-rc5",
 	"description": "a lightweight proxy based alternative to mobx",
 	"main": "lib/lobx.js",
 	"module": "lib/lobx.module.js",
@@ -15,7 +15,8 @@
 		"test:perf": "npm run build:prod && node  node_modules/.bin/jest --testRegex perf.ts",
 		"build": "rollup -c rollup.config.js",
 		"build:prod": "rollup -c rollup.config.js",
-		"lint": "eslint ./src ./tests --ext .ts"
+		"lint": "eslint ./src ./tests --ext .ts",
+		"prepublishOnly": "npm run build:prod"
 	},
 	"repository": {
 		"type": "git",
