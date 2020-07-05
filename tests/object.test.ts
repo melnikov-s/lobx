@@ -6,7 +6,8 @@ import {
 	trace,
 	type,
 	enforceActions,
-	isObservable
+	isObservable,
+	getObservableSource
 } from "../src/index";
 
 function object<T extends object>(obj: T = {} as T): Record<string, any> {
@@ -317,6 +318,12 @@ test("[mobx-test] object crud", function() {
 		{ object: o, name: "1", oldValue: "b", type: "delete" },
 		{ object: o, name: "2", newValue: "a", type: "add" }
 	]);
+});
+
+test("frozen objects are not observed", () => {
+	const o = object({ toBeFrozen: {} });
+	Object.freeze(getObservableSource(o).toBeFrozen);
+	expect(isObservable(o.toBeFrozen)).toBe(false);
 });
 
 test("[mobx-test] keys should be observable when extending", () => {

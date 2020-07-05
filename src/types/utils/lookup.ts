@@ -159,7 +159,10 @@ export function getObservable<T>(
 		return value;
 	}
 
-	if (typeof value === "object" || typeof value === "function") {
+	if (
+		(typeof value === "object" || typeof value === "function") &&
+		!Object.isFrozen(value)
+	) {
 		const obj = (value as unknown) as object;
 
 		if (config) {
