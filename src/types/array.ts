@@ -291,9 +291,12 @@ const arrayMethods = {
 		): unknown[] {
 			const adm = getAdministration(this);
 			adm.atom.reportObserved();
-			return adm.source[method](function(v: unknown, i: number) {
-				return func.call(context, getObservable(v, adm.graph), i, adm.proxy);
-			});
+			return getObservable(
+				adm.source[method](function(v: unknown, i: number) {
+					return func.call(context, getObservable(v, adm.graph), i, adm.proxy);
+				}),
+				adm.graph
+			);
 		};
 	}
 });

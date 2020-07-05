@@ -107,7 +107,7 @@ test("iteration returns observable results", () => {
 			let ran = false;
 			count++;
 
-			arr[method](function(v, i, a) {
+			const result = arr[method](function(v, i, a) {
 				ran = true;
 				expect(a).toBe(arr);
 				expect(v).toBe(arr[i]);
@@ -115,6 +115,10 @@ test("iteration returns observable results", () => {
 
 				return true;
 			}, context);
+
+			if (result && typeof result === "object") {
+				expect(isObservable(result)).toBe(true);
+			}
 
 			expect(ran).toBe(true);
 		});
