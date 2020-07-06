@@ -316,23 +316,26 @@ const arrayMethods = {
 		): unknown {
 			const adm = getAdministration(this);
 			adm.atom.reportObserved();
-			return adm.source[method](function(
-				acc: unknown,
-				value: unknown,
-				index: number
-			) {
-				return getObservable(
-					func.call(
-						adm.proxy,
-						acc,
-						getObservable(value, adm.graph),
-						index,
-						adm.proxy
-					),
-					adm.graph
-				);
-			},
-			initialvalue);
+			return getObservable(
+				adm.source[method](function(
+					acc: unknown,
+					value: unknown,
+					index: number
+				) {
+					return getObservable(
+						func.call(
+							adm.proxy,
+							getObservable(acc, adm.graph),
+							getObservable(value, adm.graph),
+							index,
+							adm.proxy
+						),
+						adm.graph
+					);
+				},
+				initialvalue),
+				adm.graph
+			);
 		};
 	}
 });

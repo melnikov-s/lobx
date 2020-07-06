@@ -143,6 +143,7 @@ test("iteration returns observable results", () => {
 				ran = true;
 				expect(a).toBe(arr);
 				expect(v).toBe(arr[i]);
+				expect(isObservable(acc)).toBe(true);
 
 				return acc;
 			}, {});
