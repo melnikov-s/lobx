@@ -338,16 +338,12 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		this.graph.transaction(() => {
 			this.valuesMap.reportChanged(key);
 			this.keysAtom.reportChanged();
-			this.valuesMap.delete(key);
 			this.hasMap.reportChanged(key);
+
+			this.valuesMap.delete(key);
 			this.flushChange();
 		});
 
 		notifyDelete(this.proxy, oldValue, key);
-	}
-
-	getKeys(): PropertyKey[] {
-		this.keysAtom.reportObserved();
-		return Object.keys(this.source);
 	}
 }

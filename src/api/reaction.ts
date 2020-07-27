@@ -3,7 +3,7 @@ import { Graph } from "./graph";
 
 export default function<T>(
 	track: () => T,
-	callback: (a?: T, listener?: Listener) => void,
+	callback: (a: T, listener: Listener) => void,
 	opts?: { graph?: Graph }
 ): () => void {
 	let value: T;
