@@ -225,7 +225,11 @@ const arrayMethods = {
 		const adm = getAdministration(this);
 		adm.atom.reportChanged();
 
-		adm.source.sort(compareFn);
+		adm.source.sort(
+			compareFn &&
+				((a, b) =>
+					compareFn(getObservable(a, adm.graph), getObservable(b, adm.graph)))
+		);
 
 		return this;
 	}

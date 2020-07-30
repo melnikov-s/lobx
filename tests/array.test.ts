@@ -28,7 +28,19 @@ test("iteration returns observable results", () => {
 	expect(count).toBe(3);
 });
 
-["indexOf", "includes", "lastIndexOf"].forEach(method => {
+test("sort paramters are observable", () => {
+	let count = 0;
+	const arr = array([{}, {}]);
+	arr.sort((a, b) => {
+		count++;
+		expect(isObservable(a)).toBe(true);
+		expect(isObservable(b)).toBe(true);
+		return 0;
+	});
+	expect(count).toBe(1);
+});
+
+["indexOf", "lastIndexOf", "includes"].forEach(method => {
 	test(`Array.prototype.${method} method is observable`, () => {
 		let count = 0;
 		const lookup = {};
