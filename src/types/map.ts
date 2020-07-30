@@ -6,7 +6,9 @@ import {
 	getAdministration
 } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/trace";
-import Administration from "./utils/Administration";
+import Administration, {
+	getAdministration as hasObservable
+} from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 
 class ObservableValueMap<K, V> {
@@ -91,27 +93,41 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 		return val;
 	}
 
-	has(key: K): boolean {
-		const targetKey = getObservableSource(key);
+	private hasEntry(key: K): boolean {
+		return !!(
+			this.source.has(getObservableSource(key)) ||
+			(hasObservable(key) && this.source.has(getObservable(key, this.graph)))
+		);
+	}
 
+	has(key: K): boolean {
 		if (this.graph.isTracking()) {
-			this.hasMap.reportObserved(targetKey);
+			this.hasMap.reportObserved(getObservableSource(key));
 			this.atom.reportObserved();
 		}
 
-		return this.data.has(targetKey);
+		return this.hasEntry(key);
 	}
 
 	set(key: K, value: V): this {
 		const targetKey = getObservableSource(key);
 		const targetValue = getObservableSource(value);
 
-		const hasKey = this.data.has(targetKey);
-		let oldValue: V | undefined;
+		const hasKey = this.hasEntry(key);
+		const oldValue: V | undefined =
+			this.data.peek(targetKey) ?? this.data.peek(key);
 
-		if (!hasKey || (oldValue = this.data.peek(targetKey)) !== targetValue) {
+		if (
+			!hasKey ||
+			(oldValue !== targetValue &&
+				oldValue !== getObservable(value, this.graph))
+		) {
 			this.graph.transaction(() => {
-				this.data.set(targetKey, targetValue);
+				if (this.data.has(key)) {
+					this.data.set(key, targetValue);
+				} else {
+					this.data.set(targetKey, targetValue);
+				}
 				if (!hasKey) {
 					this.flushChange();
 					this.hasMap.reportChanged(targetKey);
@@ -130,7 +146,7 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 	delete(key: K): boolean {
 		const targetKey = getObservableSource(key);
 
-		if (this.data.has(targetKey)) {
+		if (this.hasEntry(key)) {
 			const oldValue = this.data.peek(targetKey);
 
 			this.graph.transaction(() => {
@@ -138,6 +154,7 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(targetKey);
 				this.data.delete(targetKey);
+				this.data.delete(key);
 			});
 
 			notifyDelete(this.proxy, oldValue, targetKey);
@@ -148,8 +165,11 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 
 	get(key: K): V | undefined {
 		const targetKey = getObservableSource(key);
-		return this.has(targetKey)
-			? getObservable(this.data.get(targetKey), this.graph)
+		return this.has(key)
+			? getObservable(
+					this.data.get(targetKey) ?? this.data.get(key),
+					this.graph
+			  )
 			: undefined;
 	}
 

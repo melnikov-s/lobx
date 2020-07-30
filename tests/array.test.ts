@@ -43,21 +43,28 @@ test("sort paramters are observable", () => {
 ["indexOf", "lastIndexOf", "includes"].forEach(method => {
 	test(`Array.prototype.${method} method is observable`, () => {
 		let count = 0;
+		const negativeValue = method === "includes" ? false : -1;
 		const lookup = {};
 		const observedLookup = observable(lookup);
-		const arr = array([{}, lookup, {}, lookup, {}, lookup]);
-
-		const realArr = [{}, lookup, {}, lookup];
+		const frozen = {};
+		Object.freeze(frozen);
+		const arrA = array([{}, lookup, {}, {}, lookup, frozen]);
+		const arrB = array([{}, observedLookup, frozen]);
 
 		autorun(() => {
 			count++;
-
-			expect(arr[method](observedLookup, 2)).toBe(realArr[method](lookup, 2));
+			expect(arrA[method](lookup)).toBe(negativeValue);
+			expect(arrA[method](observedLookup)).not.toBe(negativeValue);
+			expect(arrB[method](lookup)).toBe(negativeValue);
+			expect(arrB[method](observedLookup)).not.toBe(negativeValue);
+			expect(arrA[method](frozen)).not.toBe(negativeValue);
+			expect(arrB[method](frozen)).not.toBe(negativeValue);
 		});
-
-		realArr.push(0);
-		arr.push(0);
+		expect(count).toBe(1);
+		arrA.push({});
 		expect(count).toBe(2);
+		arrB.push({});
+		expect(count).toBe(3);
 	});
 });
 

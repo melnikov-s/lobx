@@ -6,6 +6,7 @@ import {
 } from "./utils/lookup";
 import { notifyArrayUpdate, notifySpliceArray } from "./utils/trace";
 import Administration from "./utils/Administration";
+import { isNonPrimitive } from "../utils";
 
 export class ArrayAdministration<T> extends Administration<T[]> {
 	constructor(source: T[] = [], graph: Graph) {
@@ -247,6 +248,15 @@ const arrayMethods = {
 });
 
 // search methods
+// These are tricky, the proxy will store the observable sources (if applicable)
+// on the source array, but return the observable proxy during a read (if not forzen).
+// therefore `indexOf(source)` needs to always return `-1` while `indexOf(observable)` needs
+// to return the expected value. The issue here is that it's possible to have an observable
+// array that was initially observed with observable proxies already present in the array and lobx does not want to perform
+// the work of looping through each array it's trying to observe and map those back to its observable source.
+// Therefore we need to perform this look up twice, once to look for the observable source and if not
+// found another time to look for the observable proxy since the observable array can have either.
+// TODO: rewrite with our own implementation of these methods instead of calling the native ones twice?
 ["indexOf", "includes", "lastIndexOf"].forEach(method => {
 	if (Array.prototype.hasOwnProperty(method)) {
 		arrayMethods[method] = function(
@@ -256,8 +266,28 @@ const arrayMethods = {
 		): unknown {
 			const adm = getAdministration(this);
 			adm.atom.reportObserved();
-			const target = getObservableSource(value);
-			return adm.source[method].call(adm.source, target, ...args);
+
+			if (isNonPrimitive(value)) {
+				const target = getObservableSource(value);
+				const negativeValue = method === "includes" ? false : -1;
+				if (getObservable(value, adm.graph) !== value) {
+					// if this is true then we're dealing with a non-frozen observable source
+					// and those are not to be in the array.
+					return negativeValue;
+				}
+
+				const rtn = adm.source[method].call(adm.source, target, ...args);
+				if (rtn !== negativeValue) {
+					return rtn;
+				} else if (value !== target) {
+					// if we might get a differnt result with the observable source, try again
+					return adm.source[method].call(adm.source, value, ...args);
+				}
+
+				return negativeValue;
+			}
+
+			return adm.source[method].call(adm.source, value, ...args);
 		};
 	}
 });

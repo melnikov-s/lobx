@@ -6,7 +6,9 @@ import {
 	getAdministration
 } from "./utils/lookup";
 import { notifyAdd, notifyDelete } from "./utils/trace";
-import Administration from "./utils/Administration";
+import Administration, {
+	getAdministration as hasObservable
+} from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 
 export class SetAdministration<T> extends Administration<Set<T>>
@@ -35,6 +37,14 @@ export class SetAdministration<T> extends Administration<Set<T>>
 		return val;
 	}
 
+	private hasEntry(value: T): boolean {
+		return !!(
+			this.source.has(getObservableSource(value)) ||
+			(hasObservable(value) &&
+				this.source.has(getObservable(value, this.graph)))
+		);
+	}
+
 	clear(): void {
 		this.graph.transaction(() => {
 			this.source.forEach(value => this.delete(value));
@@ -60,9 +70,8 @@ export class SetAdministration<T> extends Administration<Set<T>>
 	}
 
 	add(value: T): this {
-		const target = getObservableSource(value);
-
-		if (!this.source.has(target)) {
+		if (!this.hasEntry(value)) {
+			const target = getObservableSource(value);
 			this.source.add(target);
 			this.graph.transaction(() => {
 				this.keysAtom.reportChanged();
@@ -76,10 +85,10 @@ export class SetAdministration<T> extends Administration<Set<T>>
 	}
 
 	delete(value: T): boolean {
-		const target = getObservableSource(value);
-
-		if (this.source.has(target)) {
+		if (this.hasEntry(value)) {
+			const target = getObservableSource(value);
 			this.source.delete(target);
+			this.source.delete(value);
 			this.graph.transaction(() => {
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(target);
@@ -93,14 +102,13 @@ export class SetAdministration<T> extends Administration<Set<T>>
 	}
 
 	has(value: T): boolean {
-		const target = getObservableSource(value);
-
 		if (this.graph.isTracking()) {
+			const target = getObservableSource(value);
 			this.hasMap.reportObserved(target);
 			this.atom.reportObserved();
 		}
 
-		return this.source.has(target);
+		return this.hasEntry(value);
 	}
 
 	entries(): IterableIterator<[T, T]> {

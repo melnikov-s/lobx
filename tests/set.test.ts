@@ -1,4 +1,10 @@
-import { autorun, observable, isObservable, trace } from "../src/index";
+import {
+	autorun,
+	observable,
+	isObservable,
+	trace,
+	getObservableSource
+} from "../src/index";
 
 const set = <T>(obj: Set<T> = new Set()): Set<T> => {
 	return observable(obj);
@@ -128,6 +134,57 @@ test("set equality for observed and target objects", () => {
 test("instanceof Set", () => {
 	const s = set();
 	expect(s instanceof Set).toBe(true);
+});
+
+test("set can be initialized with observable values", () => {
+	const o1 = observable({});
+	const o2 = observable({});
+	const o3 = {};
+
+	const s = set(new Set([o1, o2, o3]));
+	expect(s.has(getObservableSource(o1))).toBe(true);
+	expect(s.has(getObservableSource(o2))).toBe(true);
+	s.add(o1);
+	expect(s.size).toBe(3);
+	s.add(o2);
+	expect(s.size).toBe(3);
+	expect(s.has(o1)).toBe(true);
+	expect(s.has(o2)).toBe(true);
+	expect(s.has(o3)).toBe(true);
+	expect(s.has(observable(o3))).toBe(true);
+	s.add(observable(o3));
+	expect(s.size).toBe(3);
+	s.delete(observable(o3));
+	expect(s.size).toBe(2);
+	s.delete(getObservableSource(o1));
+	expect(s.size).toBe(2);
+	s.delete(o1);
+	expect(s.size).toBe(1);
+	s.delete(o2);
+	expect(s.size).toBe(0);
+});
+
+test("does not trigger a change when same observable is set on set initialized with observable values", () => {
+	const o1 = observable({ prop: 1 });
+	const o2 = observable({ prop: 2 });
+
+	const s = set(new Set([o1, o2]));
+
+	let count = 0;
+	autorun(() => {
+		s.forEach(() => {});
+		count++;
+	});
+	expect(count).toBe(1);
+	s.add(o1);
+	expect(s.size).toBe(2);
+	expect(count).toBe(1);
+	s.add(getObservableSource(o1));
+	expect(s.size).toBe(2);
+	expect(count).toBe(1);
+	s.delete(o2);
+	expect(s.size).toBe(1);
+	expect(count).toBe(2);
 });
 
 test("WeakSet is reactive", () => {
