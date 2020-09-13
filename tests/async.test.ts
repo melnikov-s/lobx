@@ -203,3 +203,35 @@ test("instanceof works as expected", async () => {
 	expect(ran).toBe(true);
 	expect(Promise).toBe(OldPromise); // it's been restored
 });
+
+test("calling nested async actions", async () => {
+	let ran = false;
+	const OldPromise = Promise;
+	let PatchedPromise: any;
+
+	const o = observable.configure(
+		{
+			testOutter: type.action({ async: true }),
+			testInner: type.action({ async: true })
+		},
+		{
+			async testOutter() {
+				PatchedPromise = Promise;
+				expect(OldPromise).not.toBe(Promise); // we patched it
+				await this.testInner();
+				expect(OldPromise).not.toBe(Promise); // still patched
+				ran = true;
+			},
+
+			async testInner() {
+				expect(OldPromise).not.toBe(Promise); // we patched it
+				expect(PatchedPromise).toBe(Promise); // same promise as before, no double proxying
+			}
+		}
+	);
+
+	await o.testOutter();
+	expect(ran).toBe(true);
+	await OldPromise.resolve();
+	expect(Promise).toBe(OldPromise); // it's been restored
+});

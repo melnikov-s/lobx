@@ -43,6 +43,7 @@ export function getObservableSource<T>(obj: T): T {
 }
 
 const observablePromiseMap: WeakMap<Graph, typeof Promise> = new WeakMap();
+const asyncGraphActions: WeakSet<Graph> = new WeakSet();
 
 function getObservablePromiseCtor(graph: Graph): typeof Promise {
 	let ObservablePromise = observablePromiseMap.get(graph);
@@ -56,13 +57,16 @@ function getObservablePromiseCtor(graph: Graph): typeof Promise {
 }
 
 export function patchPromise<T>(fn: () => T, graph: Graph): T {
+	// if we're already in an async action
+	if (asyncGraphActions.has(graph)) {
+		return fn();
+	}
+
 	const global = getGlobal();
 	const oldPromise: typeof Promise = global.Promise;
 	const ObservablePromise = getObservablePromiseCtor(graph);
-	if (oldPromise === ObservablePromise) {
-		throw new Error("uh oh");
-	}
 	global.Promise = ObservablePromise;
+	asyncGraphActions.add(graph);
 	try {
 		return fn();
 	} finally {
@@ -72,6 +76,7 @@ export function patchPromise<T>(fn: () => T, graph: Graph): T {
 			);
 		}
 		global.Promise = oldPromise;
+		asyncGraphActions.delete(graph);
 	}
 }
 
