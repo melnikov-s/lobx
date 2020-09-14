@@ -9,6 +9,7 @@ import graph, {
 	action,
 	enforceActions,
 	isInAction,
+	isInTransactionAction,
 	isTracking,
 	transaction,
 	runInAction,
@@ -20,13 +21,13 @@ import graph, {
 } from "./api/graph";
 import { getObservableSource, isObservable } from "./types/utils/lookup";
 import { trace } from "./types/utils/trace";
-import { asyncAction, asyncTransaction } from "./api/async";
+import { task, transactionTask } from "./api/async";
 import { propertyType, Configuration } from "./types/object";
 import { getAdministration } from "./types/utils/Administration";
 export {
 	action,
-	asyncAction,
-	asyncTransaction,
+	task,
+	transactionTask,
 	atom,
 	Atom,
 	autorun,
@@ -40,6 +41,7 @@ export {
 	graph,
 	Graph,
 	isInAction,
+	isInTransactionAction,
 	isObservable,
 	isObserved,
 	isTracking,

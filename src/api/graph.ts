@@ -7,6 +7,7 @@ import ObservableValue from "../types/observableValue";
 export type Graph = {
 	enforceActions: (enforce: boolean) => void;
 	isInAction: () => boolean;
+	isInTransaction: () => boolean;
 	isObserved: (node: ObservableNode) => boolean;
 	isTracking: () => boolean;
 	runInAction: <T>(fn: () => T) => T;
@@ -60,6 +61,10 @@ export function isObserved(observable: unknown, graph = defaultGraph): boolean {
 
 export function isInAction(): boolean {
 	return getDefaultGraph().isInAction();
+}
+
+export function isInTransactionAction(): boolean {
+	return getDefaultGraph().isInTransaction();
 }
 
 export function isTracking(): boolean {

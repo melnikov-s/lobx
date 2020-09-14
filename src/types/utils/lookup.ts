@@ -9,8 +9,8 @@ import {
 import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
-import { PromiseAdministration, PromiseCtorAdministration } from "../promise";
-import { getGlobal, getParentConstructor, isPlainObject } from "../../utils";
+import { PromiseAdministration } from "../promise";
+import { getParentConstructor, isPlainObject } from "../../utils";
 
 export function getAdministration<T extends object>(
 	obj: T
@@ -24,8 +24,6 @@ export function getAdministration<T extends object>(
 	? DateAdministration
 	: T extends Promise<unknown>
 	? PromiseAdministration
-	: T extends typeof Promise
-	? PromiseCtorAdministration
 	: ObjectAdministration<any> {
 	return getAdm(obj)! as ReturnType<typeof getAdministration>;
 }
@@ -42,62 +40,13 @@ export function getObservableSource<T>(obj: T): T {
 	return adm ? ((adm.source as unknown) as T) : obj;
 }
 
-const observablePromiseMap: WeakMap<Graph, typeof Promise> = new WeakMap();
-const asyncGraphActions: WeakSet<Graph> = new WeakSet();
-
-function getObservablePromiseCtor(graph: Graph): typeof Promise {
-	let ObservablePromise = observablePromiseMap.get(graph);
-	if (!ObservablePromise) {
-		ObservablePromise = new PromiseCtorAdministration(Promise, graph, true)
-			.proxy;
-		observablePromiseMap.set(graph, ObservablePromise);
-	}
-
-	return ObservablePromise;
-}
-
-export function patchPromise<T>(fn: () => T, graph: Graph): T {
-	// if we're already in an async action
-	if (asyncGraphActions.has(graph)) {
-		return fn();
-	}
-
-	const global = getGlobal();
-	const oldPromise: typeof Promise = global.Promise;
-	const ObservablePromise = getObservablePromiseCtor(graph);
-	global.Promise = ObservablePromise;
-	asyncGraphActions.add(graph);
-	try {
-		return fn();
-	} finally {
-		if (global.Promise !== ObservablePromise) {
-			throw new Error(
-				"Fatal error! promise got overwritten during async action"
-			);
-		}
-		global.Promise = oldPromise;
-		asyncGraphActions.delete(graph);
-	}
-}
-
-export function getAction<T extends Function>(
-	fn: T,
-	graph: Graph,
-	async: boolean = false
-): T {
+export function getAction<T extends Function>(fn: T, graph: Graph): T {
 	let action = actionsMap.get(fn);
 
 	if (!action) {
-		action = async
-			? function(this: unknown, ...args: unknown[]): unknown {
-					return patchPromise(
-						() => graph.runInAction(() => fn.apply(this, args)),
-						graph
-					);
-			  }
-			: function(this: unknown, ...args: unknown[]): unknown {
-					return graph.runInAction(() => fn.apply(this, args));
-			  };
+		action = function(this: unknown, ...args: unknown[]): unknown {
+			return graph.runInAction(() => fn.apply(this, args));
+		};
 
 		actionsMap.set(fn, action);
 	}

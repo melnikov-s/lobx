@@ -32,7 +32,7 @@ type ObservableOptionsConfig = ObservableOptions & {
 };
 
 type ComputedOptions = { type: "computed"; ref: boolean };
-type ActionOptions = { type: "action"; async: boolean };
+type ActionOptions = { type: "action" };
 
 type ConfigOption<
 	T extends ObservableOptions | ComputedOptions | ActionOptions
@@ -57,7 +57,7 @@ const defaultObservable: ObservableOptions = {
 	ref: false
 };
 const defaultComputed: ComputedOptions = { type: "computed", ref: true };
-const defaultAction: ActionOptions = { type: "action", async: false };
+const defaultAction: ActionOptions = { type: "action" };
 
 const observableType: CallableOption<ObservableOptions> = Object.assign(
 	function(options: ConfigOption<ObservableOptions>): ObservableOptions {
@@ -258,11 +258,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 					);
 				}
 
-				return getAction(
-					(this.get(key) as unknown) as Function,
-					this.graph,
-					(config as ActionOptions).async
-				);
+				return getAction((this.get(key) as unknown) as Function, this.graph);
 			}
 			case propertyType.computed.type: {
 				if (!this.computedMap) this.computedMap = new Map();

@@ -213,6 +213,10 @@ export default class Graph {
 		return this.inAction;
 	}
 
+	isInTransaction(): boolean {
+		return this.inTransaction;
+	}
+
 	isObserved(node: ObservableNode): boolean {
 		return (
 			node.graph === this &&

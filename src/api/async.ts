@@ -2,15 +2,12 @@ import { getAdministration } from "../types/utils/lookup";
 import { PromiseAdministration } from "../types/promise";
 import { Graph, resolveGraph } from "./graph";
 
-export function asyncAction<T>(
-	p: Promise<T>,
-	opts?: { graph: Graph }
-): Promise<T> {
+export function task<T>(p: Promise<T>, opts?: { graph: Graph }): Promise<T> {
 	let adm = getAdministration(p);
 
 	if (adm && !adm.useAction) {
 		throw new Error(
-			"this promise has already been wrapped with `asyncTransaction`"
+			"this promise has already been wrapped with `transactionTask`"
 		);
 	} else if (!adm) {
 		adm = new PromiseAdministration(p, resolveGraph(opts?.graph), true);
@@ -19,14 +16,14 @@ export function asyncAction<T>(
 	return adm.proxy as Promise<T>;
 }
 
-export function asyncTransaction<T>(
+export function transactionTask<T>(
 	p: Promise<T>,
 	opts?: { graph: Graph }
 ): Promise<T> {
 	let adm = getAdministration(p);
 
 	if (adm && !adm.useAction) {
-		throw new Error("this promise has already been wrapped with `asyncAction`");
+		throw new Error("this promise has already been wrapped with `task`");
 	} else if (!adm) {
 		adm = new PromiseAdministration(p, resolveGraph(opts?.graph));
 	}
