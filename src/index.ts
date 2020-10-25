@@ -17,17 +17,16 @@ import graph, {
 	untracked,
 	getDefaultGraph,
 	onObservedStateChange,
-	onTransactionDone
+	onTransactionDone,
+	task,
+	runInTask
 } from "./api/graph";
 import { getObservableSource, isObservable } from "./types/utils/lookup";
 import { trace } from "./types/utils/trace";
-import { task, transactionTask } from "./api/async";
 import { propertyType, Configuration } from "./types/object";
 import { getAdministration } from "./types/utils/Administration";
 export {
 	action,
-	task,
-	transactionTask,
 	atom,
 	Atom,
 	autorun,
@@ -53,6 +52,8 @@ export {
 	onTransactionDone,
 	reaction,
 	runInAction,
+	runInTask,
+	task,
 	trace,
 	transaction,
 	propertyType as type,

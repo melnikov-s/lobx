@@ -1,6 +1,11 @@
 import Atom from "../core/nodes/atom";
 import Graph from "../core/graph";
-import { getObservable, getObservableSource, getAction } from "./utils/lookup";
+import {
+	getObservable,
+	getObservableSource,
+	getAction,
+	getTask
+} from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/trace";
 import { isPropertyKey, getPropertyDescriptor } from "../utils";
 import Administration from "./utils/Administration";
@@ -11,6 +16,7 @@ type ConfigurationTypes =
 	| ObservableOptions
 	| ComputedOptions
 	| ActionOptions
+	| TaskOptions
 	| undefined;
 
 export type ConfigurationGetter<T> = (
@@ -20,7 +26,7 @@ export type ConfigurationGetter<T> = (
 
 export type Configuration<T> = Partial<Record<keyof T, ConfigurationTypes>>;
 
-type Types = "observable" | "computed" | "action";
+type Types = "observable" | "computed" | "action" | "task";
 
 type ObservableOptions = {
 	type: "observable";
@@ -33,9 +39,10 @@ type ObservableOptionsConfig = ObservableOptions & {
 
 type ComputedOptions = { type: "computed"; ref: boolean };
 type ActionOptions = { type: "action" };
+type TaskOptions = { type: "task" };
 
 type ConfigOption<
-	T extends ObservableOptions | ComputedOptions | ActionOptions
+	T extends ObservableOptions | ComputedOptions | ActionOptions | TaskOptions
 > = Partial<Omit<T, "type">>;
 
 type CallableOption<
@@ -49,7 +56,8 @@ type CallableOption<
 type PropertyOptions = {
 	observable: CallableOption<ObservableOptions>;
 	computed: CallableOption<ComputedOptions>;
-	action: CallableOption<ActionOptions>;
+	action: ActionOptions;
+	task: TaskOptions;
 };
 
 const defaultObservable: ObservableOptions = {
@@ -57,7 +65,8 @@ const defaultObservable: ObservableOptions = {
 	ref: false
 };
 const defaultComputed: ComputedOptions = { type: "computed", ref: true };
-const defaultAction: ActionOptions = { type: "action" };
+const actionType: ActionOptions = { type: "action" };
+const taskType: TaskOptions = { type: "task" };
 
 const observableType: CallableOption<ObservableOptions> = Object.assign(
 	function(options: ConfigOption<ObservableOptions>): ObservableOptions {
@@ -86,19 +95,13 @@ const computedType: CallableOption<ComputedOptions> = Object.assign(function(
 },
 defaultComputed);
 
-const actionType: CallableOption<ActionOptions> = Object.assign(function(
-	options: ConfigOption<ActionOptions>
-): ActionOptions {
-	return { ...defaultAction, ...options, type: "action" };
-},
-defaultAction);
-
 export const propertyType: {
 	[key in Types]: PropertyOptions[key];
 } = {
 	observable: observableType,
 	computed: computedType,
-	action: actionType
+	action: actionType,
+	task: taskType
 } as const;
 
 function defaultConfigGetter(
@@ -237,7 +240,8 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 		switch (config.type) {
 			case propertyType.observable.type:
-			case propertyType.action.type: {
+			case propertyType.action.type:
+			case propertyType.task.type: {
 				if (key in this.source) {
 					this.valuesMap.reportObserved(key);
 				} else if (this.graph.isTracking()) {
@@ -258,7 +262,10 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 					);
 				}
 
-				return getAction((this.get(key) as unknown) as Function, this.graph);
+				const getMethod =
+					config.type === propertyType.task.type ? getTask : getAction;
+
+				return getMethod((this.get(key) as unknown) as Function, this.graph);
 			}
 			case propertyType.computed.type: {
 				if (!this.computedMap) this.computedMap = new Map();

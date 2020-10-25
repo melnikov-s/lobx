@@ -9,7 +9,6 @@ import {
 import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
-import { PromiseAdministration } from "../promise";
 import { getParentConstructor, isPlainObject } from "../../utils";
 
 export function getAdministration<T extends object>(
@@ -22,8 +21,6 @@ export function getAdministration<T extends object>(
 	? ArrayAdministration<R>
 	: T extends Date
 	? DateAdministration
-	: T extends Promise<unknown>
-	? PromiseAdministration
 	: ObjectAdministration<any> {
 	return getAdm(obj)! as ReturnType<typeof getAdministration>;
 }
@@ -46,6 +43,20 @@ export function getAction<T extends Function>(fn: T, graph: Graph): T {
 	if (!action) {
 		action = function(this: unknown, ...args: unknown[]): unknown {
 			return graph.runInAction(() => fn.apply(this, args));
+		};
+
+		actionsMap.set(fn, action);
+	}
+
+	return action as T;
+}
+
+export function getTask<T extends Function>(fn: T, graph: Graph): T {
+	let action = actionsMap.get(fn);
+
+	if (!action) {
+		action = function(this: unknown, ...args: unknown[]): unknown {
+			return graph.runInTask(() => fn.apply(this, args));
 		};
 
 		actionsMap.set(fn, action);

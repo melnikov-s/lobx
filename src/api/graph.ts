@@ -12,8 +12,14 @@ export type Graph = {
 	isTracking: () => boolean;
 	runInAction: <T>(fn: () => T) => T;
 	transaction: <T>(fn: () => T) => T;
+	startAction: () => void;
+	endAction: () => void;
+	startTransaction: () => void;
+	endTransaction: () => void;
 	untracked: <T>(fn: () => T) => T;
 	onTransactionDone: (callback: () => void) => () => void;
+	runInTask<T>(fn: () => T): Promise<T>;
+	task<T>(promise: Promise<T>): Promise<T>;
 };
 
 export default function makeGraph(): Graph {
@@ -77,6 +83,14 @@ export function transaction<T>(fn: () => T): T {
 
 export function runInAction<T>(fn: () => T): T {
 	return getDefaultGraph().runInAction(fn);
+}
+
+export function runInTask<T>(fn: () => T): Promise<T> {
+	return getDefaultGraph().runInTask(fn);
+}
+
+export function task<T>(promise: Promise<T>): Promise<T> {
+	return getDefaultGraph().task(promise);
 }
 
 export function untracked<T>(fn: () => T): T {

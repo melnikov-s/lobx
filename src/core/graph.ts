@@ -116,6 +116,8 @@ export default class Graph {
 		Set<(observing: boolean) => void>
 	> = new Map();
 	private transactionDoneCbs: Set<() => void> = new Set();
+	private actionCallDepth = 0;
+	private transactionEnding = false;
 
 	// clean up any unobserved computed nodes that were cached for the
 	// duration of a transaction or derivation
@@ -318,8 +320,12 @@ export default class Graph {
 
 		// if we're not currently in a transaction start a new one
 		if (!this.inTransaction) {
-			this.transaction(() => this.reportChanged(node, oldValue));
-
+			try {
+				this.startTransaction();
+				this.reportChanged(node, oldValue);
+			} finally {
+				this.endTransaction();
+			}
 			return;
 		}
 
@@ -414,86 +420,131 @@ export default class Graph {
 
 		return value;
 	}
-
-	// run a some mutations in an action. This will simply set a flag and call a transaction.
-	// The flag is only applicable when enforcedActions are turned on.
 	runInAction<T>(fn: () => T): T {
-		if (this.inAction) {
-			return this.transaction(fn);
+		let result: T;
+		try {
+			this.startAction();
+			result = fn();
+		} finally {
+			this.endAction();
 		}
 
-		this.inAction = true;
+		return result;
+	}
 
-		return this.transaction(fn);
+	async runInTask<T>(fn: () => T): Promise<T> {
+		this.startAction();
+		let result: T;
+		try {
+			result = await fn();
+		} finally {
+			this.endAction();
+		}
+
+		return result;
+	}
+
+	async task<T>(promise: Promise<T>): Promise<T> {
+		this.endAction();
+		let result: T;
+		try {
+			result = await promise;
+		} finally {
+			this.startAction();
+		}
+
+		return result;
 	}
 
 	transaction<T>(fn: () => T): T {
-		// used to keep track of the root transaction in case one is invoked within another
-		let isRootTransaction = false;
+		let result: T;
+		try {
+			this.startTransaction();
+			result = fn();
+		} finally {
+			this.endTransaction();
+		}
 
+		return result;
+	}
+
+	endAction(): void {
+		this.endTransaction();
+	}
+
+	startAction(): void {
+		this.inAction = true;
+		this.startTransaction();
+	}
+
+	endTransaction(): void {
+		if (this.actionCallDepth === 0) {
+			throw new Error(
+				"lobx: attempted to end an action that has not been started"
+			);
+		}
+
+		this.actionCallDepth--;
+
+		if (this.actionCallDepth === 0 && !this.transactionEnding) {
+			// if reactions cause further transactions we do not want to enter this block again
+			// otherwise we might have an infinite loop
+			this.transactionEnding = true;
+
+			if (this.inAction) {
+				this.runStack.pop();
+			}
+
+			try {
+				// loop through all the affected listeners and filter out
+				// the listeners whose obesrvables did not produce a new value
+				this.queuedListeners.forEach(l => {
+					// we remove the listener from the queue so that it can be re-added
+					// in the case that a reaction performs a mutation
+					// this.queuedListeners.delete(l);
+					// computed might re-evaluate here in order to determine if a new
+					// value was prodcued
+					if (this.hasChanged(l)) {
+						// perform reaction if any of the dependents have changed
+						l.react();
+
+						// after a reaction it's possible that we queued another listener
+						// this can occur if a reaction made a further mutation
+						// if that happens the listener will be added to the `queuedListeners` Set
+						// and will eventually run in this forEach loop.
+					}
+				});
+			} finally {
+				this.inTransaction = false;
+				this.transactionEnding = false;
+				this.inAction = false;
+				this.queuedListeners.clear();
+				this.changedObservables.clear();
+
+				// All computed nodes marked potentially stale are now confirmed stale
+				// need to reset them
+				this.potentialStale.forEach(n => {
+					n.clear();
+				});
+				this.potentialStale.clear();
+
+				// clean up any unobserved computed that were cached for the duration
+				// of this transaction.
+				this.clearInvokedComputed();
+				this.transactionDoneCbs.forEach(c => c());
+			}
+		}
+	}
+
+	startTransaction(): void {
+		this.actionCallDepth++;
 		if (!this.inTransaction) {
 			// make transactions untracked if we're in an action
 			if (this.inAction) {
 				this.runStack.push(null);
 			}
 			this.inTransaction = true;
-			isRootTransaction = true;
 		}
-
-		let result: T;
-
-		try {
-			// run the transaction
-			result = fn();
-		} finally {
-			// clean up and trigger all affected reactions
-			if (isRootTransaction) {
-				if (this.inAction) {
-					this.runStack.pop();
-				}
-
-				try {
-					// loop through all the affected listeners and filter out
-					// the listeners whose obesrvables did not produce a new value
-					this.queuedListeners.forEach(l => {
-						// we remove the listener from the queue so that it can be re-added
-						// in the case that a reaction performs a mutation
-						// this.queuedListeners.delete(l);
-						// computed might re-evaluate here in order to determine if a new
-						// value was prodcued
-						if (this.hasChanged(l)) {
-							// perform reaction if any of the dependents have changed
-							l.react();
-
-							// after a reaction it's possible that we queued another listener
-							// this can occur if a reaction made a further mutation
-							// if that happens the listener will be added to the `queuedListeners` Set
-							// and will eventually run in this forEach loop.
-						}
-					});
-				} finally {
-					this.inTransaction = false;
-					this.inAction = false;
-					this.queuedListeners.clear();
-					this.changedObservables.clear();
-
-					// All computed nodes marked potentially stale are now confirmed stale
-					// need to reset them
-					this.potentialStale.forEach(n => {
-						n.clear();
-					});
-					this.potentialStale.clear();
-
-					// clean up any unobserved computed that were cached for the duration
-					// of this transaction.
-					this.clearInvokedComputed();
-
-					this.transactionDoneCbs.forEach(c => c());
-				}
-			}
-		}
-
-		return result;
 	}
 
 	untracked<T>(fn: () => T): T {

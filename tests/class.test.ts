@@ -4,7 +4,8 @@ import {
 	isObservable,
 	type,
 	enforceActions,
-	getObservableSource
+	getObservableSource,
+	task
 } from "../src/index";
 
 test("objects created from class are observable", () => {
@@ -416,7 +417,7 @@ test("properties can be configured to be actions", () => {
 		},
 		class {
 			valueA = 1;
-			valueB = 2;
+			valueB = 1;
 
 			action(val: number) {
 				this.valueA = val;
@@ -446,6 +447,48 @@ test("properties can be configured to be actions", () => {
 	expect(c.valueB).toBe(2);
 
 	expect(() => c.notAction(3)).toThrowError();
+	enforceActions(false);
+});
+
+test("properties can be configured to be tasks", async () => {
+	const C = observable.configure(
+		{
+			valueA: type.observable,
+			valueB: type.observable,
+			action: type.task
+		},
+		class {
+			valueA = 1;
+			valueB = 1;
+
+			async action(val: number) {
+				this.valueA = val;
+				await task(Promise.resolve());
+				this.valueB = val;
+				this.valueA = val + 1;
+			}
+		}
+	);
+
+	const c = new C();
+	enforceActions(true);
+	let count = 0;
+
+	autorun(() => {
+		c.valueA;
+		c.valueB;
+		count++;
+	});
+
+	const p = c.action(2);
+	expect(count).toBe(2);
+	expect(c.valueA).toBe(2);
+	expect(c.valueB).toBe(1);
+	await p;
+	expect(count).toBe(3);
+	expect(c.valueA).toBe(3);
+	expect(c.valueB).toBe(2);
+
 	enforceActions(false);
 });
 
