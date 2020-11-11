@@ -117,7 +117,9 @@ export default class Graph {
 	> = new Map();
 	private transactionDoneCbs: Set<() => void> = new Set();
 	private actionCallDepth = 0;
+	private taskDepth = 0;
 	private transactionEnding = false;
+	private taskCalledStack: boolean[] = [];
 
 	// clean up any unobserved computed nodes that were cached for the
 	// duration of a transaction or derivation
@@ -420,32 +422,48 @@ export default class Graph {
 
 		return value;
 	}
+
 	runInAction<T>(fn: () => T): T {
-		let result: T;
+		let result: unknown;
+		if (this.taskDepth === 0) {
+			this.taskCalledStack.length = 0;
+		}
+
+		this.taskDepth++;
+
+		this.taskCalledStack.push(false);
+
 		try {
 			this.startAction();
 			result = fn();
 		} finally {
-			this.endAction();
+			if (this.taskCalledStack[this.taskDepth - 1]) {
+				if (typeof (result as Promise<unknown>)?.finally !== "function") {
+					this.taskDepth--;
+					throw new Error(
+						"lobx: [FATAL] when task is used in an action that action must return a promise, instead got :" +
+							typeof result
+					);
+				}
+				result = (result as Promise<T>).finally(() => {
+					this.endAction();
+				});
+			} else {
+				this.endAction();
+			}
+
+			this.taskDepth--;
 		}
 
-		return result;
-	}
-
-	async runInTask<T>(fn: () => T): Promise<T> {
-		this.startAction();
-		let result: T;
-		try {
-			result = await fn();
-		} finally {
-			this.endAction();
-		}
-
-		return result;
+		return result as T;
 	}
 
 	async task<T>(promise: Promise<T>): Promise<T> {
+		if (!this.inAction) {
+			throw new Error("lobx: can't call `task` outside of an action");
+		}
 		this.endAction();
+		this.taskCalledStack[this.taskDepth - 1] = true;
 		let result: T;
 		try {
 			result = await promise;

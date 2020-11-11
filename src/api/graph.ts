@@ -18,7 +18,6 @@ export type Graph = {
 	endTransaction: () => void;
 	untracked: <T>(fn: () => T) => T;
 	onTransactionDone: (callback: () => void) => () => void;
-	runInTask<T>(fn: () => T): Promise<T>;
 	task<T>(promise: Promise<T>): Promise<T>;
 };
 
@@ -83,10 +82,6 @@ export function transaction<T>(fn: () => T): T {
 
 export function runInAction<T>(fn: () => T): T {
 	return getDefaultGraph().runInAction(fn);
-}
-
-export function runInTask<T>(fn: () => T): Promise<T> {
-	return getDefaultGraph().runInTask(fn);
 }
 
 export function task<T>(promise: Promise<T>): Promise<T> {

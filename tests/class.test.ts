@@ -455,7 +455,7 @@ test("properties can be configured to be tasks", async () => {
 		{
 			valueA: type.observable,
 			valueB: type.observable,
-			action: type.task
+			action: type.action
 		},
 		class {
 			valueA = 1;

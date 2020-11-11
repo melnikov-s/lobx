@@ -51,20 +51,6 @@ export function getAction<T extends Function>(fn: T, graph: Graph): T {
 	return action as T;
 }
 
-export function getTask<T extends Function>(fn: T, graph: Graph): T {
-	let action = actionsMap.get(fn);
-
-	if (!action) {
-		action = function(this: unknown, ...args: unknown[]): unknown {
-			return graph.runInTask(() => fn.apply(this, args));
-		};
-
-		actionsMap.set(fn, action);
-	}
-
-	return action as T;
-}
-
 export function getObservableWithConfig<T extends object>(
 	target: T,
 	graph: Graph,

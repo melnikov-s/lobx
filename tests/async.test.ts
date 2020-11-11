@@ -1,8 +1,9 @@
 import {
 	observable,
 	task,
+	graph,
 	reaction,
-	runInTask,
+	runInAction,
 	getDefaultGraph,
 	enforceActions
 } from "../src";
@@ -36,10 +37,42 @@ const expectNoActionsRunning = () =>
 	expect(getDefaultGraph().isInAction()).toBe(false);
 
 const actionAsync = <T>(fn: (...args: any[]) => T) => (...args: any[]) =>
-	(runInTask(() => fn(...args)) as unknown) as T;
+	(runInAction(() => fn(...args)) as unknown) as T;
 
 beforeEach(() => {
 	enforceActions(true);
+});
+
+test("can't call task outside of an action", async () => {
+	const f = function() {
+		return task(Promise.resolve());
+	};
+
+	await runInAction(() => f());
+
+	let error;
+
+	try {
+		await f();
+	} catch (e) {
+		error = e;
+	}
+
+	expect(error).toEqual(
+		new Error("lobx: can't call `task` outside of an action")
+	);
+});
+
+test("if task is called within an action it must return a promise", () => {
+	const g = graph();
+
+	const f = function() {
+		g.task(Promise.resolve());
+	};
+
+	expect(() => g.runInAction(f)).toThrowErrorMatchingInlineSnapshot(
+		`"lobx: [FATAL] when task is used in an action that action must return a promise, instead got :undefined"`
+	);
 });
 
 /*
@@ -65,7 +98,7 @@ test("[mobx-test] it should support async actions", async () => {
 		return x.a;
 	};
 
-	const v = await runInTask(() => f(2));
+	const v = await runInAction(() => f(2));
 	expect(v).toBe(5);
 	expect(values).toEqual([1, 2, 3, 4, 5]);
 	expectNoActionsRunning();
@@ -91,7 +124,7 @@ test("[mobx-test] it should support try catch in async", async () => {
 		return x.a;
 	};
 
-	const v = await runInTask(() => f(2));
+	const v = await runInAction(() => f(2));
 	expect(v).toBe(5);
 	expect(values).toEqual([1, 2, 5]);
 	expectNoActionsRunning();
@@ -99,7 +132,7 @@ test("[mobx-test] it should support try catch in async", async () => {
 
 test("[mobx-test] it should support throw from async actions", async () => {
 	try {
-		await runInTask(async () => {
+		await runInAction(async () => {
 			await task(delay(10, 7));
 			throw 7;
 		});
@@ -112,7 +145,7 @@ test("[mobx-test] it should support throw from async actions", async () => {
 
 test("[mobx-test] it should support throw from awaited promise", async () => {
 	try {
-		await runInTask(async () => {
+		await runInAction(async () => {
 			return await task(delayThrow(10, 7));
 		});
 		throw new Error("should fail");
@@ -334,7 +367,7 @@ test("[mobx-test] calling async actions that do not await should be ok", async (
 	await Promise.all([f1(), f2()]);
 	expectNoActionsRunning();
 
-	expect(values).toEqual([1, 2, 3, 5]);
+	expect(values).toEqual([1, 2, 3, 4, 5]);
 });
 
 test("[mobx-test] complex case", async () => {
@@ -460,10 +493,10 @@ test("[mobx-test] actions that throw in parallel", async () => {
 
 	expectNoActionsRunning();
 	expect(result).toMatchInlineSnapshot(`
-        Array [
-          "error",
-          42,
-          "error",
-        ]
-    `);
+		        Array [
+		          "error",
+		          42,
+		          "error",
+		        ]
+	    `);
 });
