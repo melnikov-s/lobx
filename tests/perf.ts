@@ -259,6 +259,96 @@ describe("lobx tests", () => {
 
 		done();
 	});
+
+	test("object observation (empty)", function(done) {
+		runSamples(
+			() => {
+				const start = performance.now();
+				for (let i = 0; i < 1000; i++) {
+					const obj = {};
+					observable(obj);
+				}
+				return [performance.now() - start];
+			},
+			results => {
+				console.log("object observation (empty) " + results[0] + " ms.");
+			}
+		);
+
+		done();
+	});
+
+	test("array observation (empty)", function(done) {
+		runSamples(
+			() => {
+				const start = performance.now();
+				for (let i = 0; i < 1000; i++) {
+					const arr = [];
+					observable(arr);
+				}
+				return [performance.now() - start];
+			},
+			results => {
+				console.log("array observation (empty) " + results[0] + " ms.");
+			}
+		);
+
+		done();
+	});
+
+	test("object observation", function(done) {
+		runSamples(
+			() => {
+				const start = performance.now();
+				for (let i = 0; i < 1000; i++) {
+					const obj = {
+						a: "a",
+						b: { b: { c: { d: "e" } } },
+						c: "c",
+						d: "d",
+						e: { b: { c: { d: "e" } } }
+					};
+					observable(obj);
+				}
+				return [performance.now() - start];
+			},
+			results => {
+				console.log("object observation " + results[0] + " ms.");
+			}
+		);
+
+		done();
+	});
+
+	test("array observation", function(done) {
+		runSamples(
+			() => {
+				const start = performance.now();
+				for (let i = 0; i < 1000; i++) {
+					const arr = [
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } }
+					];
+					observable(arr);
+				}
+				return [performance.now() - start];
+			},
+			results => {
+				console.log("array observation " + results[0] + " ms.");
+			}
+		);
+
+		done();
+	});
 });
 
 describe("mobx tests", () => {
@@ -487,6 +577,96 @@ describe("mobx tests", () => {
 			},
 			results => {
 				console.log("computed memoization " + results[0] + " ms.");
+			}
+		);
+
+		done();
+	});
+
+	test("object observation (empty)", function(done) {
+		runSamples(
+			() => {
+				const start = performance.now();
+				for (let i = 0; i < 1000; i++) {
+					const obj = {};
+					observable(obj);
+				}
+				return [performance.now() - start];
+			},
+			results => {
+				console.log("object observation (empty) " + results[0] + " ms.");
+			}
+		);
+
+		done();
+	});
+
+	test("array observation (empty)", function(done) {
+		runSamples(
+			() => {
+				const start = performance.now();
+				for (let i = 0; i < 1000; i++) {
+					const arr = [];
+					observable(arr);
+				}
+				return [performance.now() - start];
+			},
+			results => {
+				console.log("array observation (empty) " + results[0] + " ms.");
+			}
+		);
+
+		done();
+	});
+
+	test("object observation", function(done) {
+		runSamples(
+			() => {
+				const start = performance.now();
+				for (let i = 0; i < 1000; i++) {
+					const obj = {
+						a: "a",
+						b: { b: { c: { d: "e" } } },
+						c: "c",
+						d: "d",
+						e: { b: { c: { d: "e" } } }
+					};
+					observable(obj);
+				}
+				return [performance.now() - start];
+			},
+			results => {
+				console.log("object observation " + results[0] + " ms.");
+			}
+		);
+
+		done();
+	});
+
+	test("array observation", function(done) {
+		runSamples(
+			() => {
+				const start = performance.now();
+				for (let i = 0; i < 1000; i++) {
+					const arr = [
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } },
+						{ b: { c: { d: "e" } } }
+					];
+					observable(arr);
+				}
+				return [performance.now() - start];
+			},
+			results => {
+				console.log("array observation " + results[0] + " ms.");
 			}
 		);
 

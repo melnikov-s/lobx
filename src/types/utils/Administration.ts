@@ -20,7 +20,7 @@ export default class Administration<T extends object = object> {
 		}
 	};
 	protected valuesMap?: AtomMap<unknown>;
-	private forceObservedAtoms: Atom[] = [];
+	private forceObservedAtoms?: Atom[];
 
 	constructor(source: T, graph: Graph) {
 		this.atom = new Atom(graph);
@@ -32,13 +32,13 @@ export default class Administration<T extends object = object> {
 	}
 
 	protected flushChange(): void {
-		if (this.forceObservedAtoms.length) {
+		if (this.forceObservedAtoms?.length) {
 			this.graph.transaction(() => {
-				for (let i = 0; i < this.forceObservedAtoms.length; i++) {
-					this.forceObservedAtoms[i].reportChanged();
+				for (let i = 0; i < this.forceObservedAtoms!.length; i++) {
+					this.forceObservedAtoms![i].reportChanged();
 				}
 			});
-			this.forceObservedAtoms = [];
+			this.forceObservedAtoms = undefined;
 		}
 	}
 
@@ -48,6 +48,9 @@ export default class Administration<T extends object = object> {
 
 	forceObserve(): void {
 		const atom = new Atom(this.graph);
+		if (!this.forceObservedAtoms) {
+			this.forceObservedAtoms = [];
+		}
 		this.forceObservedAtoms.push(atom);
 		atom.reportObserved();
 	}
