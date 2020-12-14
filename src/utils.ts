@@ -6,7 +6,7 @@ export function isNonPrimitive(val: unknown): val is object {
 	return val && (typeof val === "object" || typeof val === "function");
 }
 
-export function isPropertyKey(val: PropertyKey): boolean {
+export function isPropertyKey(val: unknown): val is string | number | symbol {
 	return (
 		typeof val === "string" ||
 		typeof val === "number" ||

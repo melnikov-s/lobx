@@ -9,7 +9,8 @@
 		"noImplicitThis": false,
 		"lib": ["es6"],
 		"strictNullChecks": false,
-		"downlevelIteration": true
+		"downlevelIteration": true,
+		"experimentalDecorators": true
 	},
 	"include": ["*.ts"],
 	"exclude": ["node_modules"]

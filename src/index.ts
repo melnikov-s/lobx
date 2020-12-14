@@ -4,9 +4,9 @@ import listener, { Listener } from "./api/listener";
 import atom, { Atom } from "./api/atom";
 import observable, { Observable } from "./api/observable";
 import reaction from "./api/reaction";
+import action from "./api/action";
 import graph, {
 	Graph,
-	action,
 	enforceActions,
 	isInAction,
 	isInTransactionAction,

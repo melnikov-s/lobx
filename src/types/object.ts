@@ -2,7 +2,7 @@ import Atom from "../core/nodes/atom";
 import Graph from "../core/graph";
 import { getObservable, getObservableSource, getAction } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/trace";
-import { isPropertyKey, getPropertyDescriptor } from "../utils";
+import { isPropertyKey, getPropertyDescriptor, defaultEquals } from "../utils";
 import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 import ComputedNode from "../core/nodes/computed";
@@ -22,16 +22,21 @@ export type Configuration<T> = Partial<Record<keyof T, ConfigurationTypes>>;
 
 type Types = "observable" | "computed" | "action";
 
-type ObservableOptions = {
+export type ObservableOptions = {
 	type: "observable";
-	ref: boolean;
+	ref?: boolean;
 };
 
 type ObservableOptionsConfig = ObservableOptions & {
 	configuration: Configuration<unknown>;
 };
 
-type ComputedOptions = { type: "computed"; ref: boolean };
+export type ComputedOptions = {
+	type: "computed";
+	ref?: boolean;
+	keepAlive?: boolean;
+	equals?: typeof defaultEquals;
+};
 type ActionOptions = { type: "action" };
 
 type ConfigOption<
@@ -56,7 +61,11 @@ const defaultObservable: ObservableOptions = {
 	type: "observable",
 	ref: false
 };
-const defaultComputed: ComputedOptions = { type: "computed", ref: true };
+const defaultComputed: ComputedOptions = {
+	type: "computed",
+	ref: true,
+	keepAlive: false
+};
 const actionType: ActionOptions = { type: "action" };
 
 const observableType: CallableOption<ObservableOptions> = Object.assign(
@@ -256,6 +265,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			case propertyType.computed.type: {
 				if (!this.computedMap) this.computedMap = new Map();
 				let computedNode = this.computedMap.get(key);
+				const computedConfig = config as ComputedOptions;
 				if (!computedNode) {
 					const descriptor = getPropertyDescriptor(this.source, key)!;
 					if (typeof descriptor?.get !== "function") {
@@ -264,15 +274,15 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 					computedNode = new ComputedNode(
 						this.graph,
 						descriptor.get,
-						undefined,
-						false,
+						computedConfig.equals,
+						computedConfig.keepAlive,
 						this.proxy
 					);
 
 					this.computedMap.set(key, computedNode);
 				}
 
-				return (config as ComputedOptions).ref
+				return computedConfig.ref
 					? computedNode.get()
 					: getObservable(computedNode.get(), this.graph);
 			}

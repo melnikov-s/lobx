@@ -31,6 +31,18 @@ const constructorConfigMap: WeakMap<
 	Configuration<unknown> | null
 > = new WeakMap();
 
+export function getObservableConfiguration(
+	Ctor: Function
+): Configuration<unknown> {
+	let config = constructorConfigMap.get(Ctor);
+	if (!config) {
+		config = {};
+		constructorConfigMap.set(Ctor, config);
+	}
+
+	return config;
+}
+
 export function getObservableSource<T>(obj: T): T {
 	const adm = getAdm(obj);
 
@@ -149,7 +161,7 @@ export function getObservable<T>(
 			} else if (!isPlainObject(value) && !observeNonPlain) {
 				return value;
 			}
-		} else if (typeof obj === "function") {
+		} else if (typeof obj === "function" && !constructorConfigMap.has(obj)) {
 			// allow the observation of non plain objects if their constructor was passed
 			// into observable
 			constructorConfigMap.set(obj, null);

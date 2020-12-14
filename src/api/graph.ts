@@ -39,14 +39,6 @@ export function resolveGraph(graph: Graph | null | undefined): CoreGraph {
 	return (graph ?? getDefaultGraph()) as CoreGraph;
 }
 
-export function action<T extends unknown[], U>(
-	func: (...args: T) => U
-): (...args: T) => U {
-	return function(this: unknown, ...args: T): U {
-		return runInAction(() => func.apply(this, args)) as U;
-	};
-}
-
 export function enforceActions(enforce: boolean): void {
 	return getDefaultGraph().enforceActions(enforce);
 }
