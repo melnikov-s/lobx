@@ -1,8 +1,8 @@
 import autorun from "./api/autorun";
-import computed, { Computed } from "./api/computed";
+import computed, { Computed, ComputedOptions } from "./api/computed";
 import listener, { Listener } from "./api/listener";
 import atom, { Atom } from "./api/atom";
-import observable, { Observable } from "./api/observable";
+import observable, { Observable, ObservableOptions } from "./api/observable";
 import reaction from "./api/reaction";
 import action from "./api/action";
 import graph, {
@@ -31,6 +31,7 @@ export {
 	autorun,
 	computed,
 	Computed,
+	ComputedOptions,
 	Configuration,
 	enforceActions,
 	getAdministration,
@@ -47,6 +48,7 @@ export {
 	Listener,
 	observable,
 	Observable,
+	ObservableOptions,
 	onObservedStateChange,
 	onTransactionDone,
 	reaction,
