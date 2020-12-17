@@ -134,3 +134,33 @@ test("observable decorators can be further configured with options", () => {
 	expect(count).toBe(2);
 	expect(o.comp).toBe(2);
 });
+
+test("class can be observed with `@observable`", () => {
+	@observable
+	class C {
+		@observable value = 1;
+		count = 0;
+
+		@computed get comp() {
+			this.count++;
+			return this.value * 2;
+		}
+	}
+
+	let count = 0;
+	const o = new C();
+
+	autorun(() => {
+		o.comp;
+		count++;
+	});
+
+	expect(o.count).toBe(1);
+
+	o.value = 2;
+	expect(o.count).toBe(2);
+	expect(count).toBe(2);
+
+	expect(o.comp).toBe(4);
+	expect(o.count).toBe(2);
+});
