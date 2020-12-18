@@ -49,7 +49,7 @@ test("object methods return a value", () => {
 	expect(o.readValue()).toBe("prop");
 });
 
-test("object methods occur in a transaction", () => {
+test("object methods occur in a batch", () => {
 	const C = observable(
 		class {
 			valueA = 0;
@@ -98,7 +98,7 @@ test("object methods are observable", () => {
 	expect(count).toBe(2);
 });
 
-test("object setters occur in a transaction", () => {
+test("object setters occur in a batch", () => {
 	const C = observable(
 		class {
 			valueA = 0;

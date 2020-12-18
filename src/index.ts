@@ -9,15 +9,15 @@ import graph, {
 	Graph,
 	enforceActions,
 	isInAction,
-	isInTransactionAction,
+	isInBatch,
 	isTracking,
-	transaction,
+	batch,
 	runInAction,
 	isObserved,
 	untracked,
 	getDefaultGraph,
 	onObservedStateChange,
-	onTransactionDone,
+	onReactionsComplete,
 	task
 } from "./api/graph";
 import { getObservableSource, isObservable } from "./types/utils/lookup";
@@ -40,7 +40,7 @@ export {
 	graph,
 	Graph,
 	isInAction,
-	isInTransactionAction,
+	isInBatch,
 	isObservable,
 	isObserved,
 	isTracking,
@@ -50,12 +50,12 @@ export {
 	Observable,
 	ObservableOptions,
 	onObservedStateChange,
-	onTransactionDone,
+	onReactionsComplete,
 	reaction,
 	runInAction,
 	task,
 	trace,
-	transaction,
+	batch,
 	propertyType as type,
 	untracked
 };

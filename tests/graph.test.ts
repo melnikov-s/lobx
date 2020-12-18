@@ -10,7 +10,7 @@ import {
 	untracked,
 	atom,
 	isObserved,
-	onTransactionDone,
+	onReactionsComplete,
 	isTracking,
 	action
 } from "../src";
@@ -211,20 +211,24 @@ test("enforce actions allows for initialization within a computed", () => {
 	enforceActions(false);
 });
 
-test("onTrasactionDone: can hook into a transcation when it is done", () => {
+test("onReactionsComplete:: can call method when reactions are done", () => {
 	const o = observable.box(0);
 	let count = 0;
-	const unsub = onTransactionDone(() => count++);
+	const unsub = onReactionsComplete(() => count++);
 	const act = action(() => {
 		runInAction(() => {
 			runInAction(() => {
-				o.set(1);
+				o.set(o.get() + 1);
 			});
 		});
 	});
 	expect(count).toBe(0);
 	act();
 	expect(o.get()).toBe(1);
+	expect(count).toBe(0);
+	autorun(() => o.get());
+	act();
+	expect(o.get()).toBe(2);
 	expect(count).toBe(1);
 	unsub();
 	act();

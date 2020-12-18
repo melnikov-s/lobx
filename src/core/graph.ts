@@ -103,7 +103,7 @@ export type Node = ObserverNode | ObservableNode;
 
 export default class Graph {
 	private changedObservables: Map<Node, unknown> = new Map();
-	private inTransaction = false;
+	private inBatch = false;
 	private actionsEnforced = false;
 	private inAction = false;
 	private invokedComputed: Set<Computed<unknown>> = new Set();
@@ -115,14 +115,14 @@ export default class Graph {
 		ObservableNode,
 		Set<(observing: boolean) => void>
 	> = new Map();
-	private transactionDoneCbs: Set<() => void> = new Set();
-	private actionCallDepth = 0;
+	private reactionsCompleteCallbacks: Set<() => void> = new Set();
+	private callDepth = 0;
 	private taskDepth = 0;
-	private transactionEnding = false;
+	private batchEnding = false;
 	private taskCalledStack: boolean[] = [];
 
 	// clean up any unobserved computed nodes that were cached for the
-	// duration of a transaction or derivation
+	// duration of a batch or derivation
 	private clearInvokedComputed(): void {
 		this.invokedComputed.forEach(c => {
 			if (c.observers.size === 0 && !c.isKeepAlive()) {
@@ -132,7 +132,7 @@ export default class Graph {
 		this.invokedComputed.clear();
 	}
 
-	// determine if a node has changed it's value during a transaction
+	// determine if a node has changed it's value during a batch
 	private hasChanged(node: Node): boolean {
 		let changed = false;
 
@@ -176,14 +176,14 @@ export default class Graph {
 			?.forEach(f => f(observing));
 	}
 
-	// propagate a change to an observable down the graph during a transaction
+	// propagate a change to an observable down the graph during a batch
 	// in order to mark any affected computed nodes as a potentially stale
 	// and collect all dependent listeners
 	private propagateChange(node: ObservableNode): void {
 		node.observers.forEach(childNode => {
 			if (childNode.nodeType === nodeTypes.computed) {
 				// if this is the first time this computed node was changed within
-				// a transaction we collect its value for later comparison
+				// a batch we collect its value for later comparison
 				// at this point the computed value should never be dirty
 				if (!this.changedObservables.has(childNode)) {
 					this.changedObservables.set(childNode, childNode.value);
@@ -195,7 +195,7 @@ export default class Graph {
 					this.propagateChange(childNode);
 				}
 			} else {
-				// store all affected listeners for potential invocation when transaction
+				// store all affected listeners for potential invocation when batch
 				// is complete
 				const listener = childNode as Listener;
 
@@ -217,8 +217,8 @@ export default class Graph {
 		return this.inAction;
 	}
 
-	isInTransaction(): boolean {
-		return this.inTransaction;
+	isInBatch(): boolean {
+		return this.inBatch;
 	}
 
 	isObserved(node: ObservableNode): boolean {
@@ -234,6 +234,14 @@ export default class Graph {
 
 	isTracking(): boolean {
 		return this.topOfRunStack != null;
+	}
+
+	onReactionsComplete(callback: () => void): () => void {
+		this.reactionsCompleteCallbacks.add(callback);
+
+		return (): void => {
+			this.reactionsCompleteCallbacks.delete(callback);
+		};
 	}
 
 	onObservedStateChange(
@@ -253,14 +261,6 @@ export default class Graph {
 			if (callbacks!.size === 0) {
 				this.onObservedStateChangeCallbacks.delete(node);
 			}
-		};
-	}
-
-	onTransactionDone(callback: () => void): () => void {
-		this.transactionDoneCbs.add(callback);
-
-		return (): void => {
-			this.transactionDoneCbs.delete(callback);
 		};
 	}
 
@@ -320,18 +320,18 @@ export default class Graph {
 			);
 		}
 
-		// if we're not currently in a transaction start a new one
-		if (!this.inTransaction) {
+		// if we're not currently in a action start a new one
+		if (!this.inAction) {
 			try {
-				this.startTransaction();
+				this.startAction();
 				this.reportChanged(node, oldValue);
 			} finally {
-				this.endTransaction();
+				this.endAction();
 			}
 			return;
 		}
 
-		// keep track of the old value to ensure it changed when the transaction
+		// keep track of the old value to ensure it changed when the batch
 		// is completed
 		if (!this.changedObservables.has(node)) {
 			this.changedObservables.set(node, oldValue);
@@ -396,11 +396,11 @@ export default class Graph {
 			this.runStack.pop();
 
 			if (this.runStack.length === 0) {
-				// if we're not in a transaction we can clean up any derived computeds that are not
+				// if we're not in a batch we can clean up any derived computeds that are not
 				// observed but were cached for the duration of the derivation.
-				// if we're in an transaction, that clean up will be performed after the transaction
+				// if we're in an batch, that clean up will be performed after the batch
 				// is completed.
-				if (!this.inTransaction) {
+				if (!this.inBatch) {
 					this.clearInvokedComputed();
 				}
 
@@ -474,44 +474,50 @@ export default class Graph {
 		return result;
 	}
 
-	transaction<T>(fn: () => T): T {
+	batch<T>(fn: () => T): T {
 		let result: T;
 		try {
-			this.startTransaction();
+			this.startBatch();
 			result = fn();
 		} finally {
-			this.endTransaction();
+			this.endBatch();
 		}
 
 		return result;
 	}
 
 	endAction(): void {
-		this.endTransaction();
+		this.endBatch();
 	}
 
 	startAction(): void {
+		// make actions untracked
+		if (!this.inAction) {
+			this.runStack.push(null);
+		}
 		this.inAction = true;
-		this.startTransaction();
+		this.startBatch();
 	}
 
-	endTransaction(): void {
-		if (this.actionCallDepth === 0) {
+	endBatch(): void {
+		if (this.callDepth === 0) {
 			throw new Error(
 				"lobx: attempted to end an action that has not been started"
 			);
 		}
 
-		this.actionCallDepth--;
+		this.callDepth--;
 
-		if (this.actionCallDepth === 0 && !this.transactionEnding) {
-			// if reactions cause further transactions we do not want to enter this block again
+		if (this.callDepth === 0 && !this.batchEnding) {
+			// if reactions cause further batchs we do not want to enter this block again
 			// otherwise we might have an infinite loop
-			this.transactionEnding = true;
+			this.batchEnding = true;
 
 			if (this.inAction) {
 				this.runStack.pop();
 			}
+
+			let reactionsExecuted = false;
 
 			try {
 				// loop through all the affected listeners and filter out
@@ -525,6 +531,7 @@ export default class Graph {
 					if (this.hasChanged(l)) {
 						// perform reaction if any of the dependents have changed
 						l.react();
+						reactionsExecuted = true;
 
 						// after a reaction it's possible that we queued another listener
 						// this can occur if a reaction made a further mutation
@@ -533,8 +540,8 @@ export default class Graph {
 					}
 				});
 			} finally {
-				this.inTransaction = false;
-				this.transactionEnding = false;
+				this.inBatch = false;
+				this.batchEnding = false;
 				this.inAction = false;
 				this.queuedListeners.clear();
 				this.changedObservables.clear();
@@ -547,21 +554,19 @@ export default class Graph {
 				this.potentialStale.clear();
 
 				// clean up any unobserved computed that were cached for the duration
-				// of this transaction.
+				// of this batch.
 				this.clearInvokedComputed();
-				this.transactionDoneCbs.forEach(c => c());
+				if (reactionsExecuted) {
+					this.reactionsCompleteCallbacks.forEach(c => c());
+				}
 			}
 		}
 	}
 
-	startTransaction(): void {
-		this.actionCallDepth++;
-		if (!this.inTransaction) {
-			// make transactions untracked if we're in an action
-			if (this.inAction) {
-				this.runStack.push(null);
-			}
-			this.inTransaction = true;
+	startBatch(): void {
+		this.callDepth++;
+		if (!this.inBatch) {
+			this.inBatch = true;
 		}
 	}
 

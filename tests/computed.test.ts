@@ -240,7 +240,9 @@ test("will throw if an observable created within a computed is re-used", () => {
 
 	expect(count).toBe(1);
 
-	expect(() => o2.set(10)).toThrowError();
+	expect(() => o2.set(10)).toThrowErrorMatchingInlineSnapshot(
+		`"Can't change an observable during a reaction or within a computed"`
+	);
 });
 
 test("can use an observable that was created in another computed", () => {

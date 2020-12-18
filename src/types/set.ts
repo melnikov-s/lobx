@@ -46,7 +46,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 	}
 
 	clear(): void {
-		this.graph.transaction(() => {
+		this.graph.batch(() => {
 			this.source.forEach(value => this.delete(value));
 		});
 	}
@@ -73,7 +73,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 		if (!this.hasEntry(value)) {
 			const target = getObservableSource(value);
 			this.source.add(target);
-			this.graph.transaction(() => {
+			this.graph.batch(() => {
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(target);
 			});
@@ -89,7 +89,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 			const target = getObservableSource(value);
 			this.source.delete(target);
 			this.source.delete(value);
-			this.graph.transaction(() => {
+			this.graph.batch(() => {
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(target);
 			});

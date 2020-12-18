@@ -164,7 +164,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		thisArg: unknown,
 		args: unknown[]
 	): T extends (args: unknown[]) => unknown ? ReturnType<T> : never {
-		return this.graph.transaction(() =>
+		return this.graph.batch(() =>
 			Reflect.apply(this.source as Function, thisArg, args)
 		);
 	}
@@ -211,7 +211,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	private set(key: PropertyKey, value: T[keyof T]): void {
-		this.graph.transaction(() => {
+		this.graph.batch(() => {
 			Reflect.set(this.source, key, value, this.proxy);
 		});
 	}
@@ -304,7 +304,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		if (!had || oldValue !== targetValue) {
 			this.set(key, targetValue);
 
-			this.graph.transaction(() => {
+			this.graph.batch(() => {
 				if (!had) {
 					this.keysAtom.reportChanged();
 					this.hasMap.reportChanged(key);
@@ -334,7 +334,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 		const oldValue = this.get(key);
 		delete this.source[key];
-		this.graph.transaction(() => {
+		this.graph.batch(() => {
 			this.valuesMap.reportChanged(key);
 			this.keysAtom.reportChanged();
 			this.hasMap.reportChanged(key);

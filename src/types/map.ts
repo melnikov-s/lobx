@@ -122,7 +122,7 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 			(oldValue !== targetValue &&
 				oldValue !== getObservable(value, this.graph))
 		) {
-			this.graph.transaction(() => {
+			this.graph.batch(() => {
 				if (this.data.has(key)) {
 					this.data.set(key, targetValue);
 				} else {
@@ -149,7 +149,7 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 		if (this.hasEntry(key)) {
 			const oldValue = this.data.peek(targetKey);
 
-			this.graph.transaction(() => {
+			this.graph.batch(() => {
 				this.flushChange();
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(targetKey);
@@ -249,7 +249,7 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 	}
 
 	clear(): void {
-		this.graph.transaction(() => {
+		this.graph.batch(() => {
 			this.data.forEach((_, key) => this.delete(key));
 		});
 	}

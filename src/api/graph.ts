@@ -7,17 +7,17 @@ import ObservableValue from "../types/observableValue";
 export type Graph = {
 	enforceActions: (enforce: boolean) => void;
 	isInAction: () => boolean;
-	isInTransaction: () => boolean;
+	isInBatch: () => boolean;
 	isObserved: (node: ObservableNode) => boolean;
 	isTracking: () => boolean;
 	runInAction: <T>(fn: () => T) => T;
-	transaction: <T>(fn: () => T) => T;
+	batch: <T>(fn: () => T) => T;
 	startAction: () => void;
 	endAction: () => void;
-	startTransaction: () => void;
-	endTransaction: () => void;
+	startBatch: () => void;
+	endBatch: () => void;
 	untracked: <T>(fn: () => T) => T;
-	onTransactionDone: (callback: () => void) => () => void;
+	onReactionsComplete: (callback: () => void) => () => void;
 	task<T>(promise: Promise<T>): Promise<T>;
 };
 
@@ -60,15 +60,15 @@ export function isInAction(): boolean {
 	return getDefaultGraph().isInAction();
 }
 
-export function isInTransactionAction(): boolean {
-	return getDefaultGraph().isInTransaction();
+export function isInBatch(): boolean {
+	return getDefaultGraph().isInBatch();
 }
 
 export function isTracking(): boolean {
 	return getDefaultGraph().isTracking();
 }
 
-export function transaction<T>(fn: () => T): T {
+export function batch<T>(fn: () => T): T {
 	return getDefaultGraph().runInAction(fn);
 }
 
@@ -109,8 +109,8 @@ export function forceObserve<T extends object>(...args: T[]): void {
 	}
 }
 
-export function onTransactionDone(callback: () => void): () => void {
-	return getDefaultGraph().onTransactionDone(callback);
+export function onReactionsComplete(callback: () => void): () => void {
+	return getDefaultGraph().onReactionsComplete(callback);
 }
 
 type KeyType<T> = T extends Set<infer R>
