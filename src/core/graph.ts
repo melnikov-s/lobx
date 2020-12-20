@@ -118,7 +118,6 @@ export default class Graph {
 	private reactionsCompleteCallbacks: Set<() => void> = new Set();
 	private callDepth = 0;
 	private taskDepth = 0;
-	private batchEnding = false;
 	private taskCalledStack: boolean[] = [];
 
 	// clean up any unobserved computed nodes that were cached for the
@@ -458,20 +457,15 @@ export default class Graph {
 		return result as T;
 	}
 
-	async task<T>(promise: Promise<T>): Promise<T> {
+	task<T>(promise: Promise<T>): Promise<T> {
 		if (!this.inAction) {
 			throw new Error("lobx: can't call `task` outside of an action");
 		}
 		this.endAction();
 		this.taskCalledStack[this.taskDepth - 1] = true;
-		let result: T;
-		try {
-			result = await promise;
-		} finally {
+		return Promise.resolve(promise).finally(() => {
 			this.startAction();
-		}
-
-		return result;
+		});
 	}
 
 	batch<T>(fn: () => T): T {
@@ -506,13 +500,7 @@ export default class Graph {
 			);
 		}
 
-		this.callDepth--;
-
-		if (this.callDepth === 0 && !this.batchEnding) {
-			// if reactions cause further batchs we do not want to enter this block again
-			// otherwise we might have an infinite loop
-			this.batchEnding = true;
-
+		if (this.callDepth === 1) {
 			if (this.inAction) {
 				this.runStack.pop();
 			}
@@ -541,7 +529,6 @@ export default class Graph {
 				});
 			} finally {
 				this.inBatch = false;
-				this.batchEnding = false;
 				this.inAction = false;
 				this.queuedListeners.clear();
 				this.changedObservables.clear();
@@ -556,10 +543,13 @@ export default class Graph {
 				// clean up any unobserved computed that were cached for the duration
 				// of this batch.
 				this.clearInvokedComputed();
+				this.callDepth--;
 				if (reactionsExecuted) {
 					this.reactionsCompleteCallbacks.forEach(c => c());
 				}
 			}
+		} else {
+			this.callDepth--;
 		}
 	}
 

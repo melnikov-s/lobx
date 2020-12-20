@@ -153,6 +153,61 @@ test("WeakMap does not report to have Map methods", () => {
 	expect((m as any).forEach).toBe(undefined);
 });
 
+test("map can be initialized with observable values", () => {
+	const o1 = observable({});
+	const o2 = observable({});
+	const o3 = {};
+
+	const m = map(
+		new Map([
+			[o1, o1],
+			[o2, o2],
+			[o3, o3]
+		])
+	);
+	expect(m.has(getObservableSource(o1))).toBe(true);
+	expect(m.has(getObservableSource(o2))).toBe(true);
+	expect(m.has(o1)).toBe(true);
+	expect(m.has(o2)).toBe(true);
+	m.set(o2, o2);
+	expect(m.size).toBe(3);
+	expect(m.has(observable(o3))).toBe(true);
+	m.delete(observable(o3));
+	expect(m.size).toBe(2);
+	m.delete(getObservableSource(o1));
+	expect(m.size).toBe(2);
+	m.delete(o1);
+	expect(m.size).toBe(1);
+	m.delete(o2);
+	expect(m.size).toBe(0);
+});
+
+test("does not trigger a change when same observable is set on map initialized with observable values", () => {
+	const o1 = observable({ prop: 1 });
+	const o2 = observable({ prop: 2 });
+
+	const m = map(
+		new Map([
+			[o1, o1],
+			[o2, o2]
+		])
+	);
+
+	let count = 0;
+	autorun(() => {
+		m.forEach(() => {});
+		count++;
+	});
+	expect(count).toBe(1);
+	expect(m.get(o1)).toBe(o1);
+	m.set(o1, o1);
+	expect(count).toBe(1);
+	m.set(o1, getObservableSource(o1));
+	expect(count).toBe(1);
+	m.set(o1, o2);
+	expect(count).toBe(2);
+});
+
 test("[mobx-test] map crud", function() {
 	const events = [];
 	const m = map(new Map(Object.entries({ "1": "a" }))) as Map<any, any>;
@@ -215,61 +270,6 @@ test("[mobx-test] map crud", function() {
 		{ object: m, name: ["arr"], oldValue: "arrVal", type: "delete" },
 		{ object: m, name: s, oldValue: "symbol-value", type: "delete" }
 	]);
-});
-
-test("map can be initialized with observable values", () => {
-	const o1 = observable({});
-	const o2 = observable({});
-	const o3 = {};
-
-	const m = map(
-		new Map([
-			[o1, o1],
-			[o2, o2],
-			[o3, o3]
-		])
-	);
-	expect(m.has(getObservableSource(o1))).toBe(true);
-	expect(m.has(getObservableSource(o2))).toBe(true);
-	expect(m.has(o1)).toBe(true);
-	expect(m.has(o2)).toBe(true);
-	m.set(o2, o2);
-	expect(m.size).toBe(3);
-	expect(m.has(observable(o3))).toBe(true);
-	m.delete(observable(o3));
-	expect(m.size).toBe(2);
-	m.delete(getObservableSource(o1));
-	expect(m.size).toBe(2);
-	m.delete(o1);
-	expect(m.size).toBe(1);
-	m.delete(o2);
-	expect(m.size).toBe(0);
-});
-
-test("does not trigger a change when same observable is set on map initialized with observable values", () => {
-	const o1 = observable({ prop: 1 });
-	const o2 = observable({ prop: 2 });
-
-	const m = map(
-		new Map([
-			[o1, o1],
-			[o2, o2]
-		])
-	);
-
-	let count = 0;
-	autorun(() => {
-		m.forEach(() => {});
-		count++;
-	});
-	expect(count).toBe(1);
-	expect(m.get(o1)).toBe(o1);
-	m.set(o1, o1);
-	expect(count).toBe(1);
-	m.set(o1, getObservableSource(o1));
-	expect(count).toBe(1);
-	m.set(o1, o2);
-	expect(count).toBe(2);
 });
 
 test("[mobx-test] observe value", function() {

@@ -275,6 +275,12 @@ test("observes configured non plain objects", () => {
 	expect(isObservable(o.v)).toBe(true);
 });
 
+test("frozen objects are not observed", () => {
+	const o = object({ toBeFrozen: {} });
+	Object.freeze(getObservableSource(o).toBeFrozen);
+	expect(isObservable(o.toBeFrozen)).toBe(false);
+});
+
 test("[mobx-test] object crud", function() {
 	const events = [];
 	const o = object({ "1": "a" });
@@ -318,12 +324,6 @@ test("[mobx-test] object crud", function() {
 		{ object: o, name: "1", oldValue: "b", type: "delete" },
 		{ object: o, name: "2", newValue: "a", type: "add" }
 	]);
-});
-
-test("frozen objects are not observed", () => {
-	const o = object({ toBeFrozen: {} });
-	Object.freeze(getObservableSource(o).toBeFrozen);
-	expect(isObservable(o.toBeFrozen)).toBe(false);
 });
 
 test("[mobx-test] keys should be observable when extending", () => {
