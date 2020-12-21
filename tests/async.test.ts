@@ -28,7 +28,7 @@ function delayFn(time: number, fn: () => void) {
 	return new Promise(resolve => {
 		setTimeout(() => {
 			fn();
-			resolve();
+			resolve(null);
 		}, time);
 	});
 }

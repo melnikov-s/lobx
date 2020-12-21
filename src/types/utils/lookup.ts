@@ -161,7 +161,11 @@ export function getObservable<T>(
 			} else if (!isPlainObject(value) && !observeNonPlain) {
 				return value;
 			}
-		} else if (typeof obj === "function" && !constructorConfigMap.has(obj)) {
+		} else if (
+			observeNonPlain &&
+			typeof obj === "function" &&
+			!constructorConfigMap.has(obj)
+		) {
 			// allow the observation of non plain objects if their constructor was passed
 			// into observable
 			constructorConfigMap.set(obj, null);

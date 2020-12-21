@@ -267,6 +267,12 @@ test("does not deeply observe non configured non plain objects", () => {
 	expect(isObservable(o.v)).toBe(false);
 });
 
+test("does not observe constructors indirectly", () => {
+	const C = class {};
+	const o = object({ v: C });
+	expect(isObservable(new o.v())).toBe(false);
+});
+
 test("observes configured non plain objects", () => {
 	const C = class {};
 	observable.configure({}, C);
