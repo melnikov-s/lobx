@@ -6,7 +6,6 @@ import {
 } from "./utils/lookup";
 import { notifyArrayUpdate, notifySpliceArray } from "./utils/trace";
 import Administration from "./utils/Administration";
-import { isNonPrimitive } from "../utils";
 
 export class ArrayAdministration<T> extends Administration<T[]> {
 	constructor(source: T[] = [], graph: Graph) {
@@ -138,26 +137,6 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 }
 
 const arrayMethods = {
-	concat<T>(this: T[], ...args: Array<T | T[]>): T[] {
-		const adm = getAdministration(this);
-		adm.atom.reportObserved();
-
-		const targetArgs = [];
-		for (let i = 0; i < args.length; i++) {
-			if (Array.isArray(args[i])) {
-				const arg = args[i] as T[];
-				const targetInnerArgs = [];
-				for (let j = 0; j < arg.length; j++) {
-					targetInnerArgs[j] = getObservableSource(arg[j]);
-				}
-				targetArgs[i] = targetInnerArgs;
-			} else {
-				targetArgs[i] = getObservableSource(args[i]);
-			}
-		}
-
-		return getObservable(adm.source.concat(...targetArgs), adm.graph);
-	},
 	fill<T>(
 		this: T[],
 		value: T,
@@ -236,78 +215,8 @@ const arrayMethods = {
 	}
 };
 
-// methods that do not accept observable input and do not produce observable output
-["join", "toString", "toLocaleString"].forEach(method => {
-	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function(this: unknown[]): string {
-			const adm = getAdministration(this);
-			adm.atom.reportObserved();
-			return adm.source[method].apply(adm.source, arguments);
-		};
-	}
-});
-
-// search methods
-// These are tricky, the proxy will store the observable sources (if applicable)
-// on the source array, but return the observable proxy during a read (if not forzen).
-// therefore `indexOf(source)` needs to always return `-1` while `indexOf(observable)` needs
-// to return the expected value. The issue here is that it's possible to have an observable
-// array that was initially observed with observable proxies already present in the array and lobx does not want to perform
-// the work of looping through each array it's trying to observe and map those back to its observable source.
-// Therefore we need to perform this look up twice, once to look for the observable source and if not
-// found another time to look for the observable proxy since the observable array can have either.
-// TODO: rewrite with our own implementation of these methods instead of calling the native ones twice?
-["indexOf", "includes", "lastIndexOf"].forEach(method => {
-	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function(
-			this: unknown[],
-			value: unknown,
-			...args: unknown[]
-		): unknown {
-			const adm = getAdministration(this);
-			adm.atom.reportObserved();
-
-			if (isNonPrimitive(value)) {
-				const target = getObservableSource(value);
-				const negativeValue = method === "includes" ? false : -1;
-				if (getObservable(value, adm.graph) !== value) {
-					// if this is true then we're dealing with a non-frozen observable source
-					// and those are not to be in the array.
-					return negativeValue;
-				}
-
-				const rtn = adm.source[method].call(adm.source, target, ...args);
-				if (rtn !== negativeValue) {
-					return rtn;
-				} else if (value !== target) {
-					// if we might get a differnt result with the observable source, try again
-					return adm.source[method].call(adm.source, value, ...args);
-				}
-
-				return negativeValue;
-			}
-
-			return adm.source[method].call(adm.source, value, ...args);
-		};
-	}
-});
-
-// methods that return a new array
-["slice", "copyWithin", "flat"].forEach(method => {
-	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function(this: unknown[]): unknown[] {
-			const adm = getAdministration(this);
-			adm.atom.reportObserved();
-			return getObservable(
-				adm.source[method].apply(adm.source, arguments),
-				adm.graph
-			);
-		};
-	}
-});
-
-// Methods that loop through the array
 [
+	"concat",
 	"every",
 	"filter",
 	"forEach",
@@ -315,61 +224,24 @@ const arrayMethods = {
 	"flatMap",
 	"find",
 	"findIndex",
-	"some"
+	"some",
+	"join",
+	"toString",
+	"toLocaleString",
+	"slice",
+	"copyWithin",
+	"flat",
+	"indexOf",
+	"includes",
+	"lastIndexOf",
+	"reduce",
+	"reduceRight"
 ].forEach(method => {
 	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function(
-			this: unknown[],
-			func: (value: unknown, index: number, arr: unknown[]) => unknown,
-			context: unknown
-		): unknown[] {
+		arrayMethods[method] = function(this: unknown[]): unknown {
 			const adm = getAdministration(this);
-			adm.atom.reportObserved();
-			return getObservable(
-				adm.source[method](function(v: unknown, i: number) {
-					return func.call(context, getObservable(v, adm.graph), i, adm.proxy);
-				}),
-				adm.graph
-			);
-		};
-	}
-});
 
-// reduce methods
-["reduce", "reduceRight"].forEach(method => {
-	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function(
-			this: unknown[],
-			func: (
-				acc: unknown,
-				value: unknown,
-				index: number,
-				arr: unknown[]
-			) => unknown,
-			initialvalue: unknown
-		): unknown {
-			const adm = getAdministration(this);
-			adm.atom.reportObserved();
-			return getObservable(
-				adm.source[method](function(
-					acc: unknown,
-					value: unknown,
-					index: number
-				) {
-					return getObservable(
-						func.call(
-							adm.proxy,
-							getObservable(acc, adm.graph),
-							getObservable(value, adm.graph),
-							index,
-							adm.proxy
-						),
-						adm.graph
-					);
-				},
-				initialvalue),
-				adm.graph
-			);
+			return adm.source[method].apply(adm.proxy, arguments);
 		};
 	}
 });

@@ -4,8 +4,7 @@ import {
 	reaction,
 	observable,
 	trace,
-	isObservable,
-	getObservableSource
+	isObservable
 } from "../src";
 
 const array = (obj: any[] = []): any[] => {
@@ -89,15 +88,15 @@ test("sort paramters are observable", () => {
 ["concat", "slice", "flat"].forEach(method => {
 	test(`Array.prototype.${method} method is observable`, () => {
 		let count = 0;
-		const realArr = [{}, 2, 3, 4];
-		const arr = array([{}, 2, 3, 4]);
+		const realArr = [[{}], 2, 3, 4];
+		const arr = array([[{}], 2, 3, 4]);
 
 		autorun(() => {
 			count++;
 			const result = arr[method]();
 
 			expect(result).toEqual(realArr[method]());
-			expect(isObservable(result)).toBe(true);
+			expect(isObservable(result)).toBe(false);
 			expect(isObservable(result[0])).toBe(true);
 		});
 
@@ -136,7 +135,11 @@ test("sort paramters are observable", () => {
 			}, context);
 
 			if (result && typeof result === "object") {
-				expect(isObservable(result)).toBe(true);
+				expect(isObservable(result)).toBe(method === "find" ? true : false);
+			}
+
+			if (method === "filter") {
+				expect(isObservable(result[0])).toBe(true);
 			}
 
 			expect(ran).toBe(true);
@@ -162,12 +165,12 @@ test("sort paramters are observable", () => {
 				ran = true;
 				expect(a).toBe(arr);
 				expect(v).toBe(arr[i]);
-				expect(isObservable(acc)).toBe(true);
+				expect(isObservable(acc)).toBe(false);
 
 				return acc;
 			}, {});
 
-			expect(isObservable(res)).toBe(true);
+			expect(isObservable(res)).toBe(false);
 
 			expect(ran).toBe(true);
 		});
@@ -358,16 +361,6 @@ test("[mobx-test] concat should automatically slice observable arrays", () => {
 	const a1 = array([1, 2]);
 	const a2 = array([3, 4]);
 	expect(a1.concat(a2)).toEqual([1, 2, 3, 4]);
-});
-
-test("[mobx-test] concat stores targets and returns observables", () => {
-	const a1 = array();
-	const a2 = [{}, {}, {}, {}];
-	const a3 = a1.concat(a2, {}, [observable({})]);
-	expect(a3.length).toBe(6);
-	expect(isObservable(a3)).toBe(true);
-	a3.forEach(v => expect(isObservable(v)).toBe(true));
-	getObservableSource(a3).forEach(v => expect(isObservable(v)).toBe(false));
 });
 
 test("[mobx-test] array modification", function() {
