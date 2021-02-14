@@ -1,7 +1,7 @@
 import makeListener, { Listener } from "./listener";
 import { Graph } from "./graph";
 
-export default function<T>(
+export default function reaction<T>(
 	track: () => T,
 	callback: (a: T, listener: Listener) => void,
 	opts?: { graph?: Graph }

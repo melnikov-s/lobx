@@ -3,6 +3,10 @@ import * as mobx from "mobx";
 
 const performance = global["performance"];
 
+mobx.configure({
+	enforceActions: "never"
+});
+
 const SAMPLES = 30;
 
 function runSamples(perfTest, resultsFn) {

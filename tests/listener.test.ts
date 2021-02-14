@@ -39,7 +39,9 @@ test("calling dispose will no longer invoke the callback", () => {
 	const o = observable.box(0);
 	l.track(() => o.get());
 	o.set(1);
+	expect(l.isDisposed).toBe(false);
 	l.dispose();
+	expect(l.isDisposed).toBe(true);
 	o.set(2);
 	o.set(3);
 	expect(count).toBe(1);

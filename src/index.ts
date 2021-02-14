@@ -24,15 +24,19 @@ import { getObservableSource, isObservable } from "./types/utils/lookup";
 import { trace } from "./types/utils/trace";
 import { propertyType, Configuration } from "./types/object";
 import { getAdministration } from "./types/utils/Administration";
+import { Scheduler, createScheduler } from "./api/scheduler";
+
 export {
 	action,
 	atom,
 	Atom,
 	autorun,
+	batch,
 	computed,
 	Computed,
 	ComputedOptions,
 	Configuration,
+	createScheduler,
 	enforceActions,
 	getAdministration,
 	getDefaultGraph,
@@ -53,9 +57,9 @@ export {
 	onReactionsComplete,
 	reaction,
 	runInAction,
+	Scheduler,
 	task,
 	trace,
-	batch,
 	propertyType as type,
 	untracked
 };

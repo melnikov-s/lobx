@@ -1,7 +1,7 @@
 import makeListener, { Listener } from "./listener";
 import { Graph } from "./graph";
 
-export default function(
+export default function autorun(
 	callback: (t: Listener) => void,
 	opts?: { graph?: Graph }
 ): () => void {

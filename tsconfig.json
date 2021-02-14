@@ -10,7 +10,7 @@
 		"noUnusedLocals": true,
 		"noImplicitAny": true,
 		"noImplicitThis": true,
-		"lib": ["es2015"],
+		"lib": ["es2015", "DOM"],
 		"strictNullChecks": true,
 		"declaration": true,
 		"declarationDir": "./lib",

@@ -6,7 +6,7 @@ export type Atom<T = unknown> = {
 	reportObserved: () => boolean;
 };
 
-export default function<T = unknown>(opts?: {
+export default function atom<T = unknown>(opts?: {
 	graph?: Graph;
 	equals?: (v: T) => boolean;
 }): Atom<T> {

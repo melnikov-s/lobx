@@ -496,10 +496,11 @@ export default class Graph {
 	endBatch(): void {
 		if (this.callDepth === 0) {
 			throw new Error(
-				"lobx: attempted to end an action that has not been started"
+				"lobx: attempted to end a batch/action that has not been started"
 			);
 		}
 
+		// if we're ending the outter most batch
 		if (this.callDepth === 1) {
 			if (this.inAction) {
 				this.runStack.pop();
@@ -544,6 +545,8 @@ export default class Graph {
 				// of this batch.
 				this.clearInvokedComputed();
 				this.callDepth--;
+
+				// If a reaction occured during this batch invoke `onReactionsComplete` callbacks
 				if (reactionsExecuted) {
 					this.reactionsCompleteCallbacks.forEach(c => c());
 				}

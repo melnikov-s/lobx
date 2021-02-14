@@ -3,7 +3,7 @@ export function defaultEquals<T>(a: T, b: T): boolean {
 }
 
 export function isNonPrimitive(val: unknown): val is object {
-	return val && (typeof val === "object" || typeof val === "function");
+	return val != null && (typeof val === "object" || typeof val === "function");
 }
 
 export function isPropertyKey(val: unknown): val is string | number | symbol {
