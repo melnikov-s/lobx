@@ -126,10 +126,12 @@ export function createScheduler(
 
 	return schedule((newReactions: ScheduledReactions) => {
 		if (reactions.size === 0) {
+			reactions.merge(newReactions);
 			scheduler(() => {
 				reactions.flush();
 			});
+		} else {
+			reactions.merge(newReactions);
 		}
-		reactions.merge(newReactions);
 	}, opts);
 }

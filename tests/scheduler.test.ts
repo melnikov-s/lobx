@@ -138,3 +138,26 @@ test("listeners on the same scheduler trigger in a tight loop", () => {
 	expect(count).toBe(3);
 	expect(asserted).toBe(true);
 });
+
+test("can create a sync scheduler", () => {
+	let count = 0;
+	const createCustomScheduler = (): Scheduler => createScheduler(fn => fn());
+
+	const scheduler = createCustomScheduler();
+	const o = observable.box(0);
+	const l = scheduler.listener(() => {
+		count++;
+	});
+	const l2 = scheduler.listener(() => {
+		count++;
+	});
+	const l3 = scheduler.listener(() => {
+		count++;
+	});
+	l.track(() => o.get());
+	l2.track(() => o.get());
+	l3.track(() => o.get());
+	o.set(1);
+	o.set(2);
+	expect(count).toBe(6);
+});
