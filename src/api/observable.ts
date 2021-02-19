@@ -4,13 +4,13 @@ import { defaultEquals, isNonPrimitive, isPropertyKey } from "../utils";
 import {
 	getObservable,
 	getObservableConfiguration,
-	getObservableWithConfig
+	getObservableWithConfig,
 } from "../types/utils/lookup";
 import {
 	Configuration,
 	ConfigurationGetter,
 	propertyType,
-	ObservableOptions as ObjectObservableOptions
+	ObservableOptions as ObjectObservableOptions,
 } from "../types/object";
 
 export type Observable<T> = {

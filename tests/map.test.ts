@@ -3,11 +3,11 @@ import {
 	observable,
 	isObservable,
 	reaction,
-	trace
+	trace,
 } from "../src/index";
 import {
 	getAdministration,
-	getObservableSource
+	getObservableSource,
 } from "../src/types/utils/lookup";
 
 const map = <K = any, V = any>(obj: Map<K, V> = new Map()): Map<K, V> => {
@@ -25,7 +25,7 @@ const keys = (map: Map<any, any>): any[] => {
 };
 
 const values = (map: Map<any, any>): any[] => {
-	return keys(map).map(key => map.get(key));
+	return keys(map).map((key) => map.get(key));
 };
 
 test("map values are deeply observable", () => {
@@ -51,7 +51,7 @@ test("map keys returns observable objects", () => {
 	const m = map();
 	m.set(target, target);
 
-	Array.from(m.keys()).forEach(t => {
+	Array.from(m.keys()).forEach((t) => {
 		ran = true;
 		expect(isObservable(t)).toBe(true);
 	});
@@ -65,7 +65,7 @@ test("map values returns observable objects", () => {
 	const m = map();
 	m.set(target, target);
 
-	Array.from(m.values()).forEach(t => {
+	Array.from(m.values()).forEach((t) => {
 		ran = true;
 		expect(isObservable(t)).toBe(true);
 	});
@@ -162,7 +162,7 @@ test("map can be initialized with observable values", () => {
 		new Map([
 			[o1, o1],
 			[o2, o2],
-			[o3, o3]
+			[o3, o3],
 		])
 	);
 	expect(m.has(getObservableSource(o1))).toBe(true);
@@ -189,7 +189,7 @@ test("does not trigger a change when same observable is set on map initialized w
 	const m = map(
 		new Map([
 			[o1, o1],
-			[o2, o2]
+			[o2, o2],
 		])
 	);
 
@@ -208,10 +208,10 @@ test("does not trigger a change when same observable is set on map initialized w
 	expect(count).toBe(2);
 });
 
-test("[mobx-test] map crud", function() {
+test("[mobx-test] map crud", function () {
 	const events = [];
 	const m = map(new Map(Object.entries({ "1": "a" }))) as Map<any, any>;
-	trace(m, function(changes) {
+	trace(m, function (changes) {
 		events.push(changes);
 	});
 
@@ -245,7 +245,7 @@ test("[mobx-test] map crud", function() {
 		["1", "aa"],
 		[1, "b"],
 		[k, "arrVal"],
-		[s, "symbol-value"]
+		[s, "symbol-value"],
 	]);
 
 	expect(m.size).toBe(4);
@@ -268,25 +268,25 @@ test("[mobx-test] map crud", function() {
 		{ object: m, name: "1", oldValue: "aa", type: "delete" },
 		{ object: m, name: 1, oldValue: "b", type: "delete" },
 		{ object: m, name: ["arr"], oldValue: "arrVal", type: "delete" },
-		{ object: m, name: s, oldValue: "symbol-value", type: "delete" }
+		{ object: m, name: s, oldValue: "symbol-value", type: "delete" },
 	]);
 });
 
-test("[mobx-test] observe value", function() {
+test("[mobx-test] observe value", function () {
 	const a = map();
 	let hasX = false;
 	let valueX = undefined;
 	let valueY = undefined;
 
-	autorun(function() {
+	autorun(function () {
 		hasX = a.has("x");
 	});
 
-	autorun(function() {
+	autorun(function () {
 		valueX = a.get("x");
 	});
 
-	autorun(function() {
+	autorun(function () {
 		valueY = a.get("y");
 	});
 
@@ -312,31 +312,31 @@ test("[mobx-test] observe value", function() {
 	expect(valueY).toBe(undefined);
 });
 
-test("[mobx-test] initialize with entries", function() {
+test("[mobx-test] initialize with entries", function () {
 	const thing = [{ x: 3 }];
 	const a = map(
 		new Map([
 			["a", 1],
-			[thing, 2]
+			[thing, 2],
 		] as any)
 	);
 	expect(Array.from(a)).toEqual([
 		["a", 1],
-		[thing, 2]
+		[thing, 2],
 	]);
 });
 
-test("[mobx-test] observe collections", function() {
+test("[mobx-test] observe collections", function () {
 	const x = map();
 	let ks, vs, entries;
 
-	autorun(function() {
+	autorun(function () {
 		ks = keys(x);
 	});
-	autorun(function() {
+	autorun(function () {
 		vs = iteratorToArray(x.values());
 	});
-	autorun(function() {
+	autorun(function () {
 		entries = iteratorToArray(x.entries());
 	});
 
@@ -363,7 +363,7 @@ test("[mobx-test] observe collections", function() {
 	expect(vs).toEqual([2, 3]);
 	expect(entries).toEqual([
 		["a", 2],
-		["b", 3]
+		["b", 3],
 	]);
 
 	x.has("c");
@@ -371,7 +371,7 @@ test("[mobx-test] observe collections", function() {
 	expect(vs).toEqual([2, 3]);
 	expect(entries).toEqual([
 		["a", 2],
-		["b", 3]
+		["b", 3],
 	]);
 
 	x.delete("a");
@@ -380,11 +380,11 @@ test("[mobx-test] observe collections", function() {
 	expect(entries).toEqual([["b", 3]]);
 });
 
-test("[mobx-test] cleanup", function() {
+test("[mobx-test] cleanup", function () {
 	const x = map(new Map(Object.entries({ a: 1 })));
 
 	let aValue;
-	const disposer = autorun(function() {
+	const disposer = autorun(function () {
 		aValue = x.get("a");
 	});
 
@@ -416,10 +416,10 @@ test("[mobx-test] cleanup", function() {
 	expect((adm.hasMap as any).map.has("a")).toBe(false);
 });
 
-test("[mobx-test] unobserve before delete", function() {
+test("[mobx-test] unobserve before delete", function () {
 	const propValues = [];
 	const myObservable = observable({
-		myMap: map()
+		myMap: map(),
 	}) as any;
 	myObservable.myMap.set("myId", {
 		myProp: "myPropValue",
@@ -427,11 +427,11 @@ test("[mobx-test] unobserve before delete", function() {
 			if (myObservable.myMap.has("myId"))
 				return myObservable.myMap.get("myId").myProp + " calculated";
 			return undefined;
-		}
+		},
 	});
 	// the error only happens if the value is observed
-	autorun(function() {
-		values(myObservable.myMap).forEach(function(value) {
+	autorun(function () {
+		values(myObservable.myMap).forEach(function (value) {
 			propValues.push(value.myCalculatedProp);
 		});
 	});
@@ -440,7 +440,7 @@ test("[mobx-test] unobserve before delete", function() {
 	expect(propValues).toEqual(["myPropValue calculated"]);
 });
 
-test("[mobx-test] has should not throw on invalid keys", function() {
+test("[mobx-test] has should not throw on invalid keys", function () {
 	const x = map();
 	expect(x.has(undefined)).toBe(false);
 	expect(x.has({})).toBe(false);
@@ -499,7 +499,7 @@ test("[mobx-test] support for ES6 Map", () => {
 	expect(isObservable(m)).toBe(true);
 	expect(Array.from(m)).toEqual([
 		["x", 3],
-		["y", 2]
+		["y", 2],
 	]);
 });
 
@@ -515,7 +515,7 @@ test("[mobx-test] can iterate maps", () => {
 	const y = [];
 	const d = reaction(
 		() => Array.from(x),
-		items => y.push(items)
+		(items) => y.push(items)
 	);
 
 	y.push(Array.from(x));
@@ -526,8 +526,8 @@ test("[mobx-test] can iterate maps", () => {
 		[["a", "A"]],
 		[
 			["a", "A"],
-			["b", "B"]
-		]
+			["b", "B"],
+		],
 	]);
 	d();
 });
@@ -550,7 +550,7 @@ test("[mobx-test] can iterate map - entries", () => {
 	const y = [];
 	const d = reaction(
 		() => iteratorToArray(x.entries()),
-		items => y.push(items)
+		(items) => y.push(items)
 	);
 
 	y.push(iteratorToArray(x.entries()));
@@ -561,8 +561,8 @@ test("[mobx-test] can iterate map - entries", () => {
 		[["a", "A"]],
 		[
 			["a", "A"],
-			["b", "B"]
-		]
+			["b", "B"],
+		],
 	]);
 	d();
 });
@@ -572,7 +572,7 @@ test("[mobx-test] can iterate map - keys", () => {
 	const y = [];
 	const d = reaction(
 		() => iteratorToArray(x.keys()),
-		items => y.push(items)
+		(items) => y.push(items)
 	);
 
 	y.push(iteratorToArray(x.keys()));
@@ -587,7 +587,7 @@ test("[mobx-test] can iterate map - values", () => {
 	const y = [];
 	const d = reaction(
 		() => iteratorToArray(x.values()),
-		items => y.push(items)
+		(items) => y.push(items)
 	);
 
 	y.push(iteratorToArray(x.values()));
@@ -597,7 +597,7 @@ test("[mobx-test] can iterate map - values", () => {
 	d();
 });
 
-test("[mobx-test] NaN as map key", function() {
+test("[mobx-test] NaN as map key", function () {
 	const a = map(new Map([[NaN, 0]]));
 	expect(a.has(NaN)).toBe(true);
 	expect(a.get(NaN)).toBe(0);
@@ -611,7 +611,7 @@ test("[mobx-test] maps.values, keys and maps.entries are iterables", () => {
 	const x = map(new Map(Object.entries({ x: 1, y: 2 })));
 	expect(Array.from(x.entries())).toEqual([
 		["x", 1],
-		["y", 2]
+		["y", 2],
 	]);
 	expect(Array.from(x.values())).toEqual([1, 2]);
 	expect(Array.from(x.keys())).toEqual(["x", "y"]);
@@ -644,7 +644,7 @@ test("[mobx-test] .forEach() subscribes for key changes", () => {
 
 	autorun(() => {
 		autorunInvocationCount++;
-		m.forEach(_ => {});
+		m.forEach((_) => {});
 	});
 
 	m.set(1, 1);
@@ -710,7 +710,7 @@ test("[mobx-test] .entries() subscribes for value changes", () => {
 		new Map([
 			[1, 1],
 			[2, 2],
-			[3, 3]
+			[3, 3],
 		])
 	);
 	let autorunInvocationCount = 0;
@@ -733,7 +733,7 @@ test("[mobx-test] .values() subscribes for value changes", () => {
 		new Map([
 			[1, 1],
 			[2, 2],
-			[3, 3]
+			[3, 3],
 		])
 	);
 	let autorunInvocationCount = 0;
@@ -756,14 +756,14 @@ test("[mobx-test] .forEach() subscribes for value changes", () => {
 		new Map([
 			[1, 1],
 			[2, 2],
-			[3, 3]
+			[3, 3],
 		])
 	);
 	let autorunInvocationCount = 0;
 
 	autorun(() => {
 		autorunInvocationCount++;
-		m.forEach(_ => {});
+		m.forEach((_) => {});
 	});
 
 	m.set(1, 11);
@@ -778,7 +778,7 @@ test("[mobx-test] .keys() does NOT subscribe for value changes", () => {
 		new Map([
 			[1, 1],
 			[2, 2],
-			[3, 3]
+			[3, 3],
 		])
 	);
 	let autorunInvocationCount = 0;
@@ -801,14 +801,14 @@ test("[mobx-test] noop mutations do NOT reportChanges", () => {
 		new Map([
 			[1, 1],
 			[2, 2],
-			[3, 3]
+			[3, 3],
 		])
 	);
 	let autorunInvocationCount = 0;
 
 	autorun(() => {
 		autorunInvocationCount++;
-		m.forEach(_ => {});
+		m.forEach((_) => {});
 	});
 
 	m.set(1, 1);
@@ -825,14 +825,14 @@ test("[mobx-test] iterators should be resilient to concurrent delete operation",
 			new Map([
 				[1, 1],
 				[2, 2],
-				[3, 3]
+				[3, 3],
 			])
 		);
 		const expectedMap = map(
 			new Map([
 				[1, 1],
 				[2, 2],
-				[3, 3]
+				[3, 3],
 			])
 		);
 		for (const entry of m[method]()) {

@@ -3,11 +3,11 @@ import Graph from "../core/graph";
 import {
 	getObservable,
 	getObservableSource,
-	getAdministration
+	getAdministration,
 } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/trace";
 import Administration, {
-	getAdministration as hasObservable
+	getAdministration as hasObservable,
 } from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 
@@ -64,7 +64,8 @@ class ObservableValueMap<K, V> {
 	}
 }
 
-export class MapAdministration<K, V> extends Administration<Map<K, V>>
+export class MapAdministration<K, V>
+	extends Administration<Map<K, V>>
 	implements Map<K, V> {
 	data: ObservableValueMap<K, V>;
 	hasMap: AtomMap<K>;
@@ -178,21 +179,21 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 		this.atom.reportObserved();
 
 		let nextIndex = 0;
-		const observableKeys = Array.from(this.data.keys()).map(o =>
+		const observableKeys = Array.from(this.data.keys()).map((o) =>
 			getObservable(o, this.graph)
 		);
 		return {
-			[Symbol.iterator]: function(): IterableIterator<K> {
+			[Symbol.iterator]: function (): IterableIterator<K> {
 				return this;
 			},
 			next(): IteratorResult<K> {
 				return nextIndex < observableKeys.length
 					? {
 							value: observableKeys[nextIndex++],
-							done: false
+							done: false,
 					  }
 					: { done: true, value: undefined };
-			}
+			},
 		};
 	}
 
@@ -200,16 +201,16 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 		const self = this;
 		const keys = this.keys();
 		return {
-			[Symbol.iterator]: function(): IterableIterator<V> {
+			[Symbol.iterator]: function (): IterableIterator<V> {
 				return this;
 			},
 			next(): IteratorResult<V> {
 				const { done, value } = keys.next();
 				return {
 					done,
-					value: done ? (undefined as any) : self.get(value)
+					value: done ? (undefined as any) : self.get(value),
 				};
-			}
+			},
 		};
 	}
 
@@ -217,7 +218,7 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 		const self = this;
 		const keys = this.keys();
 		return {
-			[Symbol.iterator]: function(): IterableIterator<[K, V]> {
+			[Symbol.iterator]: function (): IterableIterator<[K, V]> {
 				return this;
 			},
 			next(): IteratorResult<[K, V]> {
@@ -226,9 +227,9 @@ export class MapAdministration<K, V> extends Administration<Map<K, V>>
 					done,
 					value: done
 						? (undefined as any)
-						: ([value, self.get(value)!] as [K, V])
+						: ([value, self.get(value)!] as [K, V]),
 				};
-			}
+			},
 		};
 	}
 
@@ -279,9 +280,9 @@ const mapMethods = Object.create(null);
 	"entries",
 	"keys",
 	"values",
-	Symbol.iterator
-].forEach(method => {
-	mapMethods[method] = function(): unknown {
+	Symbol.iterator,
+].forEach((method) => {
+	mapMethods[method] = function (): unknown {
 		const adm = getAdministration(this);
 		return adm[method].apply(adm, arguments);
 	};

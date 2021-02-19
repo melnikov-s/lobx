@@ -5,7 +5,7 @@ import {
 	type,
 	enforceActions,
 	getObservableSource,
-	task
+	task,
 } from "../src/index";
 
 test("objects created from class are observable", () => {
@@ -202,7 +202,7 @@ test("observable returns the configured instance with proxied constructor", () =
 test("properties can be configured to be observable", () => {
 	const C = observable.configure(
 		{
-			valueA: type.observable
+			valueA: type.observable,
 		},
 		class {
 			valueA = 1;
@@ -250,7 +250,7 @@ test("unconfigured values are not observed", () => {
 test("properties can be configured to be observable refs", () => {
 	const C = observable.configure(
 		{
-			value: type.observable({ ref: true })
+			value: type.observable({ ref: true }),
 		},
 		class {
 			value = {};
@@ -276,8 +276,8 @@ test("properties can be further configured", () => {
 		{
 			value: type.observable.configure<Value>({
 				valueA: type.observable,
-				comp: type.computed
-			})
+				comp: type.computed,
+			}),
 		},
 		class {
 			value = {
@@ -287,7 +287,7 @@ test("properties can be further configured", () => {
 				get comp() {
 					this.count++;
 					return this.valueA * 2;
-				}
+				},
 			};
 		}
 	);
@@ -313,7 +313,7 @@ test("properties can be configured to be computed", () => {
 	const C = observable.configure(
 		{
 			comp: type.computed,
-			value: type.observable
+			value: type.observable,
 		},
 		class {
 			value = 1;
@@ -369,7 +369,7 @@ test("properties can be configured to be computed refs", () => {
 		{
 			comp: type.computed,
 			compNonRef: type.computed({ ref: false }),
-			value: type.observable
+			value: type.observable,
 		},
 		class {
 			value = 1;
@@ -413,7 +413,7 @@ test("properties can be configured to be actions", () => {
 		{
 			valueA: type.observable,
 			valueB: type.observable,
-			action: type.action
+			action: type.action,
 		},
 		class {
 			valueA = 1;
@@ -455,7 +455,7 @@ test("properties can be configured to be tasks", async () => {
 		{
 			valueA: type.observable,
 			valueB: type.observable,
-			action: type.action
+			action: type.action,
 		},
 		class {
 			valueA = 1;
@@ -508,7 +508,7 @@ test("configure with inherited class", () => {
 		{
 			value: type.observable,
 			comp: type.computed,
-			action: type.action
+			action: type.action,
 		},
 		class extends Base {}
 	);
@@ -546,7 +546,7 @@ test("configure with inherited class (super)", () => {
 		{
 			value: type.observable,
 			comp: type.computed,
-			action: type.action
+			action: type.action,
 		},
 		class extends Base {
 			action(n: number) {
@@ -581,7 +581,7 @@ test("observable returns the configured instance", () => {
 
 	observable.configure(
 		{
-			observable: type.observable
+			observable: type.observable,
 		},
 		C
 	);
@@ -599,7 +599,7 @@ test("types are inherited by prototype on configured constructors", () => {
 
 	observable.configure(
 		{
-			baseAObservable: type.observable
+			baseAObservable: type.observable,
 		},
 		BaseA
 	);
@@ -612,7 +612,7 @@ test("types are inherited by prototype on configured constructors", () => {
 	observable.configure(
 		{
 			baseAOverwrite: type.observable,
-			baseBObservable: type.observable
+			baseBObservable: type.observable,
 		},
 		BaseB
 	);
@@ -640,7 +640,7 @@ test("types are not inherited by prototype on non-configured constructors", () =
 
 	observable.configure(
 		{
-			baseAObservable: type.observable
+			baseAObservable: type.observable,
 		},
 		BaseA
 	);
@@ -652,7 +652,7 @@ test("types are not inherited by prototype on non-configured constructors", () =
 
 	observable.configure(
 		{
-			baseBObservable: type.observable
+			baseBObservable: type.observable,
 		},
 		BaseB
 	);

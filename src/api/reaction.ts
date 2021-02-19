@@ -19,7 +19,7 @@ export default function reaction<T>(
 
 	value = listener.track(track);
 
-	return function(): void {
+	return function (): void {
 		listener.dispose();
 	};
 }

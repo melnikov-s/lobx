@@ -36,7 +36,7 @@ export default class AtomMap<K> {
 
 				entry = new Atom(this.graph);
 				if (this.clearOnUnobserved) {
-					const unsub = this.graph.onObservedStateChange(entry, observing => {
+					const unsub = this.graph.onObservedStateChange(entry, (observing) => {
 						if (!observing) {
 							this.map?.delete(key);
 							unsub();

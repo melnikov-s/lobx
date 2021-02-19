@@ -3,11 +3,11 @@ module.exports = {
 	bail: false,
 	roots: ["<rootDir>", "<rootDir>/tests/"],
 	transform: {
-		"^.+\\.tsx?$": "ts-jest"
+		"^.+\\.tsx?$": "ts-jest",
 	},
 	globals: {
 		"ts-jest": {
-			tsconfig: "tests/tsconfig.json"
-		}
-	}
+			tsconfig: "tests/tsconfig.json",
+		},
+	},
 };

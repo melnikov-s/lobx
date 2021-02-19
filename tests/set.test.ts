@@ -3,7 +3,7 @@ import {
 	observable,
 	isObservable,
 	trace,
-	getObservableSource
+	getObservableSource,
 } from "../src/index";
 
 const set = <T>(obj: Set<T> = new Set()): Set<T> => {
@@ -61,7 +61,7 @@ test("set forEach returns observable objects", () => {
 	const s = set();
 	s.add(target);
 
-	s.forEach(t => {
+	s.forEach((t) => {
 		ran = true;
 		expect(isObservable(t)).toBe(true);
 	});
@@ -75,7 +75,7 @@ test("set keys returns observable objects", () => {
 	const s = set();
 	s.add(target);
 
-	Array.from(s.keys()).forEach(t => {
+	Array.from(s.keys()).forEach((t) => {
 		ran = true;
 		expect(isObservable(t)).toBe(true);
 	});
@@ -89,7 +89,7 @@ test("set values returns observable objects", () => {
 	const s = set();
 	s.add(target);
 
-	Array.from(s.values()).forEach(t => {
+	Array.from(s.values()).forEach((t) => {
 		ran = true;
 		expect(isObservable(t)).toBe(true);
 	});
@@ -216,11 +216,11 @@ test("instanceof WeakSet", () => {
 	expect(s instanceof WeakSet).toBe(true);
 });
 
-test("[mobx-test] set crud", function() {
+test("[mobx-test] set crud", function () {
 	const events = [];
 	const s = set(new Set([1])) as Set<any>;
 
-	const u = trace(s, changes => {
+	const u = trace(s, (changes) => {
 		events.push(changes);
 	});
 
@@ -274,19 +274,19 @@ test("[mobx-test] set crud", function() {
 		{ object: s, newValue: 3, type: "add" },
 		{ object: s, oldValue: 3, type: "delete" },
 		{ object: s, newValue: 4, type: "add" },
-		{ object: s, oldValue: 4, type: "delete" }
+		{ object: s, oldValue: 4, type: "delete" },
 	]);
 });
 
-test("[mobx-test] observe value", function() {
+test("[mobx-test] observe value", function () {
 	const s = set();
 	let hasX = false;
 	let hasY = false;
 
-	autorun(function() {
+	autorun(function () {
 		hasX = s.has("x");
 	});
-	autorun(function() {
+	autorun(function () {
 		hasY = s.has("y");
 	});
 
@@ -300,17 +300,17 @@ test("[mobx-test] observe value", function() {
 	expect(hasY).toBe(false);
 });
 
-test("[mobx-test] observe collections", function() {
+test("[mobx-test] observe collections", function () {
 	const x = set();
 	let ks, values, entries;
 
-	autorun(function() {
+	autorun(function () {
 		ks = keys(x);
 	});
-	autorun(function() {
+	autorun(function () {
 		values = Array.from(x.values());
 	});
-	autorun(function() {
+	autorun(function () {
 		entries = Array.from(x.entries());
 	});
 
@@ -319,7 +319,7 @@ test("[mobx-test] observe collections", function() {
 	expect(values).toEqual(["a"]);
 	expect(entries).toEqual([["a", "a"]]);
 
-	x.forEach(value => {
+	x.forEach((value) => {
 		expect(x.has(value)).toBe(true);
 	});
 
@@ -337,7 +337,7 @@ test("[mobx-test] observe collections", function() {
 	expect(values).toEqual(["a", "b"]);
 	expect(entries).toEqual([
 		["a", "a"],
-		["b", "b"]
+		["b", "b"],
 	]);
 
 	x.delete("a");
@@ -346,12 +346,12 @@ test("[mobx-test] observe collections", function() {
 	expect(entries).toEqual([["b", "b"]]);
 });
 
-test("[mobx-test] cleanup", function() {
+test("[mobx-test] cleanup", function () {
 	const s = set(new Set(["a"]));
 
 	let hasA;
 
-	autorun(function() {
+	autorun(function () {
 		hasA = s.has("a");
 	});
 
@@ -376,7 +376,7 @@ test("[mobx-test] set should support iterall / iterable ", () => {
 
 	expect(leech(a.entries())).toEqual([
 		[1, 1],
-		[2, 2]
+		[2, 2],
 	]);
 
 	expect(leech(a.keys())).toEqual([1, 2]);

@@ -1,7 +1,7 @@
 import { observable, createScheduler, Scheduler, isInBatch } from "../src";
 
 const createTimeoutScheduler = (timeout: number = 0): Scheduler =>
-	createScheduler(fn => setTimeout(fn, timeout));
+	createScheduler((fn) => setTimeout(fn, timeout));
 
 beforeEach(() => {
 	jest.useFakeTimers();
@@ -46,7 +46,7 @@ test("reaction scheduler passes in the last value into callback", () => {
 	let value = 0;
 	scheduler.reaction(
 		() => o.get(),
-		v => {
+		(v) => {
 			value = v;
 		}
 	);
@@ -109,7 +109,7 @@ test("listeners on the same scheduler trigger in a tight loop", () => {
 	let count = 0;
 	let asserted = true;
 	const createCustomScheduler = (timeout: number = 0): Scheduler =>
-		createScheduler(fn =>
+		createScheduler((fn) =>
 			setTimeout(() => {
 				expect(count).toBe(0);
 				fn();
@@ -141,7 +141,7 @@ test("listeners on the same scheduler trigger in a tight loop", () => {
 
 test("can create a sync scheduler", () => {
 	let count = 0;
-	const createCustomScheduler = (): Scheduler => createScheduler(fn => fn());
+	const createCustomScheduler = (): Scheduler => createScheduler((fn) => fn());
 
 	const scheduler = createCustomScheduler();
 	const o = observable.box(0);

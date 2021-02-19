@@ -4,20 +4,20 @@ import {
 	onObservedStateChange,
 	autorun,
 	computed,
-	runInAction
+	runInAction,
 } from "../src";
 
 const onBecomeObserved = (o, ...args: any[]) =>
 	onObservedStateChange(
 		o,
-		args[1] ? args[0] : observing => observing && args[0](),
-		args[1] ? observing => observing && args[1]() : undefined
+		args[1] ? args[0] : (observing) => observing && args[0](),
+		args[1] ? (observing) => observing && args[1]() : undefined
 	);
 const onBecomeUnobserved = (o, ...args: any[]) =>
 	onObservedStateChange(
 		o,
-		args[1] ? args[0] : observing => !observing && args[0](),
-		args[1] ? observing => !observing && args[1]() : undefined
+		args[1] ? args[0] : (observing) => !observing && args[0](),
+		args[1] ? (observing) => !observing && args[1]() : undefined
 	);
 const objectCase = () => ({
 	obj: observable({ value: 1, valueAlt: 2 }),
@@ -29,7 +29,7 @@ const objectCase = () => ({
 	},
 	add(k, v) {
 		this.obj[k] = v;
-	}
+	},
 });
 objectCase.label = "object";
 
@@ -37,7 +37,7 @@ const arrayCase = () => ({
 	obj: observable([1, 2, 3]),
 	get() {
 		return this.obj[0];
-	}
+	},
 });
 arrayCase.label = "array";
 
@@ -48,7 +48,7 @@ const setCase = () => ({
 	notExistingKey: 4,
 	get() {
 		return this.obj.forEach(() => {});
-	}
+	},
 });
 setCase.label = "set";
 
@@ -57,7 +57,7 @@ const mapCase = () => ({
 		new Map([
 			[1, 1],
 			[2, 2],
-			[3, 3]
+			[3, 3],
 		])
 	),
 	existingKey: 1,
@@ -68,7 +68,7 @@ const mapCase = () => ({
 	},
 	add(k, v) {
 		this.obj.set(k, v);
-	}
+	},
 });
 mapCase.label = "map";
 
@@ -76,11 +76,11 @@ const dateCase = () => ({
 	obj: observable(new Date()),
 	get() {
 		return this.obj.getDate();
-	}
+	},
 });
 dateCase.label = "date";
 
-[objectCase, arrayCase, setCase, mapCase, dateCase].forEach(TestCase => {
+[objectCase, arrayCase, setCase, mapCase, dateCase].forEach((TestCase) => {
 	test(`onBecomeObserved on ${TestCase.label}`, () => {
 		const testCase = TestCase();
 		let count = 0;
@@ -136,7 +136,7 @@ dateCase.label = "date";
 	});
 });
 
-[objectCase, mapCase].forEach(TestCase => {
+[objectCase, mapCase].forEach((TestCase) => {
 	test(`onBecomeObserved on ${TestCase.label} with existing key`, () => {
 		const testCase = TestCase();
 		let count = 0;
@@ -316,7 +316,7 @@ test("computed calls `onBecomeObserved` / `onBecomeUnobserved` in a computed der
 	onBecomeUnobserved(c2, () => count++);
 
 	const c3 = computed(() => c1.get() * 2 > 0 && c2.get(), {
-		keepAlive: true
+		keepAlive: true,
 	});
 
 	onBecomeObserved(c3, () => count++);
@@ -341,7 +341,7 @@ test("calls unBecomeObserved/onBecomeUnobserved to nodes observed by keepAlive c
 			return o.get() * 2;
 		},
 		{
-			keepAlive: true
+			keepAlive: true,
 		}
 	);
 	onBecomeObserved(c, () => count++);
@@ -423,7 +423,7 @@ test("onObservedStateChange works with computed getters on objects", () => {
 		value: 1,
 		get comp() {
 			return o.value * 2;
-		}
+		},
 	});
 
 	onObservedStateChange(o, "comp", () => count++);

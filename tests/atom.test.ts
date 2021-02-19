@@ -4,12 +4,12 @@ import {
 	autorun,
 	atom,
 	runInAction,
-	onObservedStateChange
+	onObservedStateChange,
 } from "../src";
 
 const createValueAtom = (v, onBecomeObservedCb?, onBecomeUnobservedCb?) => {
 	const n = atom();
-	onObservedStateChange(n, observing => {
+	onObservedStateChange(n, (observing) => {
 		observing ? onBecomeObservedCb?.() : onBecomeUnobservedCb?.();
 	});
 	let value = v;
@@ -22,7 +22,7 @@ const createValueAtom = (v, onBecomeObservedCb?, onBecomeUnobservedCb?) => {
 		get() {
 			n.reportObserved();
 			return value;
-		}
+		},
 	};
 };
 
@@ -110,7 +110,7 @@ test("will not trigger listeners unless 'reportChanged' is called", () => {
 	const o = observable.box(1);
 	const c = computed(() => ({
 		n: a.get(),
-		o: o.get()
+		o: o.get(),
 	}));
 
 	autorun(() => {
@@ -165,7 +165,7 @@ test("unoptimizable subscriptions are diffed correctly", () => {
 });
 
 test("can set a custom equals method", () => {
-	const a = atom({ equals: a => a === 1 });
+	const a = atom({ equals: (a) => a === 1 });
 
 	let count = 0;
 

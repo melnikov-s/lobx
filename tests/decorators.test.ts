@@ -4,7 +4,9 @@ import {
 	computed,
 	enforceActions,
 	task,
-	action
+	action,
+	isInAction,
+	isObservable,
 } from "../src/index";
 
 test("properties can be configured with a decorator", () => {

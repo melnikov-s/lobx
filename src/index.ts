@@ -18,7 +18,7 @@ import graph, {
 	getDefaultGraph,
 	onObservedStateChange,
 	onReactionsComplete,
-	task
+	task,
 } from "./api/graph";
 import { getObservableSource, isObservable } from "./types/utils/lookup";
 import { trace } from "./types/utils/trace";
@@ -61,7 +61,7 @@ export {
 	task,
 	trace,
 	propertyType as type,
-	untracked
+	untracked,
 };
 
 export {
@@ -71,5 +71,5 @@ export {
 	DeleteEvent,
 	UpdateArrayEvent,
 	SpliceArrayEvent,
-	MutationListener
+	MutationListener,
 } from "./types/utils/trace";

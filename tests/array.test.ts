@@ -4,7 +4,7 @@ import {
 	reaction,
 	observable,
 	trace,
-	isObservable
+	isObservable,
 } from "../src";
 
 const array = (obj: any[] = []): any[] => {
@@ -39,7 +39,7 @@ test("sort paramters are observable", () => {
 	expect(count).toBe(1);
 });
 
-["indexOf", "lastIndexOf", "includes"].forEach(method => {
+["indexOf", "lastIndexOf", "includes"].forEach((method) => {
 	test(`Array.prototype.${method} method is observable`, () => {
 		let count = 0;
 		const negativeValue = method === "includes" ? false : -1;
@@ -67,7 +67,7 @@ test("sort paramters are observable", () => {
 	});
 });
 
-["join", "toString", "toLocaleString"].forEach(method => {
+["join", "toString", "toLocaleString"].forEach((method) => {
 	test(`Array.prototype.${method} method is observable`, () => {
 		let count = 0;
 		const arr = array([1, 2, 3]);
@@ -85,7 +85,7 @@ test("sort paramters are observable", () => {
 	});
 });
 
-["concat", "slice", "flat"].forEach(method => {
+["concat", "slice", "flat"].forEach((method) => {
 	test(`Array.prototype.${method} method is observable`, () => {
 		let count = 0;
 		const realArr = [[{}], 2, 3, 4];
@@ -114,8 +114,8 @@ test("sort paramters are observable", () => {
 	"flatMap",
 	"find",
 	"findIndex",
-	"some"
-].forEach(method => {
+	"some",
+].forEach((method) => {
 	test(`Array.prototype.${method} method is observable`, () => {
 		let count = 0;
 		const arr = array([{}, {}, {}]);
@@ -125,7 +125,7 @@ test("sort paramters are observable", () => {
 			let ran = false;
 			count++;
 
-			const result = arr[method](function(v, i, a) {
+			const result = arr[method](function (v, i, a) {
 				ran = true;
 				expect(a).toBe(arr);
 				expect(v).toBe(arr[i]);
@@ -152,7 +152,7 @@ test("sort paramters are observable", () => {
 	});
 });
 
-["reduce", "reduceRight"].forEach(method => {
+["reduce", "reduceRight"].forEach((method) => {
 	test(`Array.prototype.${method} method is observable`, () => {
 		let count = 0;
 		const arr = array([{}, {}, {}]);
@@ -161,7 +161,7 @@ test("sort paramters are observable", () => {
 			let ran = false;
 			count++;
 
-			const res = arr[method](function(acc, v, i, a) {
+			const res = arr[method](function (acc, v, i, a) {
 				ran = true;
 				expect(a).toBe(arr);
 				expect(v).toBe(arr[i]);
@@ -206,10 +206,10 @@ test("observable values do not get stored on the original target (push)", () => 
 	expect(target[0]).toBe(oTarget);
 });
 
-test("[mobx-test] array crud", function() {
+test("[mobx-test] array crud", function () {
 	const ar = array([1, 4]);
 	const buf = [];
-	const disposer = trace(ar, function(changes) {
+	const disposer = trace(ar, function (changes) {
 		buf.push(changes);
 	});
 
@@ -226,7 +226,7 @@ test("[mobx-test] array crud", function() {
 	ar.pop(); // does not fire anything
 
 	// check the object param
-	buf.forEach(function(change) {
+	buf.forEach(function (change) {
 		expect(change.object).toBe(ar);
 		delete change.object;
 	});
@@ -237,38 +237,38 @@ test("[mobx-test] array crud", function() {
 			type: "spliceArray",
 			index: 2,
 			removed: [],
-			added: [0]
+			added: [0],
 		},
 		{
 			type: "spliceArray",
 			index: 0,
 			removed: [1],
-			added: []
+			added: [],
 		},
 		{
 			type: "spliceArray",
 			index: 2,
 			removed: [],
-			added: [1, 2]
+			added: [1, 2],
 		},
 		{
 			type: "spliceArray",
 			index: 1,
 			removed: [0, 1],
-			added: [3, 4]
+			added: [3, 4],
 		},
 		{
 			type: "spliceArray",
 			index: 0,
 			removed: [3, 3, 4, 2],
-			added: ["a"]
+			added: ["a"],
 		},
 		{
 			type: "spliceArray",
 			index: 0,
 			removed: ["a"],
-			added: []
-		}
+			added: [],
+		},
 	];
 
 	expect(buf).toEqual(result);
@@ -278,7 +278,7 @@ test("[mobx-test] array crud", function() {
 	expect(buf).toEqual(result);
 });
 
-test("[mobx-test] basic functionality", function() {
+test("[mobx-test] basic functionality", function () {
 	const a = array([]);
 	expect(a.length).toBe(0);
 	expect(Object.keys(a)).toEqual([]);
@@ -292,10 +292,10 @@ test("[mobx-test] basic functionality", function() {
 	expect(a.length).toBe(2);
 	expect(a.slice()).toEqual([1, 2]);
 
-	const sum = computed(function() {
+	const sum = computed(function () {
 		return (
 			-1 +
-			a.reduce(function(a, b) {
+			a.reduce(function (a, b) {
 				return a + b;
 			}, 1)
 		);
@@ -343,7 +343,7 @@ test("[mobx-test] basic functionality", function() {
 	expect(Object.keys(a)).toEqual(["0", "1", "2"]);
 });
 
-test("[mobx-test] find(findIndex)", function() {
+test("[mobx-test] find(findIndex)", function () {
 	const a = array([10, 20, 20]);
 	function predicate(item) {
 		if (item === 20) {
@@ -363,14 +363,14 @@ test("[mobx-test] concat should automatically slice observable arrays", () => {
 	expect(a1.concat(a2)).toEqual([1, 2, 3, 4]);
 });
 
-test("[mobx-test] array modification", function() {
+test("[mobx-test] array modification", function () {
 	const a = array([1, 2, 3]);
 	const r = a.splice(-10, 5, 4, 5, 6);
 	expect(a.slice()).toEqual([4, 5, 6]);
 	expect(r).toEqual([1, 2, 3]);
 });
 
-test("[mobx-test] serialize", function() {
+test("[mobx-test] serialize", function () {
 	const a = [1, 2, 3];
 	const m = array(a);
 
@@ -379,11 +379,11 @@ test("[mobx-test] serialize", function() {
 	expect(a).toEqual(m.slice());
 });
 
-test("[mobx-test] array modification functions", function() {
+test("[mobx-test] array modification functions", function () {
 	const ars = [[], [1, 2, 3]];
 	const funcs = ["push", "pop", "shift", "unshift"];
-	funcs.forEach(function(f) {
-		ars.forEach(function(ar) {
+	funcs.forEach(function (f) {
+		ars.forEach(function (ar) {
 			const a = ar.slice();
 			const b = array(a.slice());
 			const res1 = a[f](4);
@@ -394,7 +394,7 @@ test("[mobx-test] array modification functions", function() {
 	});
 });
 
-test("[mobx-test] array modifications", function() {
+test("[mobx-test] array modifications", function () {
 	const a2 = array([]);
 	const inputs = [undefined, -10, -4, -3, -1, 0, 1, 3, 4, 10];
 	const arrays = [
@@ -403,7 +403,7 @@ test("[mobx-test] array modifications", function() {
 		[1, 2, 3, 4],
 		[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
 		[1, undefined],
-		[undefined]
+		[undefined],
 	];
 	for (let i = 0; i < inputs.length; i++)
 		for (let j = 0; j < inputs.length; j++)
@@ -418,7 +418,7 @@ test("[mobx-test] array modifications", function() {
 						inputs[j],
 						" [",
 						arrays[l].toString(),
-						"]"
+						"]",
 					].join(" ");
 					const a1 = arrays[k].slice();
 					a2.splice(0, a2.length, ...a1);
@@ -439,7 +439,7 @@ test("[mobx-test] array modifications", function() {
 				}
 });
 
-test("[mobx-test] is array", function() {
+test("[mobx-test] is array", function () {
 	const x = array([]);
 	expect(x instanceof Array).toBe(true);
 
@@ -447,7 +447,7 @@ test("[mobx-test] is array", function() {
 	expect(Array.isArray(x)).toBe(true);
 });
 
-test("[mobx-test] stringifies same as ecma array", function() {
+test("[mobx-test] stringifies same as ecma array", function () {
 	const x = array([]);
 	expect(x instanceof Array).toBe(true);
 
@@ -459,10 +459,10 @@ test("[mobx-test] stringifies same as ecma array", function() {
 	expect(x.toLocaleString()).toBe("1,2");
 });
 
-test("[mobx-test] observes when stringified", function() {
+test("[mobx-test] observes when stringified", function () {
 	const x = array([]);
 	let c = 0;
-	autorun(function() {
+	autorun(function () {
 		x.toString();
 		c++;
 	});
@@ -470,10 +470,10 @@ test("[mobx-test] observes when stringified", function() {
 	expect(c).toBe(2);
 });
 
-test("[mobx-test] observes when stringified to locale", function() {
+test("[mobx-test] observes when stringified to locale", function () {
 	const x = array([]);
 	let c = 0;
-	autorun(function() {
+	autorun(function () {
 		x.toLocaleString();
 		c++;
 	});
@@ -481,14 +481,14 @@ test("[mobx-test] observes when stringified to locale", function() {
 	expect(c).toBe(2);
 });
 
-test("[mobx-test] react to sort changes", function() {
+test("[mobx-test] react to sort changes", function () {
 	const x = array([4, 2, 3]);
-	const sortedX = computed(function() {
+	const sortedX = computed(function () {
 		return x.slice().sort();
 	});
 	let sorted;
 
-	autorun(function() {
+	autorun(function () {
 		sorted = sortedX.get();
 	});
 
@@ -502,7 +502,7 @@ test("[mobx-test] react to sort changes", function() {
 	expect(sorted).toEqual([1, 2, 3]);
 });
 
-test("[mobx-test] autoextend buffer length", function() {
+test("[mobx-test] autoextend buffer length", function () {
 	const ar = array(new Array(1000));
 	let changesCount = 0;
 	autorun(() => (ar.length, ++changesCount));
@@ -526,7 +526,7 @@ test("[mobx-test] can iterate arrays", () => {
 	const y = [];
 	const d = reaction(
 		() => Array.from(x),
-		items => y.push(items)
+		(items) => y.push(items)
 	);
 
 	y.push(Array.from(x));
@@ -566,7 +566,7 @@ test("[mobx-test] slice is reactive", () => {
 	let ok = false;
 	reaction(
 		() => a.slice().length,
-		l => l === 4 && (ok = true)
+		(l) => l === 4 && (ok = true)
 	);
 	expect(ok).toBe(false);
 	a.push(1);
@@ -583,9 +583,9 @@ test("[mobx-test] can define properties on arrays", () => {
 	Object.defineProperty(ar, "toString", {
 		enumerable: false,
 		configurable: true,
-		value: function() {
+		value: function () {
 			return "hoi";
-		}
+		},
 	});
 
 	expect(ar.toString()).toBe("hoi");

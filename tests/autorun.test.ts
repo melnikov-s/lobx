@@ -6,11 +6,11 @@ test("runs the callback initially", () => {
 	expect(count).toBe(1);
 });
 
-test("can be disposed on first run", function() {
+test("can be disposed on first run", function () {
 	const o = observable.box(1);
 	const values = [];
 
-	autorun(r => {
+	autorun((r) => {
 		r.dispose();
 		values.push(o.get());
 	});
@@ -52,12 +52,12 @@ test("[mobx-test] autoruns created in autoruns should kick off", () => {
 	const x2 = [];
 	let d;
 
-	autorun(function() {
+	autorun(function () {
 		if (d) {
 			// dispose previous autorun
 			d();
 		}
-		d = autorun(function() {
+		d = autorun(function () {
 			x2.push(x.get() * 2);
 		});
 	});

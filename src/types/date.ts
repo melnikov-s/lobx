@@ -26,7 +26,7 @@ const dateMethods = Object.create(null);
 
 function addDateSetMethod(method: string): void {
 	if (!dateMethods[method])
-		dateMethods[method] = function(): unknown {
+		dateMethods[method] = function (): unknown {
 			const adm = getAdministration(this)!;
 			const res = adm.source[method].apply(adm.source, arguments);
 			adm.atom.reportChanged();
@@ -36,7 +36,7 @@ function addDateSetMethod(method: string): void {
 
 function addDateGetMethod(method: string | number | symbol): void {
 	if (!dateMethods[method])
-		dateMethods[method] = function(): unknown {
+		dateMethods[method] = function (): unknown {
 			const adm = getAdministration(this)!;
 			adm.atom.reportObserved();
 			return adm.source[method].apply(adm.source, arguments);

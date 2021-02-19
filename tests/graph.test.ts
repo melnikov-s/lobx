@@ -12,7 +12,7 @@ import {
 	isObserved,
 	onReactionsComplete,
 	isTracking,
-	action
+	action,
 } from "../src";
 
 test("can't listen to untracked changes", () => {

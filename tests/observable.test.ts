@@ -77,11 +77,11 @@ test("[mobx-test] nested observables", () => {
 	let totalCalcs = 0;
 	let innerCalcs = 0;
 
-	const total = computed(function() {
+	const total = computed(function () {
 		totalCalcs += 1; // outer observable shouldn't recalc if inner observable didn't publish a real change
 		return (
 			price.get() *
-			computed(function() {
+			computed(function () {
 				innerCalcs += 1;
 				return factor.get() % 2 === 0 ? 1 : 3;
 			}).get()
@@ -104,16 +104,16 @@ test("[mobx-test] nested observables", () => {
 	expect(totalCalcs).toBe(5);
 });
 
-test("[mobx-test] multiple view dependencies", function() {
+test("[mobx-test] multiple view dependencies", function () {
 	let bCalcs = 0;
 	let dCalcs = 0;
 	const a = observable.box(1);
-	const b = computed(function() {
+	const b = computed(function () {
 		bCalcs++;
 		return 2 * a.get();
 	});
 	const c = observable.box(2);
-	const d = computed(function() {
+	const d = computed(function () {
 		dCalcs++;
 		return 3 * c.get();
 	});
@@ -121,7 +121,7 @@ test("[mobx-test] multiple view dependencies", function() {
 	let zwitch = true;
 	const buffer = [];
 	let fCalcs = 0;
-	const dis = autorun(function() {
+	const dis = autorun(function () {
 		fCalcs++;
 		if (zwitch) buffer.push(b.get() + d.get());
 		else buffer.push(d.get() + b.get());

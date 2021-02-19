@@ -3,15 +3,16 @@ import Atom from "../core/nodes/atom";
 import {
 	getObservable,
 	getObservableSource,
-	getAdministration
+	getAdministration,
 } from "./utils/lookup";
 import { notifyAdd, notifyDelete } from "./utils/trace";
 import Administration, {
-	getAdministration as hasObservable
+	getAdministration as hasObservable,
 } from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 
-export class SetAdministration<T> extends Administration<Set<T>>
+export class SetAdministration<T>
+	extends Administration<Set<T>>
 	implements Set<T> {
 	hasMap: AtomMap<T>;
 	keysAtom: Atom;
@@ -47,7 +48,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 
 	clear(): void {
 		this.graph.batch(() => {
-			this.source.forEach(value => this.delete(value));
+			this.source.forEach((value) => this.delete(value));
 		});
 	}
 
@@ -57,7 +58,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 	): void {
 		this.keysAtom.reportObserved();
 		this.atom.reportObserved();
-		this.source.forEach(value => {
+		this.source.forEach((value) => {
 			const observed = getObservable(value, this.graph);
 			callbackFn.call(thisArg, observed, observed, this);
 		});
@@ -115,7 +116,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 		let nextIndex = 0;
 		const values = Array.from(this.values());
 		return {
-			[Symbol.iterator]: function(): IterableIterator<[T, T]> {
+			[Symbol.iterator]: function (): IterableIterator<[T, T]> {
 				return this;
 			},
 			next(): IteratorResult<[T, T]> {
@@ -124,7 +125,7 @@ export class SetAdministration<T> extends Administration<Set<T>>
 				return index < values.length
 					? { value: [values[index], values[index]], done: false }
 					: { done: true, value: undefined };
-			}
+			},
 		};
 	}
 
@@ -137,21 +138,21 @@ export class SetAdministration<T> extends Administration<Set<T>>
 		this.atom.reportObserved();
 
 		let nextIndex = 0;
-		const observableValues = Array.from(this.source.values()).map(o =>
+		const observableValues = Array.from(this.source.values()).map((o) =>
 			getObservable(o, this.graph)
 		);
 		return {
-			[Symbol.iterator]: function(): IterableIterator<T> {
+			[Symbol.iterator]: function (): IterableIterator<T> {
 				return this;
 			},
 			next(): IteratorResult<T> {
 				return nextIndex < observableValues.length
 					? {
 							value: observableValues[nextIndex++],
-							done: false
+							done: false,
 					  }
 					: { done: true, value: undefined };
-			}
+			},
 		};
 	}
 
@@ -173,9 +174,9 @@ const setMethods = {};
 	"entries",
 	"keys",
 	"values",
-	Symbol.iterator
-].forEach(method => {
-	setMethods[method] = function(): unknown {
+	Symbol.iterator,
+].forEach((method) => {
+	setMethods[method] = function (): unknown {
 		const adm = getAdministration(this);
 		return adm[method].apply(adm, arguments);
 	};

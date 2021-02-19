@@ -65,7 +65,7 @@ function schedule(
 		},
 		autorun(callback: (t: Listener) => void) {
 			return autorun(applySchedule(callback, true), { graph });
-		}
+		},
 	};
 }
 
@@ -90,7 +90,7 @@ class ScheduledReactions {
 	}
 
 	merge(r: ScheduledReactions): void {
-		r.reactions.forEach(reaction => {
+		r.reactions.forEach((reaction) => {
 			this.reactions.add(reaction);
 			this.argsMap.set(reaction, r.argsMap.get(reaction)!);
 			this.listenerMap.set(reaction, r.listenerMap.get(reaction)!);
@@ -100,7 +100,7 @@ class ScheduledReactions {
 	flush(): void {
 		this.graph.batch(() => {
 			try {
-				this.reactions.forEach(reaction => {
+				this.reactions.forEach((reaction) => {
 					const args = this.argsMap.get(reaction) ?? [];
 					const listener = this.listenerMap.get(reaction)!;
 					!listener.isDisposed && reaction(...args);

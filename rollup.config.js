@@ -8,13 +8,13 @@ module.exports = {
 			file: "lib/lobx.js",
 			format: "umd",
 			name: "lobx",
-			sourcemap: true
+			sourcemap: true,
 		},
 		{
 			file: "lib/lobx.module.js",
 			format: "es",
 			name: "lobx",
-			sourcemap: true
-		}
-	]
+			sourcemap: true,
+		},
+	],
 };

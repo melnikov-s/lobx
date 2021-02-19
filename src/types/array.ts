@@ -2,7 +2,7 @@ import Graph from "../core/graph";
 import {
 	getAdministration,
 	getObservable,
-	getObservableSource
+	getObservableSource,
 } from "./utils/lookup";
 import { notifyArrayUpdate, notifySpliceArray } from "./utils/trace";
 import Administration from "./utils/Administration";
@@ -212,7 +212,7 @@ const arrayMethods = {
 		);
 
 		return this;
-	}
+	},
 };
 
 [
@@ -235,10 +235,10 @@ const arrayMethods = {
 	"includes",
 	"lastIndexOf",
 	"reduce",
-	"reduceRight"
-].forEach(method => {
+	"reduceRight",
+].forEach((method) => {
 	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function(this: unknown[]): unknown {
+		arrayMethods[method] = function (this: unknown[]): unknown {
 			const adm = getAdministration(this);
 
 			return adm.source[method].apply(adm.proxy, arguments);

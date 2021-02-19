@@ -31,7 +31,7 @@ test("passes the value returned from the track method into the callback", () => 
 		() => {
 			return o.get();
 		},
-		v => {
+		(v) => {
 			value = v;
 		}
 	);
@@ -199,6 +199,6 @@ test("reactions triggering other reactions", () => {
 		"reaction1 + 3",
 		"reaction3 + 2",
 		"computed",
-		"reaction1 + 2"
+		"reaction1 + 2",
 	]);
 });

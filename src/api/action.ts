@@ -28,7 +28,7 @@ export default function action<T extends unknown[], U>(
 		return descriptor;
 	} else {
 		const [func] = args as [(...args: T) => U];
-		return function(this: unknown, ...args: T): U {
+		return function (this: unknown, ...args: T): U {
 			return runInAction(() => func.apply(this, args)) as U;
 		};
 	}

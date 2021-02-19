@@ -293,7 +293,7 @@ test("[mobx-test] action in autorun does keep / make computed values alive", () 
 		myComputed.get();
 	};
 
-	const runWithMemoizing = fun => {
+	const runWithMemoizing = (fun) => {
 		autorun(fun)();
 	};
 
@@ -306,7 +306,7 @@ test("[mobx-test] action in autorun does keep / make computed values alive", () 
 	callComputedTwice();
 	expect(calls).toBe(5);
 
-	runWithMemoizing(function() {
+	runWithMemoizing(function () {
 		runInAction(callComputedTwice);
 	});
 	expect(calls).toBe(6);

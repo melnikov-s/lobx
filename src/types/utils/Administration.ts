@@ -17,7 +17,7 @@ export default class Administration<T extends object = object> {
 		preventExtensions(): boolean {
 			throw new Error(`observable objects cannot be frozen`);
 			return false;
-		}
+		},
 	};
 	protected valuesMap?: AtomMap<unknown>;
 	private forceObservedAtoms?: Atom[];
@@ -64,7 +64,7 @@ export default class Administration<T extends object = object> {
 		if (key) {
 			if (!this.valuesMap) {
 				throw new Error(
-					"onBecomeObserved with key not supported on this type."
+					"onObservedStateChange with key not supported on this type."
 				);
 			}
 

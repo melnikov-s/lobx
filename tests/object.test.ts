@@ -7,7 +7,7 @@ import {
 	type,
 	enforceActions,
 	isObservable,
-	getObservableSource
+	getObservableSource,
 } from "../src/index";
 
 function object<T extends object>(obj: T = {} as T): Record<string, any> {
@@ -47,7 +47,7 @@ test("getters on the object become computed", () => {
 		get comp() {
 			count++;
 			return this.prop * 2;
-		}
+		},
 	});
 
 	autorun(() => o.comp);
@@ -66,7 +66,7 @@ test("observable objects can be configured", () => {
 			{
 				observableValue: type.observable,
 				comp: type.computed,
-				inc: type.action
+				inc: type.action,
 			},
 			{
 				count: 0,
@@ -79,7 +79,7 @@ test("observable objects can be configured", () => {
 				inc() {
 					this.observableValue++;
 					this.observableValue++;
-				}
+				},
 			}
 		);
 
@@ -127,7 +127,7 @@ test("observable objects can be configured with function", () => {
 				inc() {
 					this.observableValue++;
 					this.observableValue++;
-				}
+				},
 			}
 		);
 
@@ -152,7 +152,7 @@ test("observable objects can be configured with function", () => {
 test("can retrieve Object.prototype properties from observable objects", () => {
 	const properties = Object.getOwnPropertyNames(Object.prototype);
 	const o = observable.configure({}, {});
-	expect(() => properties.forEach(n => o[n])).not.toThrow();
+	expect(() => properties.forEach((n) => o[n])).not.toThrow();
 });
 
 test("can only have one observerbale proxy per object", () => {
@@ -195,7 +195,7 @@ test("observable value is updated when target is updated", () => {
 test("observable objects are deeply observed", () => {
 	const o = object({
 		obj: { prop: "value ", obj: { prop: "value " } },
-		arr: [1, 2, 3]
+		arr: [1, 2, 3],
 	});
 
 	let count = 0;
@@ -287,10 +287,10 @@ test("frozen objects are not observed", () => {
 	expect(isObservable(o.toBeFrozen)).toBe(false);
 });
 
-test("[mobx-test] object crud", function() {
+test("[mobx-test] object crud", function () {
 	const events = [];
 	const o = object({ "1": "a" });
-	trace(o, function(changes) {
+	trace(o, function (changes) {
 		events.push(changes);
 	});
 
@@ -312,7 +312,7 @@ test("[mobx-test] object crud", function() {
 
 	expect(Object.keys(o).length).toBe(1);
 
-	Object.keys(o).forEach(k => delete o[k]);
+	Object.keys(o).forEach((k) => delete o[k]);
 	expect(Object.keys(o)).toEqual([]);
 	expect(Object.values(o)).toEqual([]);
 	expect(Object.keys(o).length).toBe(0);
@@ -328,7 +328,7 @@ test("[mobx-test] object crud", function() {
 		{ object: o, name: "1", newValue: "aa", oldValue: "a", type: "update" },
 		{ object: o, name: "1", newValue: "b", oldValue: "aa", type: "update" },
 		{ object: o, name: "1", oldValue: "b", type: "delete" },
-		{ object: o, name: "2", newValue: "a", type: "add" }
+		{ object: o, name: "2", newValue: "a", type: "add" },
 	]);
 });
 
@@ -337,18 +337,18 @@ test("[mobx-test] keys should be observable when extending", () => {
 
 	const todoTitles = [];
 	reaction(
-		() => Object.keys(todos).map(key => `${key}: ${todos[key]}`),
-		titles => todoTitles.push(titles.join(","))
+		() => Object.keys(todos).map((key) => `${key}: ${todos[key]}`),
+		(titles) => todoTitles.push(titles.join(","))
 	);
 
 	runInAction(() => {
 		Object.assign(todos, {
 			lewis: "Read Lewis",
-			chesterton: "Be mind blown by Chesterton"
+			chesterton: "Be mind blown by Chesterton",
 		});
 	});
 	expect(todoTitles).toEqual([
-		"lewis: Read Lewis,chesterton: Be mind blown by Chesterton"
+		"lewis: Read Lewis,chesterton: Be mind blown by Chesterton",
 	]);
 
 	Object.assign(todos, { lewis: "Read Lewis twice" });
@@ -356,7 +356,7 @@ test("[mobx-test] keys should be observable when extending", () => {
 	expect(todoTitles).toEqual([
 		"lewis: Read Lewis,chesterton: Be mind blown by Chesterton",
 		"lewis: Read Lewis twice,chesterton: Be mind blown by Chesterton",
-		"lewis: Read Lewis twice,chesterton: Be mind blown by Chesterton,coffee: Grab coffee"
+		"lewis: Read Lewis twice,chesterton: Be mind blown by Chesterton,coffee: Grab coffee",
 	]);
 });
 
@@ -366,7 +366,7 @@ test("[mobx-test] object - set, remove, values are reactive", () => {
 
 	reaction(
 		() => Object.values(todos),
-		values => snapshots.push(values)
+		(values) => snapshots.push(values)
 	);
 
 	expect("x" in todos).toBe(false);
@@ -388,7 +388,7 @@ test("[mobx-test] object - set, remove, entries are reactive", () => {
 
 	reaction(
 		() => Object.entries(todos),
-		entries => snapshots.push(entries)
+		(entries) => snapshots.push(entries)
 	);
 
 	expect("x" in todos).toBe(false);
@@ -405,13 +405,13 @@ test("[mobx-test] object - set, remove, entries are reactive", () => {
 		[["x", 3]],
 		[
 			["x", 3],
-			["z", 4]
+			["z", 4],
 		],
 		[
 			["x", 5],
-			["z", 4]
+			["z", 4],
 		],
-		[["x", 5]]
+		[["x", 5]],
 	]);
 });
 
@@ -421,7 +421,7 @@ test("[mobx-test] object - set, remove, keys are reactive", () => {
 
 	reaction(
 		() => Object.keys(todos),
-		keys => snapshots.push(keys)
+		(keys) => snapshots.push(keys)
 	);
 
 	todos.x = 3;
@@ -442,14 +442,14 @@ test("[mobx-test] has and get are reactive", async () => {
 		() => {
 			return "x" in todos;
 		},
-		b => b && count++
+		(b) => b && count++
 	);
 
 	reaction(
 		() => {
 			return todos.y === 3;
 		},
-		b => b && count++
+		(b) => b && count++
 	);
 
 	expect(count).toBe(0);
@@ -463,7 +463,7 @@ test("[mobx-test] getter props are considered part of collections", () => {
 	const x = object({
 		get y() {
 			return 3;
-		}
+		},
 	});
 	expect(x.y).toBe(3);
 	expect("y" in x).toBe(true); // `in` also checks proto type, so should return true!
@@ -493,12 +493,12 @@ test("[mobx-test] should react to key removal (unless reconfiguraing to empty) -
 	const events = [];
 	const x = object({
 		y: 1,
-		z: 1
+		z: 1,
 	});
 
 	reaction(
 		() => Object.keys(x),
-		keys => events.push(keys.join(","))
+		(keys) => events.push(keys.join(","))
 	);
 
 	events.push(Object.keys(x).join(","));
@@ -514,12 +514,12 @@ test("[mobx-test] should react to key removal (unless reconfiguraing to empty) -
 	const events = [];
 	const x = object({
 		y: 1,
-		z: 1
+		z: 1,
 	});
 
 	reaction(
 		() => x.z,
-		v => events.push(v)
+		(v) => events.push(v)
 	);
 
 	delete x.z;
@@ -530,12 +530,12 @@ test("[mobx-test] should react to key removal (unless reconfiguraing to empty) -
 	const events = [];
 	const x = object({
 		y: 1,
-		z: undefined
+		z: undefined,
 	});
 
 	reaction(
 		() => x.z,
-		v => events.push(v)
+		(v) => events.push(v)
 	);
 
 	delete x.z;
@@ -548,7 +548,7 @@ test("[mobx-test] should react to future key additions - 1", () => {
 
 	reaction(
 		() => Object.keys(x),
-		keys => events.push(keys.join(","))
+		(keys) => events.push(keys.join(","))
 	);
 
 	x.y = undefined;
@@ -563,7 +563,7 @@ test("[mobx-test] should react to future key additions - 2", () => {
 		() => {
 			return x.z;
 		},
-		v => {
+		(v) => {
 			events.push(v);
 		}
 	);
@@ -587,7 +587,7 @@ test("[mobx-test] correct keys are reported", () => {
 		a: 4,
 		get b() {
 			return 5;
-		}
+		},
 	});
 	x.z = 3;
 	x.y;
@@ -600,7 +600,7 @@ test("[mobx-test] correct keys are reported", () => {
 		["y", 2],
 		["a", 4],
 		["b", 5],
-		["z", 3]
+		["z", 3],
 	]);
 
 	expect(Object.getOwnPropertyNames(x)).toEqual(["x", "y", "a", "b", "z"]);
@@ -621,7 +621,7 @@ test("[mobx-test] in operator", () => {
 		a: 4,
 		get b() {
 			return 5;
-		}
+		},
 	});
 	x.z = 3;
 	expect("x" in x).toBeTruthy();
@@ -644,7 +644,7 @@ test("[mobx-test] for-in operator", () => {
 		a: 4,
 		get b() {
 			return 5;
-		}
+		},
 	});
 	x.z = 3;
 
@@ -689,7 +689,7 @@ test("[mobx-test] ownKeys invariant not broken - 1", () => {
 		x: 3,
 		get y() {
 			return 1;
-		}
+		},
 	});
 	expect(() => {
 		Object.freeze(a);
@@ -698,7 +698,7 @@ test("[mobx-test] ownKeys invariant not broken - 1", () => {
 
 test("[mobx-test] deleting / recreate prop", () => {
 	const value = object({
-		foo: undefined // if foo is something like 'abc', it works.
+		foo: undefined, // if foo is something like 'abc', it works.
 	});
 
 	const events = [];
@@ -711,6 +711,6 @@ test("[mobx-test] deleting / recreate prop", () => {
 	expect(events).toEqual([
 		undefined,
 		undefined, // ideally  not, but ok..
-		"def"
+		"def",
 	]);
 });

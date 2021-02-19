@@ -5,7 +5,7 @@ export function notifyAdd(obj: object, value: unknown, name?: unknown): void {
 		object: obj,
 		type: "add",
 		name,
-		newValue: value
+		newValue: value,
 	});
 }
 
@@ -18,7 +18,7 @@ export function notifyDelete(
 		object: obj,
 		type: "delete",
 		name,
-		oldValue: value
+		oldValue: value,
 	});
 }
 
@@ -33,7 +33,7 @@ export function notifyUpdate(
 		type: "update",
 		name,
 		oldValue,
-		newValue
+		newValue,
 	});
 }
 
@@ -48,7 +48,7 @@ export function notifyArrayUpdate<T>(
 		type: "updateArray",
 		index,
 		oldValue,
-		newValue
+		newValue,
 	});
 }
 
@@ -63,7 +63,7 @@ export function notifySpliceArray<T>(
 		type: "spliceArray",
 		index,
 		added,
-		removed
+		removed,
 	});
 }
 

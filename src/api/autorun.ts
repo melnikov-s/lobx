@@ -13,7 +13,7 @@ export default function autorun(
 
 	listener.track(boundCallback);
 
-	return function(): void {
+	return function (): void {
 		listener.dispose();
 	};
 }

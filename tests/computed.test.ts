@@ -7,7 +7,7 @@ import {
 	Observable,
 	Computed,
 	isObserved,
-	onObservedStateChange
+	onObservedStateChange,
 } from "../src";
 
 test("can return a computed value", () => {
@@ -388,7 +388,7 @@ test("will observe sibling computed values", () => {
 	const observables: (Observable<number> | Computed<number>)[] = [o];
 	for (let i = 0; i < 10; i++) {
 		observables.push(
-			computed(function() {
+			computed(function () {
 				return observables[i].get() + 1;
 			})
 		);
@@ -655,7 +655,7 @@ test("can provide a custom equals function", () => {
 			equals: (a: any, b: any) => {
 				countB++;
 				return a.prop === b.prop;
-			}
+			},
 		}
 	);
 	autorun(() => {
@@ -703,7 +703,7 @@ test("correctly marks computed as potentially stale", () => {
 test("sets the conext of the executing computed", () => {
 	const context = {};
 	const c = computed(
-		function() {
+		function () {
 			expect(this).toBe(context);
 			return 1;
 		},
@@ -718,7 +718,7 @@ test("can change keepAlive once computed has been created", () => {
 	let onBecomeObservedCount = 0;
 	const o = observable.box(1);
 
-	onObservedStateChange(o, observing => {
+	onObservedStateChange(o, (observing) => {
 		if (observing) {
 			onBecomeObservedCount++;
 		} else {
@@ -753,13 +753,13 @@ test("can change keepAlive once computed has been created", () => {
 test("[mobx-test] computed values believe NaN === NaN", () => {
 	const a = observable.box(2);
 	const b = observable.box(3);
-	const c = computed(function() {
+	const c = computed(function () {
 		return a.get() * b.get();
 	});
 	const buf = [];
 	reaction(
 		() => c.get(),
-		v => buf.push(v)
+		(v) => buf.push(v)
 	);
 
 	a.set(NaN);
@@ -771,19 +771,19 @@ test("[mobx-test] computed values believe NaN === NaN", () => {
 	expect(buf).toEqual([NaN, 6]);
 });
 
-test("[mobx-test] lazy evaluation", function() {
+test("[mobx-test] lazy evaluation", function () {
 	let bCalcs = 0;
 	let cCalcs = 0;
 	let dCalcs = 0;
 	let observerChanges = 0;
 
 	const a = observable.box(1);
-	const b = computed(function() {
+	const b = computed(function () {
 		bCalcs += 1;
 		return a.get() + 1;
 	});
 
-	const c = computed(function() {
+	const c = computed(function () {
 		cCalcs += 1;
 		return b.get() + 1;
 	});
@@ -806,14 +806,14 @@ test("[mobx-test] lazy evaluation", function() {
 	expect(bCalcs).toBe(3);
 	expect(cCalcs).toBe(3);
 
-	const d = computed(function() {
+	const d = computed(function () {
 		dCalcs += 1;
 		return b.get() * 2;
 	});
 
 	const handle = reaction(
 		() => d.get(),
-		function() {
+		function () {
 			observerChanges += 1;
 		}
 	);
@@ -846,15 +846,15 @@ test("[mobx-test] lazy evaluation", function() {
 	expect(observerChanges).toBe(1);
 });
 
-test("[mobx-test] change count optimization", function() {
+test("[mobx-test] change count optimization", function () {
 	let bCalcs = 0;
 	let cCalcs = 0;
 	const a = observable.box(3);
-	const b = computed(function() {
+	const b = computed(function () {
 		bCalcs += 1;
 		return 4 + a.get() - a.get();
 	});
-	const c = computed(function() {
+	const c = computed(function () {
 		cCalcs += 1;
 		return b.get();
 	});
@@ -874,11 +874,11 @@ test("[mobx-test] change count optimization", function() {
 	expect(cCalcs).toBe(1);
 });
 
-test("[mobx-test] observables removed", function() {
+test("[mobx-test] observables removed", function () {
 	let calcs = 0;
 	const a = observable.box(1);
 	const b = observable.box(2);
-	const c = computed(function() {
+	const c = computed(function () {
 		calcs++;
 		if (a.get() === 1) return b.get() * a.get() * b.get();
 		return 3;

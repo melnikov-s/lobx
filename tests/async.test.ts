@@ -5,11 +5,11 @@ import {
 	reaction,
 	runInAction,
 	getDefaultGraph,
-	enforceActions
+	enforceActions,
 } from "../src";
 
 function delay<T>(time: number, value: T) {
-	return new Promise<T>(resolve => {
+	return new Promise<T>((resolve) => {
 		setTimeout(() => {
 			resolve(value);
 		}, time);
@@ -25,7 +25,7 @@ function delayThrow<T>(time: number, value: T) {
 }
 
 function delayFn(time: number, fn: () => void) {
-	return new Promise(resolve => {
+	return new Promise((resolve) => {
 		setTimeout(() => {
 			fn();
 			resolve(null);
@@ -44,7 +44,7 @@ beforeEach(() => {
 });
 
 test("can't call task outside of an action", async () => {
-	const f = function() {
+	const f = function () {
 		return task(Promise.resolve());
 	};
 
@@ -66,7 +66,7 @@ test("can't call task outside of an action", async () => {
 test("if task is called within an action it must return a promise", () => {
 	const g = graph();
 
-	const f = function() {
+	const f = function () {
 		g.task(Promise.resolve());
 	};
 
@@ -85,10 +85,10 @@ test("[mobx-test] it should support async actions", async () => {
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
-	const f = async function(initial) {
+	const f = async function (initial) {
 		x.a = initial; // this runs in action
 		x.a = await task(delay(100, 3));
 		await task(delay(100, 0));
@@ -109,10 +109,10 @@ test("[mobx-test] it should support try catch in async", async () => {
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
-	const f = async function(initial) {
+	const f = async function (initial) {
 		x.a = initial; // this runs in action
 		try {
 			x.a = await task(delayThrow(100, 5));
@@ -160,10 +160,10 @@ test("[mobx-test] it should support async actions within async actions", async (
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
-	const innerF = actionAsync(async initial => {
+	const innerF = actionAsync(async (initial) => {
 		x.a = initial; // this runs in action
 		x.a = await task(delay(100, 3));
 		await task(delay(100, 0));
@@ -171,7 +171,7 @@ test("[mobx-test] it should support async actions within async actions", async (
 		return x.a;
 	});
 
-	const f1 = actionAsync(async initial => {
+	const f1 = actionAsync(async (initial) => {
 		x.a = await task(innerF(initial));
 		x.a = await task(delay(100, 5));
 		await task(delay(100, 0));
@@ -190,10 +190,10 @@ test("[mobx-test] it should support async actions within async actions that are 
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
-	const innerF = actionAsync(async initial => {
+	const innerF = actionAsync(async (initial) => {
 		x.a = initial; // this runs in action
 		x.a = await task(delay(10, 3));
 		await task(delay(30, 0));
@@ -201,7 +201,7 @@ test("[mobx-test] it should support async actions within async actions that are 
 		return 7;
 	});
 
-	const f1 = actionAsync(async initial => {
+	const f1 = actionAsync(async (initial) => {
 		const futureInnerF = innerF(initial);
 		x.a = await task(delay(20, 4));
 		await task(delay(10, 0));
@@ -221,10 +221,10 @@ test("[mobx-test] it should support async actions within async actions that thro
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
-	const innerF = actionAsync(async function(initial) {
+	const innerF = actionAsync(async function (initial) {
 		x.a = initial; // this runs in action
 		x.a = await task(delay(100, 3));
 		await task(delay(100, 0));
@@ -232,7 +232,7 @@ test("[mobx-test] it should support async actions within async actions that thro
 		throw "err";
 	});
 
-	const f = actionAsync(async function(initial) {
+	const f = actionAsync(async function (initial) {
 		x.a = await task(innerF(initial));
 		x.a = await task(delay(100, 5));
 		await task(delay(100, 0));
@@ -255,7 +255,7 @@ test("[mobx-test] dangling promises created directly inside the action without u
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
 	let danglingP;
@@ -281,7 +281,7 @@ test("[mobx-test] it should support recursive async", async () => {
 	const x = observable({ a: 10 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
 	const f1 = actionAsync(async () => {
@@ -300,7 +300,7 @@ test("[mobx-test] it should support parallel async", async () => {
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
 	const f1 = actionAsync(async () => {
@@ -338,7 +338,7 @@ test("[mobx-test] it should support parallel async", async () => {
 		delayFn(26, expectNoActionsRunning),
 		delayFn(35, expectNoActionsRunning),
 		delayFn(44, expectNoActionsRunning),
-		delayFn(46, expectNoActionsRunning)
+		delayFn(46, expectNoActionsRunning),
 	]);
 	expect(values).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 	expectNoActionsRunning();
@@ -349,7 +349,7 @@ test("[mobx-test] calling async actions that do not await should be ok", async (
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
 	const f1 = actionAsync(async () => {
@@ -375,7 +375,7 @@ test("[mobx-test] complex case", async () => {
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
 	const f1 = actionAsync(async (fn: any) => {
@@ -412,7 +412,7 @@ test("[mobx-test] immediately resolved promises", async () => {
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
 	const f1 = actionAsync(async () => {
@@ -437,7 +437,7 @@ test("[mobx-test] reusing promises", async () => {
 	const x = observable({ a: 1 });
 	reaction(
 		() => x.a,
-		v => values.push(v)
+		(v) => values.push(v)
 	);
 
 	const p = delay(10, 2);
@@ -458,7 +458,7 @@ test("[mobx-test] reusing promises", async () => {
 });
 
 test("[mobx-test] actions that throw in parallel", async () => {
-	const r = shouldThrow =>
+	const r = (shouldThrow) =>
 		new Promise((resolve, reject) => {
 			setTimeout(() => {
 				if (shouldThrow) {
@@ -488,7 +488,7 @@ test("[mobx-test] actions that throw in parallel", async () => {
 	const result = await Promise.all([
 		actionAsync1(),
 		actionAsync2(),
-		actionAsync1()
+		actionAsync1(),
 	]);
 
 	expectNoActionsRunning();

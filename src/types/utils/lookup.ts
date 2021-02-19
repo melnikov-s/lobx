@@ -4,7 +4,7 @@ import { SetAdministration } from "../set";
 import {
 	ObjectAdministration,
 	Configuration,
-	ConfigurationGetter
+	ConfigurationGetter,
 } from "../object";
 import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
@@ -53,7 +53,7 @@ export function getAction<T extends Function>(fn: T, graph: Graph): T {
 	let action = actionsMap.get(fn);
 
 	if (!action) {
-		action = function(this: unknown, ...args: unknown[]): unknown {
+		action = function (this: unknown, ...args: unknown[]): unknown {
 			return graph.runInAction(() => fn.apply(this, args));
 		};
 

@@ -57,21 +57,21 @@ type PropertyOptions = {
 
 const defaultObservable: ObservableOptions = {
 	type: "observable",
-	ref: false
+	ref: false,
 };
 const defaultComputed: ComputedOptions = {
 	type: "computed",
 	ref: true,
-	keepAlive: false
+	keepAlive: false,
 };
 const actionType: ActionOptions = { type: "action" };
 
 const observableType: CallableOption<ObservableOptions> = Object.assign(
-	function(options: ConfigOption<ObservableOptions>): ObservableOptions {
+	function (options: ConfigOption<ObservableOptions>): ObservableOptions {
 		return {
 			...defaultObservable,
 			...options,
-			type: "observable"
+			type: "observable",
 		};
 	},
 	defaultObservable,
@@ -80,13 +80,13 @@ const observableType: CallableOption<ObservableOptions> = Object.assign(
 			return {
 				type: "observable",
 				configuration: c,
-				ref: false
+				ref: false,
 			} as ObservableOptions;
-		}
+		},
 	}
 );
 
-const computedType: CallableOption<ComputedOptions> = Object.assign(function(
+const computedType: CallableOption<ComputedOptions> = Object.assign(function (
 	options: ConfigOption<ComputedOptions>
 ): ComputedOptions {
 	return { ...defaultComputed, ...options, type: "computed" };
@@ -98,7 +98,7 @@ export const propertyType: {
 } = {
 	observable: observableType,
 	computed: computedType,
-	action: actionType
+	action: actionType,
 } as const;
 
 function defaultConfigGetter(
