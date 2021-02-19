@@ -7,18 +7,16 @@ import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 import ComputedNode from "../core/nodes/computed";
 
-type ConfigurationTypes =
-	| ObservableOptions
-	| ComputedOptions
-	| ActionOptions
-	| undefined;
+type ConfigurationTypes = ObservableOptions | ComputedOptions | ActionOptions;
 
 export type ConfigurationGetter<T> = (
 	name: keyof T,
 	object: T
-) => ConfigurationTypes;
+) => ConfigurationTypes | undefined;
 
-export type Configuration<T> = Partial<Record<keyof T, ConfigurationTypes>>;
+export type Configuration<T> = Partial<
+	Record<keyof T, ConfigurationTypes | undefined>
+>;
 
 type Types = "observable" | "computed" | "action";
 
@@ -230,12 +228,71 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		);
 	}
 
+	private getComputed(key: PropertyKey): ComputedNode<T[keyof T]> {
+		const computedConfig: ConfigurationTypes = (this.config?.[key] ??
+			propertyType.observable) as ComputedOptions;
+		if (!this.computedMap) this.computedMap = new Map();
+		let computedNode = this.computedMap.get(key);
+		if (!computedNode) {
+			const descriptor = getPropertyDescriptor(this.source, key)!;
+			if (typeof descriptor?.get !== "function") {
+				throw new Error("computed values are only supported on getters");
+			}
+			computedNode = new ComputedNode(
+				this.graph,
+				descriptor.get,
+				computedConfig.equals,
+				computedConfig.keepAlive,
+				this.proxy
+			);
+
+			this.computedMap.set(key, computedNode);
+		}
+
+		return computedNode;
+	}
+
+	onObservedStateChange(
+		callback: (observing: boolean) => void,
+		key: PropertyKey | undefined
+	): () => void {
+		if (key == null) {
+			return this.graph.onObservedStateChange(this.atom, callback);
+		}
+
+		if (this.isUnconfigured(key)) {
+			throw new Error(
+				`onObservedStatChange not supported on this object with key: ${String(
+					key
+				)}`
+			);
+		}
+
+		const config: ConfigurationTypes = (this.config?.[key] ??
+			propertyType.observable)!;
+
+		switch (config.type) {
+			case propertyType.action.type: {
+				throw new Error(`onObservedStatChange not supported on actions`);
+			}
+			case propertyType.observable.type: {
+				const atom = this.valuesMap.getOrCreate(key);
+				return this.graph.onObservedStateChange(atom, callback);
+			}
+			case propertyType.computed.type: {
+				const computed = this.getComputed(key);
+				return this.graph.onObservedStateChange(computed, callback);
+			}
+		}
+	}
+
 	read(key: PropertyKey): unknown {
 		if (this.isUnconfigured(key)) {
 			return this.get(key);
 		}
 
-		const config = this.config?.[key] ?? propertyType.observable;
+		const config: ConfigurationTypes = (this.config?.[key] ??
+			propertyType.observable)!;
 
 		switch (config.type) {
 			case propertyType.observable.type:
@@ -263,26 +320,9 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 				return getAction((this.get(key) as unknown) as Function, this.graph);
 			}
 			case propertyType.computed.type: {
-				if (!this.computedMap) this.computedMap = new Map();
-				let computedNode = this.computedMap.get(key);
-				const computedConfig = config as ComputedOptions;
-				if (!computedNode) {
-					const descriptor = getPropertyDescriptor(this.source, key)!;
-					if (typeof descriptor?.get !== "function") {
-						throw new Error("computed values are only supported on getters");
-					}
-					computedNode = new ComputedNode(
-						this.graph,
-						descriptor.get,
-						computedConfig.equals,
-						computedConfig.keepAlive,
-						this.proxy
-					);
+				const computedNode = this.getComputed(key);
 
-					this.computedMap.set(key, computedNode);
-				}
-
-				return computedConfig.ref
+				return config.ref
 					? computedNode.get()
 					: getObservable(computedNode.get(), this.graph);
 			}

@@ -417,6 +417,23 @@ test("onObservedStateChange can be unsubed within the callback", () => {
 	expect(count).toBe(4);
 });
 
+test("onObservedStateChange works with computed getters on objects", () => {
+	let count = 0;
+	const o = observable({
+		value: 1,
+		get comp() {
+			return o.value * 2;
+		}
+	});
+
+	onObservedStateChange(o, "comp", () => count++);
+	expect(count).toBe(0);
+	const unsub = autorun(() => o.comp);
+	expect(count).toBe(1);
+	unsub();
+	expect(count).toBe(2);
+});
+
 test("[mobx-test] ensure onBecomeObserved and onBecomeUnobserved are only called when needed", () => {
 	let start = 0;
 	let stop = 0;

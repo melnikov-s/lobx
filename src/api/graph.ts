@@ -168,5 +168,5 @@ export function onObservedStateChange<T extends object>(
 
 	const adm = getAdministration(obj);
 
-	return adm.onObservedStateChange(cb, key);
+	return adm.onObservedStateChange(cb, key as PropertyKey);
 }
