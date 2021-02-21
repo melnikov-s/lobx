@@ -2,7 +2,7 @@ import autorun from "./api/autorun";
 import computed, { Computed, ComputedOptions } from "./api/computed";
 import listener, { Listener } from "./api/listener";
 import atom, { Atom } from "./api/atom";
-import observable, { Observable, ObservableOptions } from "./api/observable";
+import observable, { ObservableBox, ObservableOptions } from "./api/observable";
 import reaction from "./api/reaction";
 import action from "./api/action";
 import graph, {
@@ -51,7 +51,7 @@ export {
 	listener,
 	Listener,
 	observable,
-	Observable,
+	ObservableBox,
 	ObservableOptions,
 	onObservedStateChange,
 	onReactionsComplete,

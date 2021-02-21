@@ -4,7 +4,7 @@ import {
 	runInAction,
 	autorun,
 	computed,
-	Observable,
+	ObservableBox,
 	Computed,
 	isObserved,
 	onObservedStateChange,
@@ -385,7 +385,7 @@ test("will update after an action that changes an observer and no-ops another", 
 
 test("will observe sibling computed values", () => {
 	const o = observable.box(1);
-	const observables: (Observable<number> | Computed<number>)[] = [o];
+	const observables: (ObservableBox<number> | Computed<number>)[] = [o];
 	for (let i = 0; i < 10; i++) {
 		observables.push(
 			computed(function () {

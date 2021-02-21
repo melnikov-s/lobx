@@ -13,7 +13,7 @@ import {
 	ObservableOptions as ObjectObservableOptions,
 } from "../types/object";
 
-export type Observable<T> = {
+export type ObservableBox<T> = {
 	equals: (value: T) => boolean;
 	get: () => T;
 	set: (newValue: T) => T;
@@ -27,7 +27,7 @@ export type ObservableOptions = {
 function observableBox<T>(
 	initialValue: T,
 	opts?: ObservableOptions
-): Observable<T> {
+): ObservableBox<T> {
 	return new ObservableValue<T>(
 		initialValue,
 		resolveGraph(opts?.graph),
