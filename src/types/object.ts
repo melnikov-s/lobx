@@ -1,7 +1,7 @@
 import Atom from "../core/nodes/atom";
 import Graph from "../core/graph";
 import { getObservable, getObservableSource, getAction } from "./utils/lookup";
-import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/trace";
+import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/observe";
 import { isPropertyKey, getPropertyDescriptor, defaultEquals } from "../utils";
 import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
@@ -348,15 +348,14 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 				if (!had) {
 					this.keysAtom.reportChanged();
 					this.hasMap.reportChanged(key);
+					notifyAdd(this.proxy, targetValue, key);
+				} else {
+					notifyUpdate(this.proxy, targetValue, oldValue, key);
 				}
 
 				this.valuesMap.reportChanged(key);
 				this.flushChange();
 			});
-
-			had
-				? notifyUpdate(this.proxy, targetValue, oldValue, key)
-				: notifyAdd(this.proxy, targetValue, key);
 		}
 	}
 
@@ -381,8 +380,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 			this.valuesMap.delete(key);
 			this.flushChange();
+			notifyDelete(this.proxy, oldValue, key);
 		});
-
-		notifyDelete(this.proxy, oldValue, key);
 	}
 }

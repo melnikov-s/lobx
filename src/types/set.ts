@@ -5,7 +5,7 @@ import {
 	getObservableSource,
 	getAdministration,
 } from "./utils/lookup";
-import { notifyAdd, notifyDelete } from "./utils/trace";
+import { notifyAdd, notifyDelete } from "./utils/observe";
 import Administration, {
 	getAdministration as hasObservable,
 } from "./utils/Administration";
@@ -77,9 +77,8 @@ export class SetAdministration<T>
 			this.graph.batch(() => {
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(target);
+				notifyAdd(this.proxy, target);
 			});
-
-			notifyAdd(this.proxy, target);
 		}
 
 		return this;
@@ -93,9 +92,8 @@ export class SetAdministration<T>
 			this.graph.batch(() => {
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(target);
+				notifyDelete(this.proxy, target);
 			});
-
-			notifyDelete(this.proxy, target);
 
 			return true;
 		}

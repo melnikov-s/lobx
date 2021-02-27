@@ -3,7 +3,7 @@ import {
 	reaction,
 	observable,
 	runInAction,
-	trace,
+	observe,
 	type,
 	enforceActions,
 	isObservable,
@@ -287,10 +287,44 @@ test("frozen objects are not observed", () => {
 	expect(isObservable(o.toBeFrozen)).toBe(false);
 });
 
+test("observe occurs before reaction", () => {
+	const o = object({ a: 1 });
+	const buf = [];
+
+	observe(o, function () {
+		buf.push("trace1");
+	});
+
+	reaction(
+		() => o.a,
+		() => buf.push("reaction")
+	);
+
+	observe(o, function () {
+		buf.push("trace2");
+	});
+
+	o.a = 2; // update
+	delete o.a; // delete
+	o.a = 3; // add
+
+	expect(buf).toEqual([
+		"trace1",
+		"trace2",
+		"reaction",
+		"trace1",
+		"trace2",
+		"reaction",
+		"trace1",
+		"trace2",
+		"reaction",
+	]);
+});
+
 test("[mobx-test] object crud", function () {
 	const events = [];
 	const o = object({ "1": "a" });
-	trace(o, function (changes) {
+	observe(o, function (changes) {
 		events.push(changes);
 	});
 

@@ -5,7 +5,7 @@ import {
 	getObservableSource,
 	getAdministration,
 } from "./utils/lookup";
-import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/trace";
+import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/observe";
 import Administration, {
 	getAdministration as hasObservable,
 } from "./utils/Administration";
@@ -133,12 +133,11 @@ export class MapAdministration<K, V>
 					this.flushChange();
 					this.hasMap.reportChanged(targetKey);
 					this.keysAtom.reportChanged();
+					notifyAdd(this.proxy, targetValue, targetKey);
+				} else {
+					notifyUpdate(this.proxy, targetValue, oldValue, targetKey);
 				}
 			});
-
-			hasKey
-				? notifyUpdate(this.proxy, targetValue, oldValue, targetKey)
-				: notifyAdd(this.proxy, targetValue, targetKey);
 		}
 
 		return this;
@@ -156,9 +155,9 @@ export class MapAdministration<K, V>
 				this.hasMap.reportChanged(targetKey);
 				this.data.delete(targetKey);
 				this.data.delete(key);
+				notifyDelete(this.proxy, oldValue, targetKey);
 			});
 
-			notifyDelete(this.proxy, oldValue, targetKey);
 			return true;
 		}
 		return false;

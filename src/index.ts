@@ -21,7 +21,7 @@ import graph, {
 	task,
 } from "./api/graph";
 import { getObservableSource, isObservable } from "./types/utils/lookup";
-import { trace } from "./types/utils/trace";
+import { observe } from "./types/utils/observe";
 import { propertyType, Configuration } from "./types/object";
 import { getAdministration } from "./types/utils/Administration";
 import { Scheduler, createScheduler } from "./api/scheduler";
@@ -59,7 +59,7 @@ export {
 	runInAction,
 	Scheduler,
 	task,
-	trace,
+	observe,
 	propertyType as type,
 	untracked,
 };
@@ -72,4 +72,4 @@ export {
 	UpdateArrayEvent,
 	SpliceArrayEvent,
 	MutationListener,
-} from "./types/utils/trace";
+} from "./types/utils/observe";

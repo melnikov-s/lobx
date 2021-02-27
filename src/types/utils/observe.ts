@@ -67,7 +67,10 @@ export function notifySpliceArray<T>(
 	});
 }
 
-export function trace<T>(obj: object, method: MutationListener<T>): () => void {
+export function observe<T>(
+	obj: object,
+	method: MutationListener<T>
+): () => void {
 	let listener = listenerMap.get(obj) as ObservableListener<unknown>;
 
 	if (!listener) {

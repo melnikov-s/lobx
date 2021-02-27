@@ -2,7 +2,8 @@ import {
 	autorun,
 	observable,
 	isObservable,
-	trace,
+	reaction,
+	observe,
 	getObservableSource,
 } from "../src/index";
 
@@ -216,11 +217,41 @@ test("instanceof WeakSet", () => {
 	expect(s instanceof WeakSet).toBe(true);
 });
 
+test("observe occurs before reaction", () => {
+	const o = set(new Set());
+	const buf = [];
+
+	observe(o, function () {
+		buf.push("trace1");
+	});
+
+	reaction(
+		() => o.has(1),
+		() => buf.push("reaction")
+	);
+
+	observe(o, function () {
+		buf.push("trace2");
+	});
+
+	o.add(1); // add
+	o.delete(1); // delete
+
+	expect(buf).toEqual([
+		"trace1",
+		"trace2",
+		"reaction",
+		"trace1",
+		"trace2",
+		"reaction",
+	]);
+});
+
 test("[mobx-test] set crud", function () {
 	const events = [];
 	const s = set(new Set([1])) as Set<any>;
 
-	const u = trace(s, (changes) => {
+	const u = observe(s, (changes) => {
 		events.push(changes);
 	});
 

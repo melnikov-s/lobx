@@ -3,7 +3,7 @@ import {
 	autorun,
 	reaction,
 	observable,
-	trace,
+	observe,
 	isObservable,
 } from "../src";
 
@@ -206,10 +206,57 @@ test("observable values do not get stored on the original target (push)", () => 
 	expect(target[0]).toBe(oTarget);
 });
 
+test("observe occurs before reaction", () => {
+	const ar = array([1, 4]);
+	const buf = [];
+
+	observe(ar, function () {
+		buf.push("trace1");
+	});
+
+	reaction(
+		() => ar.join(),
+		() => buf.push("reaction")
+	);
+
+	observe(ar, function () {
+		buf.push("trace2");
+	});
+
+	ar[1] = 3;
+	ar[2] = 0;
+	expect(buf).toEqual([
+		"trace1",
+		"trace2",
+		"reaction",
+		"trace1",
+		"trace2",
+		"reaction",
+	]);
+});
+
+test("observe can change the value before reaction occurs", () => {
+	const ar = array([1, 4]);
+	const buf = [];
+	observe(ar, function () {
+		ar[1] = 5;
+	});
+
+	reaction(
+		() => ar[1],
+		(v) => {
+			buf.push(v);
+		}
+	);
+
+	ar[1] = 3;
+	expect(buf).toEqual([5]);
+});
+
 test("[mobx-test] array crud", function () {
 	const ar = array([1, 4]);
 	const buf = [];
-	const disposer = trace(ar, function (changes) {
+	const disposer = observe(ar, function (changes) {
 		buf.push(changes);
 	});
 

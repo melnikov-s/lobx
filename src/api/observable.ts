@@ -77,13 +77,14 @@ function observable<T>(...args: unknown[]): unknown {
 		return undefined;
 	} else {
 		const [object, opts] = args as [T, ObservableOptions];
-		if (isNonPrimitive(object)) {
-			return getObservable(object, resolveGraph(opts?.graph), undefined, true);
+		const primitive = !isNonPrimitive(object);
+		if (primitive) {
+			throw new Error(
+				`observable is only for non primitive values. Got ${typeof object} instead. Use observable.box for primitive values.`
+			);
 		}
 
-		throw new Error(
-			`observable is only for nom primitive values. Got ${typeof object} instead. Use observable.box for primitive values.`
-		);
+		return getObservable(object, resolveGraph(opts?.graph), undefined, true);
 	}
 }
 

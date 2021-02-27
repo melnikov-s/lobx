@@ -3,7 +3,7 @@ import {
 	observable,
 	isObservable,
 	reaction,
-	trace,
+	observe,
 } from "../src/index";
 import {
 	getAdministration,
@@ -208,10 +208,44 @@ test("does not trigger a change when same observable is set on map initialized w
 	expect(count).toBe(2);
 });
 
+test("observe occurs before reaction", () => {
+	const m = map(new Map([["a", 1]]));
+	const buf = [];
+
+	observe(m, function () {
+		buf.push("trace1");
+	});
+
+	reaction(
+		() => m.get("a"),
+		() => buf.push("reaction")
+	);
+
+	observe(m, function () {
+		buf.push("trace2");
+	});
+
+	m.set("a", 2); // update
+	m.delete("a"); // delete
+	m.set("a", 3); // add
+
+	expect(buf).toEqual([
+		"trace1",
+		"trace2",
+		"reaction",
+		"trace1",
+		"trace2",
+		"reaction",
+		"trace1",
+		"trace2",
+		"reaction",
+	]);
+});
+
 test("[mobx-test] map crud", function () {
 	const events = [];
 	const m = map(new Map(Object.entries({ "1": "a" }))) as Map<any, any>;
-	trace(m, function (changes) {
+	observe(m, function (changes) {
 		events.push(changes);
 	});
 

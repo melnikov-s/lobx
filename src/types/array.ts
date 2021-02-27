@@ -4,7 +4,7 @@ import {
 	getObservable,
 	getObservableSource,
 } from "./utils/lookup";
-import { notifyArrayUpdate, notifySpliceArray } from "./utils/trace";
+import { notifyArrayUpdate, notifySpliceArray } from "./utils/observe";
 import Administration from "./utils/Administration";
 
 export class ArrayAdministration<T> extends Administration<T[]> {
@@ -63,9 +63,11 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 			const changed = targetValue !== oldValue;
 			if (changed) {
-				values[index] = targetValue;
-				this.atom.reportChanged();
-				notifyArrayUpdate(this.proxy, index, oldValue, targetValue);
+				this.graph.batch(() => {
+					values[index] = targetValue;
+					this.atom.reportChanged();
+					notifyArrayUpdate(this.proxy, index, oldValue, targetValue);
+				});
 			}
 		} else if (index === values.length) {
 			// add a new item
@@ -117,8 +119,10 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 		const res = this.spliceItemsIntoValues(index, deleteCount, newTargetItems);
 
 		if (deleteCount !== 0 || newTargetItems.length !== 0) {
-			this.atom.reportChanged();
-			notifySpliceArray(this.proxy, index, newTargetItems, res);
+			this.graph.batch(() => {
+				this.atom.reportChanged();
+				notifySpliceArray(this.proxy, index, newTargetItems, res);
+			});
 		}
 
 		return res;
