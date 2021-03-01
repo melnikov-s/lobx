@@ -647,11 +647,14 @@ test("constructor has observable isntance", () => {
 test("can prevent Observable from being auto decorated", () => {
 	class C extends Observable {
 		prop = {};
+		observed = {};
 		constructor() {
-			super({ autoDecorate: false });
+			super({ configuration: { observed: observable } });
 		}
 	}
 
 	const c = new C();
 	expect(isObservable(c.prop)).toBe(false);
+	expect(isObservable(c.observed)).toBe(true);
+	expect(isObservable(c)).toBe(true);
 });

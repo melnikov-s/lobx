@@ -4,15 +4,16 @@ import {
 	hasCtorConfiguration,
 	setCtorAutoConfigure,
 } from "../types/utils/lookup";
+import { Configuration } from "../index";
 
 export default class Observable {
-	constructor(opts?: { graph?: Graph; autoDecorate?: boolean }) {
-		if (
-			(opts?.autoDecorate || opts?.autoDecorate === undefined) &&
-			!hasCtorConfiguration(this.constructor)
-		) {
+	constructor(opts?: {
+		graph?: Graph;
+		configuration?: Configuration<unknown>;
+	}) {
+		if (!opts?.configuration && !hasCtorConfiguration(this.constructor)) {
 			setCtorAutoConfigure(this.constructor);
 		}
-		return getObservable(this, resolveGraph(opts?.graph));
+		return getObservable(this, resolveGraph(opts?.graph), opts?.configuration);
 	}
 }
