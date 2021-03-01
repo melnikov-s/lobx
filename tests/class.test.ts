@@ -2,9 +2,9 @@ import {
 	autorun,
 	observable,
 	isObservable,
-	type,
 	enforceActions,
-	getObservableSource,
+	computed,
+	action,
 	task,
 	Observable,
 	decorate,
@@ -183,7 +183,7 @@ test("observable returns the configured class", () => {
 test("properties can be configured to be observable", () => {
 	const C = decorate(
 		{
-			valueA: type.observable,
+			valueA: observable,
 		},
 		class extends Observable {
 			valueA = 1;
@@ -231,7 +231,7 @@ test("unconfigured values are not observed", () => {
 test("properties can be configured to be observable refs", () => {
 	const C = decorate(
 		{
-			value: type.observable({ ref: true }),
+			value: observable.withOptions({ ref: true }),
 		},
 		class extends Observable {
 			value = {};
@@ -255,9 +255,9 @@ test("properties can be further configured", () => {
 	type Value = { valueA: number; valueB: number; comp: number };
 	const C = decorate(
 		{
-			value: type.observable.configure<Value>({
-				valueA: type.observable,
-				comp: type.computed,
+			value: observable.configure<Value>({
+				valueA: observable,
+				comp: computed,
 			}),
 		},
 		class extends Observable {
@@ -293,8 +293,8 @@ test("properties can be further configured", () => {
 test("properties can be configured to be computed", () => {
 	const C = decorate(
 		{
-			comp: type.computed,
-			value: type.observable,
+			comp: computed,
+			value: observable,
 		},
 		class extends Observable {
 			value = 1;
@@ -350,9 +350,9 @@ test("configuration can't be a function on classes", () => {
 test("properties can be configured to be actions", () => {
 	const C = decorate(
 		{
-			valueA: type.observable,
-			valueB: type.observable,
-			action: type.action,
+			valueA: observable,
+			valueB: observable,
+			action: action,
 		},
 		class extends Observable {
 			valueA = 1;
@@ -392,9 +392,9 @@ test("properties can be configured to be actions", () => {
 test("properties can be configured to be tasks", async () => {
 	const C = decorate(
 		{
-			valueA: type.observable,
-			valueB: type.observable,
-			action: type.action,
+			valueA: observable,
+			valueB: observable,
+			action: action,
 		},
 		class extends Observable {
 			valueA = 1;
@@ -445,9 +445,9 @@ test("configure with inherited class", () => {
 
 	const C = decorate(
 		{
-			value: type.observable,
-			comp: type.computed,
-			action: type.action,
+			value: observable,
+			comp: computed,
+			action: action,
 		},
 		class extends Base {}
 	);
@@ -483,9 +483,9 @@ test("configure with inherited class (super)", () => {
 
 	const C = decorate(
 		{
-			value: type.observable,
-			comp: type.computed,
-			action: type.action,
+			value: observable,
+			comp: computed,
+			action: action,
 		},
 		class extends Base {
 			action(n: number) {
@@ -520,7 +520,7 @@ test("observable returns the configured instance", () => {
 
 	decorate(
 		{
-			observable: type.observable,
+			observable: observable,
 		},
 		C
 	);
@@ -538,7 +538,7 @@ test("types are inherited by prototype on configured constructors", () => {
 
 	decorate(
 		{
-			baseAObservable: type.observable,
+			baseAObservable: observable,
 		},
 		BaseA
 	);
@@ -550,8 +550,8 @@ test("types are inherited by prototype on configured constructors", () => {
 
 	decorate(
 		{
-			baseAOverwrite: type.observable,
-			baseBObservable: type.observable,
+			baseAOverwrite: observable,
+			baseBObservable: observable,
 		},
 		BaseB
 	);
@@ -560,7 +560,7 @@ test("types are inherited by prototype on configured constructors", () => {
 		cObservable = {};
 	}
 
-	decorate({ cObservable: type.observable }, C);
+	decorate({ cObservable: observable }, C);
 
 	const c = observable(new C());
 
@@ -579,7 +579,7 @@ test("types are inherited by prototype on non-configured constructors", () => {
 
 	decorate(
 		{
-			baseAObservable: type.observable,
+			baseAObservable: observable,
 		},
 		BaseA
 	);
@@ -591,7 +591,7 @@ test("types are inherited by prototype on non-configured constructors", () => {
 
 	decorate(
 		{
-			baseBObservable: type.observable,
+			baseBObservable: observable,
 		},
 		BaseB
 	);
@@ -633,7 +633,7 @@ test("constructor has observable isntance", () => {
 	}
 	decorate(
 		{
-			prop: type.observable,
+			prop: observable,
 		},
 		C
 	);

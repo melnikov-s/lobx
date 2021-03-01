@@ -35,13 +35,20 @@ function observableBox<T>(
 	);
 }
 
-function observableWithOptions(options: Omit<ObjectObservableOptions, "type">) {
-	return (target: any, propertyKey: string): any => {
+function observableWithOptions(
+	options: Omit<ObjectObservableOptions, "type">
+): ((target: any, propertyKey: string) => any) &
+	typeof propertyType.observable {
+	function decorator(target: any, propertyKey: string): any {
 		const config = getCtorConfiguration(target.constructor);
-		config[propertyKey] = propertyType.observable(options);
+		config[propertyKey] = Object.assign({}, propertyType.observable, options);
 
 		return undefined;
-	};
+	}
+
+	Object.assign(decorator, propertyType.observable, options);
+
+	return decorator as typeof decorator & typeof propertyType.observable;
 }
 
 function observableConfigure<T extends object, S extends T>(
@@ -51,11 +58,22 @@ function observableConfigure<T extends object, S extends T>(
 ): T;
 
 function observableConfigure<T extends object>(
+	config: Configuration<T> | ConfigurationGetter<T>
+): typeof propertyType.observable;
+
+function observableConfigure<T extends object>(
 	config: Configuration<T> | ConfigurationGetter<T>,
-	target: T,
+	target?: T,
 	opts?: ObservableOptions
-): T {
-	return getObservableWithConfig(target, resolveGraph(opts?.graph), config);
+): any {
+	if (target) {
+		return getObservableWithConfig(target, resolveGraph(opts?.graph), config);
+	} else {
+		return {
+			...propertyType.observable,
+			configuration: config,
+		};
+	}
 }
 
 function observable<T extends object>(object: T, opts?: ObservableOptions): T;
@@ -83,6 +101,8 @@ function observable<T>(...args: unknown[]): unknown {
 	}
 }
 
+Object.assign(observable, propertyType.observable);
+
 observable.box = observableBox;
 observable.configure = observableConfigure;
 observable.withOptions = observableWithOptions;
@@ -91,4 +111,4 @@ export default observable as typeof observable & {
 	box: typeof observableBox;
 	configure: typeof observableConfigure;
 	withOptions: typeof observableWithOptions;
-};
+} & typeof propertyType.observable;

@@ -36,60 +36,21 @@ export type ComputedOptions = {
 };
 type ActionOptions = { type: "action" };
 
-type ConfigOption<
-	T extends ObservableOptions | ComputedOptions | ActionOptions
-> = Partial<Omit<T, "type">>;
-
-type CallableOption<
-	T extends ObservableOptions | ComputedOptions | ActionOptions
-> = T &
-	(T extends ObservableOptions
-		? { configure: <S>(c: Configuration<S>) => T }
-		: {}) &
-	((options: ConfigOption<T>) => T);
-
 type PropertyOptions = {
-	observable: CallableOption<ObservableOptions>;
-	computed: CallableOption<ComputedOptions>;
+	observable: ObservableOptions;
+	computed: ComputedOptions;
 	action: ActionOptions;
 };
 
-const defaultObservable: ObservableOptions = {
+const observableType: ObservableOptions = {
 	type: "observable",
 	ref: false,
 };
-const defaultComputed: ComputedOptions = {
+const computedType: ComputedOptions = {
 	type: "computed",
 	keepAlive: false,
 };
 const actionType: ActionOptions = { type: "action" };
-
-const observableType: CallableOption<ObservableOptions> = Object.assign(
-	function (options: ConfigOption<ObservableOptions>): ObservableOptions {
-		return {
-			...defaultObservable,
-			...options,
-			type: "observable",
-		};
-	},
-	defaultObservable,
-	{
-		configure: <T>(c: Configuration<T>): ObservableOptions => {
-			return {
-				type: "observable",
-				configuration: c,
-				ref: false,
-			} as ObservableOptions;
-		},
-	}
-);
-
-const computedType: CallableOption<ComputedOptions> = Object.assign(function (
-	options: ConfigOption<ComputedOptions>
-): ComputedOptions {
-	return { ...defaultComputed, ...options, type: "computed" };
-},
-defaultComputed);
 
 export const propertyType: {
 	[key in Types]: PropertyOptions[key];

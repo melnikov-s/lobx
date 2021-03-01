@@ -3,8 +3,9 @@ import {
 	reaction,
 	observable,
 	runInAction,
+	computed,
+	action,
 	observe,
-	type,
 	enforceActions,
 	isObservable,
 	getObservableSource,
@@ -65,9 +66,9 @@ test("observable objects can be configured", () => {
 	try {
 		const o = observable.configure(
 			{
-				observableValue: type.observable,
-				comp: type.computed,
-				inc: type.action,
+				observableValue: observable,
+				comp: computed,
+				inc: action,
 			},
 			{
 				count: 0,
@@ -110,11 +111,11 @@ test("observable objects can be configured with function", () => {
 				expect(object).toBe(o);
 				switch (name) {
 					case "observableValue":
-						return type.observable;
+						return observable;
 					case "comp":
-						return type.computed;
+						return computed;
 					case "inc":
-						return type.action;
+						return action;
 				}
 			},
 			{
@@ -247,7 +248,7 @@ test("observes decorated non plain objects directly", () => {
 			return this.prop * 2;
 		}
 	}
-	decorate({ prop: type.observable, comp: type.computed }, C);
+	decorate({ prop: observable, comp: computed }, C);
 	const o = observable(new C());
 	autorun(() => {
 		count++;

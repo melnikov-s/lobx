@@ -52,17 +52,24 @@ function computed<T>(...args: unknown[]): unknown {
 	}
 }
 
-function computedWithOptions(options: Omit<ObjectComputedOptions, "type">) {
-	return (target: any, propertyKey: string): any => {
+function computedWithOptions(
+	options: Omit<ObjectComputedOptions, "type">
+): ((target: any, propertyKey: string) => any) & typeof propertyType.computed {
+	function decorator(target: any, propertyKey: string): any {
 		const config = getCtorConfiguration(target.constructor);
-		config[propertyKey] = propertyType.computed(options);
+		config[propertyKey] = Object.assign({}, propertyType.computed, options);
 
 		return undefined;
-	};
+	}
+	Object.assign(decorator, propertyType.computed, options);
+
+	return decorator as typeof decorator & typeof propertyType.computed;
 }
+
+Object.assign(computed, propertyType.computed);
 
 computed.withOptions = computedWithOptions;
 
 export default computed as typeof computed & {
 	withOptions: typeof computedWithOptions;
-};
+} & typeof propertyType.computed;

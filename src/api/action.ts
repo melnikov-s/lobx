@@ -3,19 +3,17 @@ import { getCtorConfiguration } from "../types/utils/lookup";
 import { isPropertyKey } from "../utils";
 import { runInAction } from "./graph";
 
-export default function action<T extends unknown[], U>(
+function action<T extends unknown[], U>(
 	func: (...args: T) => U
 ): (...args: T) => U;
 
-export default function action(
+function action(
 	target: unknown,
 	propertyKey: string,
 	descriptor: PropertyDescriptor
 ): any;
 
-export default function action<T extends unknown[], U>(
-	...args: unknown[]
-): unknown {
+function action<T extends unknown[], U>(...args: unknown[]): unknown {
 	if (isPropertyKey(args[1])) {
 		const [target, propertyKey, descriptor] = args as [
 			any,
@@ -33,3 +31,7 @@ export default function action<T extends unknown[], U>(
 		};
 	}
 }
+
+Object.assign(action, propertyType.action);
+
+export default action as typeof action & typeof propertyType.action;
