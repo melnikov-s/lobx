@@ -643,3 +643,15 @@ test("constructor has observable isntance", () => {
 	expect(weakSet.has(c)).toBe(true);
 	expect.assertions(3);
 });
+
+test("can prevent Observable from being auto decorated", () => {
+	class C extends Observable {
+		prop = {};
+		constructor() {
+			super({ autoDecorate: false });
+		}
+	}
+
+	const c = new C();
+	expect(isObservable(c.prop)).toBe(false);
+});

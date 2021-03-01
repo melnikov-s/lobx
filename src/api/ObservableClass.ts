@@ -6,8 +6,11 @@ import {
 } from "../types/utils/lookup";
 
 export default class Observable {
-	constructor(opts?: { graph: Graph }) {
-		if (!hasCtorConfiguration(this.constructor)) {
+	constructor(opts?: { graph?: Graph; autoDecorate?: boolean }) {
+		if (
+			(opts?.autoDecorate || opts?.autoDecorate === undefined) &&
+			!hasCtorConfiguration(this.constructor)
+		) {
 			setCtorAutoConfigure(this.constructor);
 		}
 		return getObservable(this, resolveGraph(opts?.graph));
