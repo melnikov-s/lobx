@@ -6,21 +6,21 @@ import {
 	enforceActions,
 	getObservableSource,
 	task,
+	Observable,
+	decorate,
 } from "../src/index";
 
 test("objects created from class are observable", () => {
-	const C = observable(class {});
+	class C extends Observable {}
 
 	const o = new C();
 	expect(isObservable(o)).toBe(true);
 });
 
 test("objects create from class have observable properties", () => {
-	const C = observable(
-		class {
-			value = "prop";
-		}
-	);
+	class C extends Observable {
+		value = "prop";
+	}
 
 	const o = new C();
 	let count = 0;
@@ -35,32 +35,28 @@ test("objects create from class have observable properties", () => {
 });
 
 test("object methods return a value", () => {
-	const C = observable(
-		class {
-			value = "prop";
+	class C extends Observable {
+		value = "prop";
 
-			readValue() {
-				return this.value;
-			}
+		readValue() {
+			return this.value;
 		}
-	);
+	}
 
 	const o = new C();
 	expect(o.readValue()).toBe("prop");
 });
 
 test("object methods occur in a batch", () => {
-	const C = observable(
-		class {
-			valueA = 0;
-			valueB = 0;
+	class C extends Observable {
+		valueA = 0;
+		valueB = 0;
 
-			inc() {
-				this.valueA++;
-				this.valueB++;
-			}
+		inc() {
+			this.valueA++;
+			this.valueB++;
 		}
-	);
+	}
 
 	const o = new C();
 	let count = 0;
@@ -76,15 +72,13 @@ test("object methods occur in a batch", () => {
 });
 
 test("object methods are observable", () => {
-	const C = observable(
-		class {
-			value = "prop";
+	class C extends Observable {
+		value = "prop";
 
-			readValue() {
-				return this.value;
-			}
+		readValue() {
+			return this.value;
 		}
-	);
+	}
 
 	const o = new C();
 	let count = 0;
@@ -99,17 +93,15 @@ test("object methods are observable", () => {
 });
 
 test("object setters occur in a batch", () => {
-	const C = observable(
-		class {
-			valueA = 0;
-			valueB = 0;
+	class C extends Observable {
+		valueA = 0;
+		valueB = 0;
 
-			set values(v: number) {
-				this.valueA = v;
-				this.valueB = v;
-			}
+		set values(v: number) {
+			this.valueA = v;
+			this.valueB = v;
 		}
-	);
+	}
 
 	const o = new C();
 	let count = 0;
@@ -125,30 +117,26 @@ test("object setters occur in a batch", () => {
 });
 
 test("object getters return a value", () => {
-	const C = observable(
-		class {
-			value = "prop";
+	class C extends Observable {
+		value = "prop";
 
-			get readValue() {
-				return this.value;
-			}
+		get readValue() {
+			return this.value;
 		}
-	);
+	}
 
 	const o = new C();
 	expect(o.readValue).toBe("prop");
 });
 
 test("object getters are observable", () => {
-	const C = observable(
-		class {
-			value = "prop";
+	class C extends Observable {
+		value = "prop";
 
-			get readValue() {
-				return this.value;
-			}
+		get readValue() {
+			return this.value;
 		}
-	);
+	}
 
 	const o = new C();
 	let count = 0;
@@ -163,11 +151,9 @@ test("object getters are observable", () => {
 });
 
 test("can have properties that are Promise", async () => {
-	const C = observable(
-		class {
-			value = Promise.resolve(42);
-		}
-	);
+	class C extends Observable {
+		value = Promise.resolve(42);
+	}
 
 	const o = new C();
 	const v = await o.value;
@@ -175,36 +161,31 @@ test("can have properties that are Promise", async () => {
 });
 
 test("properties can not be reconfigured", () => {
-	const C = class {};
+	class C extends Observable {}
 
-	observable.configure({}, C);
-	expect(() => observable.configure({}, C)).toThrowError();
+	decorate({}, C);
+	expect(() => decorate({}, C)).toThrowError();
 });
 
 test("properties can not be reconfigured on an instance", () => {
-	const C = observable.configure({}, class {});
+	class C extends Observable {}
+	decorate({}, C);
 	const c = new C();
 	expect(() => observable.configure({}, c)).toThrowError();
 });
 
 test("observable returns the configured class", () => {
-	const C = class {};
-	const OC = observable.configure({}, C);
-	expect(observable(C)).toBe(OC);
-});
-
-test("observable returns the configured instance with proxied constructor", () => {
-	const C = observable.configure({}, class {});
-	const c = new C();
-	expect(observable(getObservableSource(c))).toBe(c);
+	const C = class extends Observable {};
+	const OC = decorate({}, C);
+	expect(C).toBe(OC);
 });
 
 test("properties can be configured to be observable", () => {
-	const C = observable.configure(
+	const C = decorate(
 		{
 			valueA: type.observable,
 		},
-		class {
+		class extends Observable {
 			valueA = 1;
 			valueB = 1;
 		}
@@ -226,9 +207,9 @@ test("properties can be configured to be observable", () => {
 });
 
 test("unconfigured values are not observed", () => {
-	const C = observable.configure(
+	const C = decorate(
 		{},
-		class {
+		class extends Observable {
 			value = {};
 		}
 	);
@@ -248,11 +229,11 @@ test("unconfigured values are not observed", () => {
 });
 
 test("properties can be configured to be observable refs", () => {
-	const C = observable.configure(
+	const C = decorate(
 		{
 			value: type.observable({ ref: true }),
 		},
-		class {
+		class extends Observable {
 			value = {};
 		}
 	);
@@ -272,14 +253,14 @@ test("properties can be configured to be observable refs", () => {
 
 test("properties can be further configured", () => {
 	type Value = { valueA: number; valueB: number; comp: number };
-	const C = observable.configure(
+	const C = decorate(
 		{
 			value: type.observable.configure<Value>({
 				valueA: type.observable,
 				comp: type.computed,
 			}),
 		},
-		class {
+		class extends Observable {
 			value = {
 				valueA: 1,
 				valueB: 2,
@@ -310,12 +291,12 @@ test("properties can be further configured", () => {
 });
 
 test("properties can be configured to be computed", () => {
-	const C = observable.configure(
+	const C = decorate(
 		{
 			comp: type.computed,
 			value: type.observable,
 		},
-		class {
+		class extends Observable {
 			value = 1;
 			count = 0;
 
@@ -346,11 +327,13 @@ test("properties can be configured to be computed", () => {
 
 test("configuration can't be a function on classes", () => {
 	expect(() =>
-		observable.configure(
+		decorate(
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			//@ts-ignore
 			(name, object) => {
 				return undefined;
 			},
-			class {
+			class extends Observable {
 				value = 1;
 				nonObserved = 0;
 				count = 0;
@@ -365,13 +348,13 @@ test("configuration can't be a function on classes", () => {
 });
 
 test("properties can be configured to be computed refs", () => {
-	const C = observable.configure(
+	const C = decorate(
 		{
 			comp: type.computed,
 			compNonRef: type.computed({ ref: false }),
 			value: type.observable,
 		},
-		class {
+		class extends Observable {
 			value = 1;
 			count = 0;
 
@@ -409,13 +392,13 @@ test("properties can be configured to be computed refs", () => {
 });
 
 test("properties can be configured to be actions", () => {
-	const C = observable.configure(
+	const C = decorate(
 		{
 			valueA: type.observable,
 			valueB: type.observable,
 			action: type.action,
 		},
-		class {
+		class extends Observable {
 			valueA = 1;
 			valueB = 1;
 
@@ -451,13 +434,13 @@ test("properties can be configured to be actions", () => {
 });
 
 test("properties can be configured to be tasks", async () => {
-	const C = observable.configure(
+	const C = decorate(
 		{
 			valueA: type.observable,
 			valueB: type.observable,
 			action: type.action,
 		},
-		class {
+		class extends Observable {
 			valueA = 1;
 			valueB = 1;
 
@@ -493,7 +476,7 @@ test("properties can be configured to be tasks", async () => {
 });
 
 test("configure with inherited class", () => {
-	class Base {
+	class Base extends Observable {
 		value = 1;
 		get comp() {
 			return this.value * 2;
@@ -504,7 +487,7 @@ test("configure with inherited class", () => {
 		}
 	}
 
-	const C = observable.configure(
+	const C = decorate(
 		{
 			value: type.observable,
 			comp: type.computed,
@@ -531,7 +514,7 @@ test("configure with inherited class", () => {
 });
 
 test("configure with inherited class (super)", () => {
-	class Base {
+	class Base extends Observable {
 		value = 1;
 		get comp() {
 			return this.value * 2;
@@ -542,7 +525,7 @@ test("configure with inherited class (super)", () => {
 		}
 	}
 
-	const C = observable.configure(
+	const C = decorate(
 		{
 			value: type.observable,
 			comp: type.computed,
@@ -574,12 +557,12 @@ test("configure with inherited class (super)", () => {
 });
 
 test("observable returns the configured instance", () => {
-	class C {
+	class C extends Observable {
 		observable = {};
 		nonObservable = {};
 	}
 
-	observable.configure(
+	decorate(
 		{
 			observable: type.observable,
 		},
@@ -592,12 +575,12 @@ test("observable returns the configured instance", () => {
 });
 
 test("types are inherited by prototype on configured constructors", () => {
-	class BaseA {
+	class BaseA extends Observable {
 		baseAObservable = {};
 		baseAOverwrite = {};
 	}
 
-	observable.configure(
+	decorate(
 		{
 			baseAObservable: type.observable,
 		},
@@ -609,7 +592,7 @@ test("types are inherited by prototype on configured constructors", () => {
 		baseBNonObservable = {};
 	}
 
-	observable.configure(
+	decorate(
 		{
 			baseAOverwrite: type.observable,
 			baseBObservable: type.observable,
@@ -621,7 +604,7 @@ test("types are inherited by prototype on configured constructors", () => {
 		cObservable = {};
 	}
 
-	observable.configure({ cObservable: type.observable }, C);
+	decorate({ cObservable: type.observable }, C);
 
 	const c = observable(new C());
 
@@ -632,13 +615,13 @@ test("types are inherited by prototype on configured constructors", () => {
 	expect(isObservable(c.cObservable)).toBe(true);
 });
 
-test("types are not inherited by prototype on non-configured constructors", () => {
-	class BaseA {
+test("types are inherited by prototype on non-configured constructors", () => {
+	class BaseA extends Observable {
 		baseAObservable = {};
 		baseNonObservable = {};
 	}
 
-	observable.configure(
+	decorate(
 		{
 			baseAObservable: type.observable,
 		},
@@ -650,35 +633,57 @@ test("types are not inherited by prototype on non-configured constructors", () =
 		baseBNonObservable = {};
 	}
 
-	observable.configure(
+	decorate(
 		{
 			baseBObservable: type.observable,
 		},
 		BaseB
 	);
 
-	const C = observable(
-		class C extends BaseB {
-			cObservable = {};
-		}
-	);
+	class C extends BaseB {
+		@observable cObservable = {
+			foo: "bar",
+		};
+	}
 
 	const c = new C();
 
-	// all true as we ignore all other configured objects
 	expect(isObservable(c.baseAObservable)).toBe(true);
-	expect(isObservable(c.baseNonObservable)).toBe(true);
-	expect(isObservable(c.baseBNonObservable)).toBe(true);
+	expect(isObservable(c.baseNonObservable)).toBe(false);
+	expect(isObservable(c.baseBNonObservable)).toBe(false);
 	expect(isObservable(c.baseBObservable)).toBe(true);
 	expect(isObservable(c.cObservable)).toBe(true);
 });
 
 test("instanceof operator on observable class and object", () => {
-	class C {}
-	const CO = observable(C);
+	class C extends Observable {}
 	const c = new C();
-	const co = new CO();
-	expect(c).toBeInstanceOf(CO);
-	expect(co).toBeInstanceOf(C);
-	expect(co).toBeInstanceOf(CO);
+	expect(c).toBeInstanceOf(C);
+});
+
+test("constructor has observable isntance", () => {
+	const weakSet = new WeakSet();
+
+	class C extends Observable {
+		constructor() {
+			super();
+			weakSet.add(this);
+			expect(isObservable(this)).toBe(true);
+		}
+		prop = {};
+		arrowFunc = () => {
+			expect(isObservable(this.prop)).toBe(true);
+		};
+	}
+	decorate(
+		{
+			prop: type.observable,
+		},
+		C
+	);
+
+	const c = new C();
+	c.arrowFunc();
+	expect(weakSet.has(c)).toBe(true);
+	expect.assertions(3);
 });

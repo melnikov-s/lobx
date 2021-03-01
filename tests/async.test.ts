@@ -196,7 +196,7 @@ test("[mobx-test] it should support async actions within async actions that are 
 	const innerF = actionAsync(async (initial) => {
 		x.a = initial; // this runs in action
 		x.a = await task(delay(10, 3));
-		await task(delay(30, 0));
+		await task(delay(50, 0));
 		x.a = 6;
 		return 7;
 	});

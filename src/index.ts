@@ -5,6 +5,7 @@ import atom, { Atom } from "./api/atom";
 import observable, { ObservableBox, ObservableOptions } from "./api/observable";
 import reaction from "./api/reaction";
 import action from "./api/action";
+import decorate from "./api/decorate";
 import graph, {
 	Graph,
 	enforceActions,
@@ -25,6 +26,7 @@ import { observe } from "./types/utils/observe";
 import { propertyType, Configuration } from "./types/object";
 import { getAdministration } from "./types/utils/Administration";
 import { Scheduler, createScheduler } from "./api/scheduler";
+import Observable from "./api/ObservableClass";
 
 export {
 	action,
@@ -37,6 +39,7 @@ export {
 	ComputedOptions,
 	Configuration,
 	createScheduler,
+	decorate,
 	enforceActions,
 	getAdministration,
 	getDefaultGraph,
@@ -51,6 +54,7 @@ export {
 	listener,
 	Listener,
 	observable,
+	Observable,
 	ObservableBox,
 	ObservableOptions,
 	onObservedStateChange,

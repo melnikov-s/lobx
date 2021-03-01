@@ -8,6 +8,7 @@ import {
 	enforceActions,
 	isObservable,
 	getObservableSource,
+	decorate,
 } from "../src/index";
 
 function object<T extends object>(obj: T = {} as T): Record<string, any> {
@@ -236,7 +237,7 @@ test("does not respond to no-op", () => {
 	expect(count).toBe(3);
 });
 
-test("observes non plain objects directly", () => {
+test("observes decorated non plain objects directly", () => {
 	let count = 0;
 	let countComp = 0;
 	class C {
@@ -246,6 +247,7 @@ test("observes non plain objects directly", () => {
 			return this.prop * 2;
 		}
 	}
+	decorate({ prop: type.observable, comp: type.computed }, C);
 	const o = observable(new C());
 	autorun(() => {
 		count++;
@@ -273,9 +275,9 @@ test("does not observe constructors indirectly", () => {
 	expect(isObservable(new o.v())).toBe(false);
 });
 
-test("observes configured non plain objects", () => {
+test("observes decorated non plain objects", () => {
 	const C = class {};
-	observable.configure({}, C);
+	decorate({}, C);
 	const o = object({ v: new C() });
 	expect(o.v).toBeInstanceOf(C);
 	expect(isObservable(o.v)).toBe(true);

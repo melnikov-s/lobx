@@ -1,5 +1,5 @@
 import { propertyType } from "../types/object";
-import { getObservableConfiguration } from "../types/utils/lookup";
+import { getCtorConfiguration } from "../types/utils/lookup";
 import { isPropertyKey } from "../utils";
 import { runInAction } from "./graph";
 
@@ -23,7 +23,7 @@ export default function action<T extends unknown[], U>(
 			unknown
 		];
 
-		const config = getObservableConfiguration(target.constructor);
+		const config = getCtorConfiguration(target.constructor);
 		config[propertyKey] = propertyType.action;
 		return descriptor;
 	} else {

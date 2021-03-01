@@ -1,6 +1,6 @@
 import ComputedNode from "../core/nodes/computed";
 import { propertyType } from "../types/object";
-import { getObservableConfiguration } from "../types/utils/lookup";
+import { getCtorConfiguration } from "../types/utils/lookup";
 import { isPropertyKey } from "../utils";
 import { resolveGraph, Graph } from "./graph";
 import { ComputedOptions as ObjectComputedOptions } from "../types/object";
@@ -37,7 +37,7 @@ function computed<T>(...args: unknown[]): unknown {
 			unknown
 		];
 
-		const config = getObservableConfiguration(target.constructor);
+		const config = getCtorConfiguration(target.constructor);
 		config[propertyKey] = propertyType.computed;
 		return descriptor;
 	} else {
@@ -54,7 +54,7 @@ function computed<T>(...args: unknown[]): unknown {
 
 function computedWithOptions(options: Omit<ObjectComputedOptions, "type">) {
 	return (target: any, propertyKey: string): any => {
-		const config = getObservableConfiguration(target.constructor);
+		const config = getCtorConfiguration(target.constructor);
 		config[propertyKey] = propertyType.computed(options);
 
 		return undefined;

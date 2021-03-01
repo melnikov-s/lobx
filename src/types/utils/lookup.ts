@@ -31,16 +31,50 @@ const constructorConfigMap: WeakMap<
 	Configuration<unknown> | null
 > = new WeakMap();
 
-export function getObservableConfiguration(
-	Ctor: Function
-): Configuration<unknown> {
+export function getCtorConfiguration(Ctor: Function): Configuration<unknown> {
 	let config = constructorConfigMap.get(Ctor);
 	if (!config) {
-		config = {};
-		constructorConfigMap.set(Ctor, config);
+		config = setCtorConfiguration(Ctor, {});
 	}
 
 	return config;
+}
+
+export function hasCtorConfiguration(Ctor: Function): boolean {
+	return constructorConfigMap.has(Ctor);
+}
+
+export function setCtorAutoConfigure(Ctor: Function): void {
+	constructorConfigMap.set(Ctor, null);
+}
+
+export function setCtorConfiguration<T>(
+	Ctor: Function,
+	config: Configuration<T> | ConfigurationGetter<T>
+): Configuration<T> {
+	if (constructorConfigMap.has(Ctor)) {
+		throw new Error(
+			`lobx: Constructor '${Ctor.name}' has already been decorated`
+		);
+	}
+
+	if (typeof config === "function") {
+		throw new Error(
+			"function configuration not supported on constructors/classes"
+		);
+	}
+	let finalConfig = config!;
+	let constructor = Ctor as Function | undefined;
+	while ((constructor = getParentConstructor(constructor))) {
+		const config = constructorConfigMap.get(constructor);
+		if (config) {
+			finalConfig = { ...config, ...finalConfig };
+		}
+	}
+
+	constructorConfigMap.set(Ctor, finalConfig);
+
+	return finalConfig;
 }
 
 export function getObservableSource<T>(obj: T): T {
@@ -74,39 +108,14 @@ export function getObservableWithConfig<T extends object>(
 		);
 	}
 
-	let finalConfig:
-		| Configuration<T>
-		| ConfigurationGetter<T>
-		| undefined = config;
-
-	if (typeof target === "function" && !constructorConfigMap.has(target)) {
-		if (typeof finalConfig === "function") {
-			throw new Error(
-				"function configuration not supported on constructors/classes"
-			);
-		}
-		finalConfig = config!;
-		let constructor = target as Function | undefined;
-		while ((constructor = getParentConstructor(constructor))) {
-			const config = constructorConfigMap.get(constructor);
-			if (config) {
-				finalConfig = { ...config, ...finalConfig };
-			}
-		}
-
-		constructorConfigMap.set(target, finalConfig);
-		finalConfig = undefined; // config is for instances not for ctor
-	}
-
-	const adm = new ObjectAdministration(target, graph, finalConfig as any);
+	const adm = new ObjectAdministration(target, graph, config);
 	return adm.proxy;
 }
 
 export function getObservable<T>(
 	value: T,
 	graph: Graph,
-	config?: Configuration<T>,
-	observeNonPlain: boolean = false
+	config?: Configuration<T>
 ): T {
 	const adm = getAdm(value);
 
@@ -158,17 +167,9 @@ export function getObservable<T>(
 						constructorConfigMap.get(proto?.constructor)!
 					) as unknown) as T;
 				}
-			} else if (!isPlainObject(value) && !observeNonPlain) {
+			} else if (!isPlainObject(value)) {
 				return value;
 			}
-		} else if (
-			observeNonPlain &&
-			typeof obj === "function" &&
-			!constructorConfigMap.has(obj)
-		) {
-			// allow the observation of non plain objects if their constructor was passed
-			// into observable
-			constructorConfigMap.set(obj, null);
 		}
 
 		const adm = new Adm(obj, graph);

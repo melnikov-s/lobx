@@ -3,7 +3,7 @@ import { resolveGraph, Graph } from "./graph";
 import { defaultEquals, isNonPrimitive, isPropertyKey } from "../utils";
 import {
 	getObservable,
-	getObservableConfiguration,
+	getCtorConfiguration,
 	getObservableWithConfig,
 } from "../types/utils/lookup";
 import {
@@ -37,7 +37,7 @@ function observableBox<T>(
 
 function observableWithOptions(options: Omit<ObjectObservableOptions, "type">) {
 	return (target: any, propertyKey: string): any => {
-		const config = getObservableConfiguration(target.constructor);
+		const config = getCtorConfiguration(target.constructor);
 		config[propertyKey] = propertyType.observable(options);
 
 		return undefined;
@@ -46,11 +46,6 @@ function observableWithOptions(options: Omit<ObjectObservableOptions, "type">) {
 
 function observableConfigure<T extends object, S extends T>(
 	config: Configuration<T> | ConfigurationGetter<S>,
-	target: T,
-	opts?: ObservableOptions
-): T;
-function observableConfigure<T extends new (args: unknown[]) => unknown>(
-	config: Configuration<InstanceType<T>>,
 	target: T,
 	opts?: ObservableOptions
 ): T;
@@ -65,13 +60,13 @@ function observableConfigure<T extends object>(
 
 function observable<T extends object>(object: T, opts?: ObservableOptions): T;
 
-function observable(target: unknown, propertyKey: string): any;
+function observable(target: any, propertyKey: string): any;
 
 function observable<T>(...args: unknown[]): unknown {
 	if (isPropertyKey(args[1])) {
 		const [target, propertyKey] = args as [any, PropertyKey];
 
-		const config = getObservableConfiguration(target.constructor);
+		const config = getCtorConfiguration(target.constructor);
 		config[propertyKey] = propertyType.observable;
 
 		return undefined;
@@ -84,7 +79,7 @@ function observable<T>(...args: unknown[]): unknown {
 			);
 		}
 
-		return getObservable(object, resolveGraph(opts?.graph), undefined, true);
+		return getObservable(object, resolveGraph(opts?.graph));
 	}
 }
 
