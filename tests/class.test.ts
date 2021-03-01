@@ -347,50 +347,6 @@ test("configuration can't be a function on classes", () => {
 	).toThrowError();
 });
 
-test("properties can be configured to be computed refs", () => {
-	const C = decorate(
-		{
-			comp: type.computed,
-			compNonRef: type.computed({ ref: false }),
-			value: type.observable,
-		},
-		class extends Observable {
-			value = 1;
-			count = 0;
-
-			get comp() {
-				this.count++;
-				return { value: this.value * 2 };
-			}
-
-			get compNonRef() {
-				this.count++;
-				return { value: this.value * 2 };
-			}
-		}
-	);
-
-	let count = 0;
-	const o = new C();
-
-	autorun(() => {
-		o.comp;
-		o.compNonRef;
-		count++;
-	});
-
-	expect(o.count).toBe(2);
-
-	o.value = 2;
-	expect(o.count).toBe(4);
-	expect(count).toBe(2);
-
-	expect(o.comp).toEqual({ value: 4 });
-	expect(o.compNonRef).toEqual({ value: 4 });
-	expect(isObservable(o.comp)).toBe(false);
-	expect(isObservable(o.compNonRef)).toBe(true);
-});
-
 test("properties can be configured to be actions", () => {
 	const C = decorate(
 		{

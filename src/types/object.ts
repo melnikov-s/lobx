@@ -31,7 +31,6 @@ type ObservableOptionsConfig = ObservableOptions & {
 
 export type ComputedOptions = {
 	type: "computed";
-	ref?: boolean;
 	keepAlive?: boolean;
 	equals?: typeof defaultEquals;
 };
@@ -61,7 +60,6 @@ const defaultObservable: ObservableOptions = {
 };
 const defaultComputed: ComputedOptions = {
 	type: "computed",
-	ref: true,
 	keepAlive: false,
 };
 const actionType: ActionOptions = { type: "action" };
@@ -322,9 +320,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			case propertyType.computed.type: {
 				const computedNode = this.getComputed(key);
 
-				return config.ref
-					? computedNode.get()
-					: getObservable(computedNode.get(), this.graph);
+				return computedNode.get();
 			}
 			default:
 				throw new Error(`unknown type passed to configure`);
