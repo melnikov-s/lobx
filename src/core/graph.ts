@@ -66,7 +66,7 @@ Below is the general shape of the graph:
 export const nodeTypes = {
 	atom: 1,
 	computed: 2,
-	listener: 3
+	listener: 3,
 } as const;
 
 interface Observable {
@@ -123,7 +123,7 @@ export default class Graph {
 	// clean up any unobserved computed nodes that were cached for the
 	// duration of a batch or derivation
 	private clearInvokedComputed(): void {
-		this.invokedComputed.forEach(c => {
+		this.invokedComputed.forEach((c) => {
 			if (c.observers.size === 0 && !c.isKeepAlive()) {
 				this.remove(c);
 			}
@@ -146,7 +146,7 @@ export default class Graph {
 					return false;
 				}
 
-				node.observing.forEach(o => {
+				node.observing.forEach((o) => {
 					changed = changed || this.hasChanged(o);
 				});
 
@@ -157,7 +157,7 @@ export default class Graph {
 				changed = changed && !node.equals(this.changedObservables.get(node));
 				break;
 			case nodeTypes.listener:
-				node.observing.forEach(o => {
+				node.observing.forEach((o) => {
 					changed = changed || this.hasChanged(o);
 				});
 				break;
@@ -172,14 +172,14 @@ export default class Graph {
 	): void {
 		this.onObservedStateChangeCallbacks
 			.get(observable)
-			?.forEach(f => f(observing));
+			?.forEach((f) => f(observing));
 	}
 
 	// propagate a change to an observable down the graph during a batch
 	// in order to mark any affected computed nodes as a potentially stale
 	// and collect all dependent listeners
 	private propagateChange(node: ObservableNode): void {
-		node.observers.forEach(childNode => {
+		node.observers.forEach((childNode) => {
 			if (childNode.nodeType === nodeTypes.computed) {
 				// if this is the first time this computed node was changed within
 				// a batch we collect its value for later comparison
@@ -272,7 +272,7 @@ export default class Graph {
 			forceUnObserve ||
 			(node.nodeType === nodeTypes.computed && this.isObserved(node));
 
-		node.observing.forEach(o => {
+		node.observing.forEach((o) => {
 			o.observers.delete(node);
 			if (!this.isObserved(o)) {
 				if (o.nodeType === nodeTypes.computed && !o.isKeepAlive()) {
@@ -368,7 +368,7 @@ export default class Graph {
 		let value: T;
 
 		// Clear out all observer links from last run
-		node.observing.forEach(n => {
+		node.observing.forEach((n) => {
 			n.observers.delete(node);
 
 			if (n.observers.size === 0) {
@@ -406,7 +406,7 @@ export default class Graph {
 				// once done with the runstack we need to go through all nodes
 				// that were marked as potential to be unobserved and if they no
 				// longer have any observers call `onBecomeUnobserved` on them.
-				this.potentialUnObserved.forEach(observable => {
+				this.potentialUnObserved.forEach((observable) => {
 					if (observable.observers.size === 0) {
 						if (observable.nodeType === nodeTypes.computed) {
 							this.remove(observable);
@@ -511,7 +511,7 @@ export default class Graph {
 			try {
 				// loop through all the affected listeners and filter out
 				// the listeners whose obesrvables did not produce a new value
-				this.queuedListeners.forEach(l => {
+				this.queuedListeners.forEach((l) => {
 					// we remove the listener from the queue so that it can be re-added
 					// in the case that a reaction performs a mutation
 					// this.queuedListeners.delete(l);
@@ -536,7 +536,7 @@ export default class Graph {
 
 				// All computed nodes marked potentially stale are now confirmed stale
 				// need to reset them
-				this.potentialStale.forEach(n => {
+				this.potentialStale.forEach((n) => {
 					n.clear();
 				});
 				this.potentialStale.clear();
@@ -548,7 +548,7 @@ export default class Graph {
 
 				// If a reaction occured during this batch invoke `onReactionsComplete` callbacks
 				if (reactionsExecuted) {
-					this.reactionsCompleteCallbacks.forEach(c => c());
+					this.reactionsCompleteCallbacks.forEach((c) => c());
 				}
 			}
 		} else {

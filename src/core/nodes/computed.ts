@@ -2,7 +2,7 @@ import Graph, {
 	Computed,
 	ObservableNode,
 	ObserverNode,
-	nodeTypes
+	nodeTypes,
 } from "../graph";
 import { defaultEquals } from "../../utils";
 
