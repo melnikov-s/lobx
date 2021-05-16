@@ -24,7 +24,7 @@ import graph, {
 import { getObservableSource, isObservable } from "./types/utils/lookup";
 import { observe } from "./types/utils/observe";
 import { Configuration } from "./types/object";
-import { getAdministration } from "./types/utils/Administration";
+import { getAdministration } from "./types/utils/lookup";
 import { Scheduler, createScheduler } from "./api/scheduler";
 import Observable from "./api/ObservableClass";
 
