@@ -177,7 +177,7 @@ test("can execute an action within an action", () => {
 	expect(countA).toBe(2);
 });
 
-test("computed values are cached in actions even when unonbserved", () => {
+test("computed values are cached in actions even when unobserved", () => {
 	let calls = 0;
 
 	const o = observable.box(1);

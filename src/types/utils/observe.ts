@@ -145,7 +145,9 @@ export class ObservableListener<T> {
 		return (): void => {
 			if (!unsubed) {
 				if (this.notifying) {
-					throw new Error("Can't unsubscribe from observer during notifcation");
+					throw new Error(
+						"Can't unsubscribe from observer during notification"
+					);
 				}
 				const idx = this.listeners?.indexOf(l);
 				if (idx != null && idx !== -1) this.listeners!.splice(idx, 1);

@@ -58,7 +58,7 @@ test("reaction scheduler passes in the last value into callback", () => {
 	expect(value).toBe(3);
 });
 
-test("unsbuscribe removes scheduled callback", () => {
+test("unsubscribe removes scheduled callback", () => {
 	const o = observable.box(0);
 	const scheduler = createTimeoutScheduler(0);
 	let count = 0;

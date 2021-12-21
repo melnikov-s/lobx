@@ -26,10 +26,8 @@ export function getAdministration<T extends object>(
 }
 
 const actionsMap: WeakMap<Function, Function> = new WeakMap();
-const constructorConfigMap: WeakMap<
-	Function,
-	Configuration<unknown> | null
-> = new WeakMap();
+const constructorConfigMap: WeakMap<Function, Configuration<unknown> | null> =
+	new WeakMap();
 
 export function getCtorConfiguration(Ctor: Function): Configuration<unknown> {
 	let config = constructorConfigMap.get(Ctor);
@@ -80,7 +78,7 @@ export function setCtorConfiguration<T>(
 export function getObservableSource<T>(obj: T): T {
 	const adm = getAdm(obj);
 
-	return adm ? ((adm.source as unknown) as T) : obj;
+	return adm ? (adm.source as unknown as T) : obj;
 }
 
 export function getAction<T extends Function>(fn: T, graph: Graph): T {
@@ -88,7 +86,11 @@ export function getAction<T extends Function>(fn: T, graph: Graph): T {
 
 	if (!action) {
 		action = function (this: unknown, ...args: unknown[]): unknown {
-			return graph.runInAction(() => fn.apply(this, args));
+			if (new.target) {
+				return new (fn as any)(...args);
+			}
+
+			return graph.runInAction(() => fn.apply(this, args), false);
 		};
 
 		actionsMap.set(fn, action);
@@ -124,7 +126,7 @@ export function getObservable<T>(
 			throw new Error("observables can only exists on a single graph");
 		}
 
-		return (adm.proxy as unknown) as T;
+		return adm.proxy as unknown as T;
 	}
 
 	if (!value) {
@@ -135,16 +137,14 @@ export function getObservable<T>(
 		(typeof value === "object" || typeof value === "function") &&
 		!Object.isFrozen(value)
 	) {
-		const obj = (value as unknown) as object;
+		const obj = value as unknown as object;
 
 		if (config) {
-			return (getObservableWithConfig(obj, graph, config) as unknown) as T;
+			return getObservableWithConfig(obj, graph, config) as unknown as T;
 		}
 
-		let Adm: new (
-			obj: any,
-			graph: Graph
-		) => Administration = ObjectAdministration;
+		let Adm: new (obj: any, graph: Graph) => Administration =
+			ObjectAdministration;
 
 		if (Array.isArray(obj)) {
 			Adm = ArrayAdministration;
@@ -161,11 +161,11 @@ export function getObservable<T>(
 				const config = constructorConfigMap.get(proto?.constructor);
 
 				if (config) {
-					return (getObservableWithConfig(
+					return getObservableWithConfig(
 						obj,
 						graph,
 						constructorConfigMap.get(proto?.constructor)!
-					) as unknown) as T;
+					) as unknown as T;
 				}
 			} else if (!isPlainObject(value)) {
 				return value;
@@ -173,7 +173,7 @@ export function getObservable<T>(
 		}
 
 		const adm = new Adm(obj, graph);
-		return (adm.proxy as unknown) as T;
+		return adm.proxy as unknown as T;
 	}
 
 	return value;

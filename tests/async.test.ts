@@ -36,8 +36,10 @@ function delayFn(time: number, fn: () => void) {
 const expectNoActionsRunning = () =>
 	expect(getDefaultGraph().isInAction()).toBe(false);
 
-const actionAsync = <T>(fn: (...args: any[]) => T) => (...args: any[]) =>
-	(runInAction(() => fn(...args)) as unknown) as T;
+const actionAsync =
+	<T>(fn: (...args: any[]) => T) =>
+	(...args: any[]) =>
+		runInAction(() => fn(...args)) as unknown as T;
 
 beforeEach(() => {
 	enforceActions(true);

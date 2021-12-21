@@ -157,7 +157,7 @@ test("can retrieve Object.prototype properties from observable objects", () => {
 	expect(() => properties.forEach((n) => o[n])).not.toThrow();
 });
 
-test("can only have one observerbale proxy per object", () => {
+test("can only have one observable proxy per object", () => {
 	const target = {};
 
 	expect(object(target)).toBe(object(target));
@@ -526,7 +526,7 @@ test("[mobx-test] delete and undelete should work", () => {
 	expect(events).toEqual([false, true, false, true, false, true]);
 });
 
-test("[mobx-test] should react to key removal (unless reconfiguraing to empty) - 1", () => {
+test("[mobx-test] should react to key removal (unless reconfiguring to empty) - 1", () => {
 	const events = [];
 	const x = object({
 		y: 1,
@@ -547,7 +547,7 @@ test("[mobx-test] should react to key removal (unless reconfiguraing to empty) -
 	expect(events).toEqual(["y,z", "z"]);
 });
 
-test("[mobx-test] should react to key removal (unless reconfiguraing to empty) - 2", () => {
+test("[mobx-test] should react to key removal (unless reconfiguring to empty) - 2", () => {
 	const events = [];
 	const x = object({
 		y: 1,
@@ -563,7 +563,7 @@ test("[mobx-test] should react to key removal (unless reconfiguraing to empty) -
 	expect(events).toEqual([undefined]);
 });
 
-test("[mobx-test] should react to key removal (unless reconfiguraing to empty) - 2", () => {
+test("[mobx-test] should react to key removal (unless reconfiguring to empty) - 2", () => {
 	const events = [];
 	const x = object({
 		y: 1,

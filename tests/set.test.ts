@@ -392,7 +392,7 @@ test("[mobx-test] cleanup", function () {
 	expect(hasA).toBe(false);
 });
 
-test("[mobx-test] set should support iterall / iterable ", () => {
+test("[mobx-test] set should support iterable ", () => {
 	const a = set(new Set([1, 2]));
 
 	function leech(iter) {

@@ -6,6 +6,7 @@ import { isPropertyKey, getPropertyDescriptor, defaultEquals } from "../utils";
 import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 import ComputedNode from "../core/nodes/computed";
+import { runInAction } from "../index";
 
 type ConfigurationTypes = ObservableOptions | ComputedOptions | ActionOptions;
 
@@ -65,8 +66,15 @@ function defaultConfigGetter(
 	proxy: object
 ): ConfigurationTypes {
 	const descriptor = getPropertyDescriptor(proxy, key);
-	if (descriptor && typeof descriptor.get === "function") {
-		return propertyType.computed;
+	if (descriptor) {
+		if (
+			typeof descriptor.get === "function" ||
+			typeof descriptor.set === "function"
+		) {
+			return propertyType.computed;
+		} else if (typeof descriptor.value === "function") {
+			return propertyType.action;
+		}
 	}
 
 	return propertyType.observable;
@@ -96,7 +104,8 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			this.config = config;
 		}
 		if (typeof source === "function") {
-			this.proxyTraps.construct = (_, args) => this.proxyConstruct(args);
+			this.proxyTraps.construct = (_, args) =>
+				this.proxyConstruct(args) as object;
 			this.proxyTraps.apply = (_, thisArg, args) =>
 				this.proxyApply(thisArg, args);
 		}
@@ -158,7 +167,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		return true;
 	}
 
-	private proxyOwnKeys(): (string | number | symbol)[] {
+	private proxyOwnKeys(): (string | symbol)[] {
 		this.keysAtom.reportObserved();
 		return Reflect.ownKeys(this.source);
 	}
@@ -173,18 +182,26 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		});
 	}
 
-	private isUnconfigured(key: PropertyKey): boolean {
+	private loadConfig(key: PropertyKey): void {
 		if (
 			this.configGetter &&
 			!Object.prototype.hasOwnProperty.call(this.config, key)
 		) {
 			this.config[key] = this.configGetter(key as keyof T, this.proxy);
 		}
+	}
 
+	private isUnconfigured(key: PropertyKey): boolean {
+		this.loadConfig(key);
 		return (
 			!Object.prototype.hasOwnProperty.call(this.config, key) ||
 			this.config[key] === undefined
 		);
+	}
+
+	private getConfig(key: PropertyKey): ConfigurationTypes {
+		this.loadConfig(key);
+		return (this.config?.[key] ?? propertyType.observable)!;
 	}
 
 	private getComputed(key: PropertyKey): ComputedNode<T[keyof T]> {
@@ -250,8 +267,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			return this.get(key);
 		}
 
-		const config: ConfigurationTypes = (this.config?.[key] ??
-			propertyType.observable)!;
+		const config: ConfigurationTypes = this.getConfig(key);
 
 		switch (config.type) {
 			case propertyType.observable.type:
@@ -272,11 +288,11 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 					return getObservable(
 						this.get(key),
 						this.graph,
-						((config as unknown) as ObservableOptionsConfig).configuration
+						(config as unknown as ObservableOptionsConfig).configuration
 					);
 				}
 
-				return getAction((this.get(key) as unknown) as Function, this.graph);
+				return getAction(this.get(key) as unknown as Function, this.graph);
 			}
 			case propertyType.computed.type: {
 				const computedNode = this.getComputed(key);
@@ -293,13 +309,18 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			this.set(key, newValue);
 			return;
 		}
+		const config = this.getConfig(key);
 
 		const had = key in this.source;
 		const oldValue: T[keyof T] = this.get(key);
 		const targetValue = getObservableSource(newValue);
 
 		if (!had || oldValue !== targetValue) {
-			this.set(key, targetValue);
+			if (config.type === propertyType.observable.type) {
+				this.set(key, targetValue);
+			} else {
+				runInAction(() => this.set(key, targetValue));
+			}
 
 			this.graph.batch(() => {
 				if (!had) {

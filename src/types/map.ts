@@ -66,7 +66,8 @@ class ObservableValueMap<K, V> {
 
 export class MapAdministration<K, V>
 	extends Administration<Map<K, V>>
-	implements Map<K, V> {
+	implements Map<K, V>
+{
 	data: ObservableValueMap<K, V>;
 	hasMap: AtomMap<K>;
 	keysAtom: Atom;

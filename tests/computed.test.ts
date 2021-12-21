@@ -700,7 +700,7 @@ test("correctly marks computed as potentially stale", () => {
 	expect(result).toBe(10);
 });
 
-test("sets the conext of the executing computed", () => {
+test("sets the context of the executing computed", () => {
 	const context = {};
 	const c = computed(
 		function () {

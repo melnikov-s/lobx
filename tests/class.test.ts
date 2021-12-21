@@ -8,7 +8,12 @@ import {
 	task,
 	Observable,
 	decorate,
+	isInAction,
 } from "../src/index";
+
+afterEach(() => {
+	enforceActions(false);
+});
 
 test("objects created from class are observable", () => {
 	class C extends Observable {}
@@ -47,7 +52,8 @@ test("object methods return a value", () => {
 	expect(o.readValue()).toBe("prop");
 });
 
-test("object methods occur in a batch", () => {
+test("object methods occur in an action ", () => {
+	enforceActions(true);
 	class C extends Observable {
 		valueA = 0;
 		valueB = 0;
@@ -55,6 +61,7 @@ test("object methods occur in a batch", () => {
 		inc() {
 			this.valueA++;
 			this.valueB++;
+			expect(isInAction()).toBe(true);
 		}
 	}
 
@@ -92,7 +99,8 @@ test("object methods are observable", () => {
 	expect(count).toBe(2);
 });
 
-test("object setters occur in a batch", () => {
+test("object setters occur in an action", () => {
+	enforceActions(true);
 	class C extends Observable {
 		valueA = 0;
 		valueB = 0;
@@ -100,6 +108,7 @@ test("object setters occur in a batch", () => {
 		set values(v: number) {
 			this.valueA = v;
 			this.valueB = v;
+			expect(isInAction()).toBe(true);
 		}
 	}
 
@@ -109,6 +118,35 @@ test("object setters occur in a batch", () => {
 	autorun(() => {
 		o.valueA;
 		o.valueB;
+		count++;
+	});
+
+	o.values = 1;
+	expect(count).toBe(2);
+});
+
+test("object getters and setters on same property", () => {
+	enforceActions(true);
+	class C extends Observable {
+		valueA = 0;
+		valueB = 0;
+
+		get values() {
+			return this.valueA + this.valueB;
+		}
+
+		set values(v: number) {
+			this.valueA = v;
+			this.valueB = v;
+			expect(isInAction()).toBe(true);
+		}
+	}
+
+	const o = new C();
+	let count = 0;
+
+	autorun(() => {
+		o.values;
 		count++;
 	});
 
@@ -386,10 +424,9 @@ test("properties can be configured to be actions", () => {
 	expect(c.valueB).toBe(2);
 
 	expect(() => c.notAction(3)).toThrowError();
-	enforceActions(false);
 });
 
-test("properties can be configured to be tasks", async () => {
+test("properties can be configured to be async actions", async () => {
 	const C = decorate(
 		{
 			valueA: observable,
@@ -427,8 +464,6 @@ test("properties can be configured to be tasks", async () => {
 	expect(count).toBe(3);
 	expect(c.valueA).toBe(3);
 	expect(c.valueB).toBe(2);
-
-	enforceActions(false);
 });
 
 test("configure with inherited class", () => {
@@ -466,7 +501,6 @@ test("configure with inherited class", () => {
 	expect(count).toBe(2);
 	expect(c.value).toBe(2);
 	expect(c.comp).toBe(4);
-	enforceActions(false);
 });
 
 test("configure with inherited class (super)", () => {
@@ -509,7 +543,6 @@ test("configure with inherited class (super)", () => {
 	expect(count).toBe(2);
 	expect(c.value).toBe(3);
 	expect(c.comp).toBe(6);
-	enforceActions(false);
 });
 
 test("observable returns the configured instance", () => {
@@ -617,7 +650,7 @@ test("instanceof operator on observable class and object", () => {
 	expect(c).toBeInstanceOf(C);
 });
 
-test("constructor has observable isntance", () => {
+test("constructor has observable instance", () => {
 	const weakSet = new WeakSet();
 
 	class C extends Observable {

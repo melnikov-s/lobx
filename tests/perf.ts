@@ -87,7 +87,7 @@ describe("lobx tests", () => {
 		done();
 	});
 
-	test("five hundrend properties that observe their sibling", function (done) {
+	test("five hundred properties that observe their sibling", function (done) {
 		runSamples(
 			() => {
 				const a = observable.box(1);
@@ -410,7 +410,7 @@ describe("mobx tests", () => {
 		done();
 	});
 
-	test("five hundrend properties that observe their sibling", function (done) {
+	test("five hundred properties that observe their sibling", function (done) {
 		runSamples(
 			() => {
 				const a = observable.box(1);

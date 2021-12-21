@@ -20,7 +20,7 @@ test("can be disposed on first run", function () {
 	expect(values).toEqual([1]);
 });
 
-test("runs the callback everytime an observer is changed", () => {
+test("runs the callback every time an observer is changed", () => {
 	let count = 0;
 	const o = observable.box(0);
 	autorun(() => {

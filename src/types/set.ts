@@ -13,7 +13,8 @@ import AtomMap from "./utils/AtomMap";
 
 export class SetAdministration<T>
 	extends Administration<Set<T>>
-	implements Set<T> {
+	implements Set<T>
+{
 	hasMap: AtomMap<T>;
 	keysAtom: Atom;
 

@@ -27,7 +27,7 @@ test("iteration returns observable results", () => {
 	expect(count).toBe(3);
 });
 
-test("sort paramters are observable", () => {
+test("sort parameters are observable", () => {
 	let count = 0;
 	const arr = array([{}, {}]);
 	arr.sort((a, b) => {

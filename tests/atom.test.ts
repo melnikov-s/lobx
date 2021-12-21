@@ -61,7 +61,7 @@ test("will trigger onBecomeObserved when observation starts", () => {
 	expect(count).toBe(3);
 });
 
-test("will trigger onBecomeUnobserved when observation ends (listener unsbuscribe)", () => {
+test("will trigger onBecomeUnobserved when observation ends (listener unsubscribe)", () => {
 	let count = 0;
 	const a = createValueAtom(1, null, () => count++);
 	const c = computed(() => a.get());

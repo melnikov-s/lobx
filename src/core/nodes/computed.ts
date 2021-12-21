@@ -36,11 +36,11 @@ export default class ComputedNode<T> implements Computed<T> {
 		return this.comparator(value, this.value as T);
 	}
 
-	// computed is dirty and needs to be re-derived if it's interal state is dirty
+	// computed is dirty and needs to be re-derived if it's internal state is dirty
 	// or if it's marked as potentially stale by the graph. A computed becomes potentially
 	// stale when one of its dependents has changed.
 	isDirty(): boolean {
-		return this.dirty || this.graph.isPotentialyStale(this);
+		return this.dirty || this.graph.isPotentiallyStale(this);
 	}
 
 	isKeepAlive(): boolean {

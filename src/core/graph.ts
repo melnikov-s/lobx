@@ -59,8 +59,7 @@ Below is the general shape of the graph:
                                listeners occupy the bottom of the graph
                                and have observers and computed nodes
                                as their dependencies but do not have any
-                               dependants
-
+                               dependents
 */
 
 export const nodeTypes = {
@@ -227,7 +226,7 @@ export default class Graph {
 		);
 	}
 
-	isPotentialyStale(node: Computed<unknown>): boolean {
+	isPotentiallyStale(node: Computed<unknown>): boolean {
 		return this.potentialStale.has(node);
 	}
 
@@ -266,7 +265,7 @@ export default class Graph {
 	// remove an observer from the graph, can happen when a listener is
 	// unsubscribed from or when a computed is no longer observed
 	// or when a derivation has ended and we want to clear cached values
-	// for unobserved computeds
+	// for unobserved computed
 	remove(node: ObserverNode, forceUnObserve: boolean = false): void {
 		const wasObserved =
 			forceUnObserve ||
@@ -301,7 +300,7 @@ export default class Graph {
 	// for execution.
 	reportChanged(node: ObservableNode, oldValue?: unknown): void {
 		if (this.runStack.length && !!this.topOfRunStack && this.isObserved(node)) {
-			// we ignore the change if the change occured within the same reaction in
+			// we ignore the change if the change occurred within the same reaction in
 			// which it was initially observed. This is to allow for creating observables
 			// in reactions and mutating them further.
 			if (node.observers.has(this.topOfRunStack) && node.observers.size === 1) {
@@ -395,7 +394,7 @@ export default class Graph {
 			this.runStack.pop();
 
 			if (this.runStack.length === 0) {
-				// if we're not in a batch we can clean up any derived computeds that are not
+				// if we're not in a batch we can clean up any derived computed that are not
 				// observed but were cached for the duration of the derivation.
 				// if we're in an batch, that clean up will be performed after the batch
 				// is completed.
@@ -422,7 +421,7 @@ export default class Graph {
 		return value;
 	}
 
-	runInAction<T>(fn: () => T): T {
+	runInAction<T>(fn: () => T, untracked = true): T {
 		let result: unknown;
 		if (this.taskDepth === 0) {
 			this.taskCalledStack.length = 0;
@@ -434,7 +433,7 @@ export default class Graph {
 
 		try {
 			this.startAction();
-			result = fn();
+			result = untracked ? this.untracked(fn) : fn();
 		} finally {
 			if (this.taskCalledStack[this.taskDepth - 1]) {
 				if (typeof (result as Promise<unknown>)?.finally !== "function") {
@@ -485,10 +484,6 @@ export default class Graph {
 	}
 
 	startAction(): void {
-		// make actions untracked
-		if (!this.inAction) {
-			this.runStack.push(null);
-		}
 		this.inAction = true;
 		this.startBatch();
 	}
@@ -500,23 +495,19 @@ export default class Graph {
 			);
 		}
 
-		// if we're ending the outter most batch
+		// if we're ending the outer most batch
 		if (this.callDepth === 1) {
-			if (this.inAction) {
-				this.runStack.pop();
-			}
-
 			let reactionsExecuted = false;
 
 			try {
 				// loop through all the affected listeners and filter out
-				// the listeners whose obesrvables did not produce a new value
+				// the listeners whose observables did not produce a new value
 				this.queuedListeners.forEach((l) => {
 					// we remove the listener from the queue so that it can be re-added
 					// in the case that a reaction performs a mutation
 					// this.queuedListeners.delete(l);
 					// computed might re-evaluate here in order to determine if a new
-					// value was prodcued
+					// value was produced
 					if (this.hasChanged(l)) {
 						// perform reaction if any of the dependents have changed
 						l.react();
@@ -546,7 +537,7 @@ export default class Graph {
 				this.clearInvokedComputed();
 				this.callDepth--;
 
-				// If a reaction occured during this batch invoke `onReactionsComplete` callbacks
+				// If a reaction occurred during this batch invoke `onReactionsComplete` callbacks
 				if (reactionsExecuted) {
 					this.reactionsCompleteCallbacks.forEach((c) => c());
 				}
