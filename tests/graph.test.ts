@@ -117,7 +117,7 @@ test("can isolate observable state to a new graph", () => {
 	a.reportChanged();
 	expect(count).toBe(3);
 	expect(isObserved(o)).toBe(false);
-	expect(isObserved(o, g)).toBe(true);
+	expect(isObserved(o, { graph: g })).toBe(true);
 });
 
 test("can isolate actions to a new graph", () => {

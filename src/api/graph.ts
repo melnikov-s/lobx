@@ -43,7 +43,10 @@ export function enforceActions(enforce: boolean): void {
 	return getDefaultGraph().enforceActions(enforce);
 }
 
-export function isObserved(observable: unknown, graph = defaultGraph): boolean {
+export function isObserved(
+	observable: unknown,
+	{ graph = defaultGraph } = {}
+): boolean {
 	if (observable instanceof AtomNode || observable instanceof ComputedNode) {
 		return graph.isObserved(observable as ObservableNode);
 	} else if (observable instanceof ObservableValue) {
