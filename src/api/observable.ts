@@ -10,8 +10,9 @@ import {
 	Configuration,
 	ConfigurationGetter,
 	propertyType,
-	ObservableOptions as ObjectObservableOptions,
-} from "../types/object";
+	getopts,
+	withDefaultConfig,
+} from "../types/utils/configuration";
 
 export type ObservableBox<T> = {
 	equals: (value: T) => boolean;
@@ -20,13 +21,16 @@ export type ObservableBox<T> = {
 };
 
 export type ObservableOptions = {
-	equals?: typeof defaultEquals;
 	graph?: Graph;
+};
+
+type ObservableOptionsConfigure = ObservableOptions & {
+	withDefaults?: boolean;
 };
 
 function observableBox<T>(
 	initialValue: T,
-	opts?: ObservableOptions
+	opts?: ObservableOptions & { equals?: typeof defaultEquals }
 ): ObservableBox<T> {
 	return new ObservableValue<T>(
 		initialValue,
@@ -35,26 +39,10 @@ function observableBox<T>(
 	);
 }
 
-function observableWithOptions(
-	options: Omit<ObjectObservableOptions, "type">
-): ((target: any, propertyKey: string) => any) &
-	typeof propertyType.observable {
-	function decorator(target: any, propertyKey: string): any {
-		const config = getCtorConfiguration(target.constructor);
-		config[propertyKey] = Object.assign({}, propertyType.observable, options);
-
-		return undefined;
-	}
-
-	Object.assign(decorator, propertyType.observable, options);
-
-	return decorator as typeof decorator & typeof propertyType.observable;
-}
-
 function observableConfigure<T extends object, S extends T>(
 	config: Configuration<T> | ConfigurationGetter<S>,
 	target: T,
-	opts?: ObservableOptions
+	opts?: ObservableOptionsConfigure
 ): T;
 
 function observableConfigure<T extends object>(
@@ -64,10 +52,14 @@ function observableConfigure<T extends object>(
 function observableConfigure<T extends object>(
 	config: Configuration<T> | ConfigurationGetter<T>,
 	target?: T,
-	opts?: ObservableOptions
+	opts?: ObservableOptionsConfigure
 ): any {
 	if (target) {
-		return getObservableWithConfig(target, resolveGraph(opts?.graph), config);
+		return getObservableWithConfig(
+			target,
+			resolveGraph(opts?.graph),
+			opts?.withDefaults ? withDefaultConfig(config) : config
+		);
 	} else {
 		return {
 			...propertyType.observable,
@@ -105,10 +97,10 @@ Object.assign(observable, propertyType.observable);
 
 observable.box = observableBox;
 observable.configure = observableConfigure;
-observable.withOptions = observableWithOptions;
+observable.opts = getopts(propertyType.observable);
 
 export default observable as typeof observable & {
 	box: typeof observableBox;
 	configure: typeof observableConfigure;
-	withOptions: typeof observableWithOptions;
+	opts: typeof observable.opts;
 } & typeof propertyType.observable;

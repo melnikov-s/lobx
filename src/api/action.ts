@@ -1,4 +1,4 @@
-import { propertyType } from "../types/object";
+import { propertyType, getopts } from "../types/utils/configuration";
 import { getCtorConfiguration } from "../types/utils/lookup";
 import { isPropertyKey } from "../utils";
 import { runInAction } from "./graph";
@@ -33,5 +33,6 @@ function action<T extends unknown[], U>(...args: unknown[]): unknown {
 }
 
 Object.assign(action, propertyType.action);
+action.opts = getopts(propertyType.action);
 
 export default action as typeof action & typeof propertyType.action;

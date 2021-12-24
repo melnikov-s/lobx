@@ -269,7 +269,7 @@ test("unconfigured values are not observed", () => {
 test("properties can be configured to be observable refs", () => {
 	const C = decorate(
 		{
-			value: observable.withOptions({ ref: true }),
+			value: observable.opts({ ref: true }),
 		},
 		class extends Observable {
 			value = {};
@@ -424,6 +424,41 @@ test("properties can be configured to be actions", () => {
 	expect(c.valueB).toBe(2);
 
 	expect(() => c.notAction(3)).toThrowError();
+});
+
+test("properties can be configured to be bound actions", () => {
+	enforceActions(true);
+	try {
+		const O = decorate(
+			{
+				val: observable,
+				inc: action.opts({ bound: true }),
+			},
+			class extends Observable {
+				val = 0;
+				inc() {
+					expect(isInAction()).toBe(true);
+					this.val++;
+					this.val++;
+				}
+			}
+		);
+
+		let count = 0;
+		const o = new O();
+
+		autorun(() => {
+			o.val;
+			count++;
+		});
+
+		const inc = o.inc;
+		inc();
+		expect(count).toBe(2);
+		expect(o.val).toBe(2);
+	} finally {
+		enforceActions(false);
+	}
 });
 
 test("properties can be configured to be async actions", async () => {

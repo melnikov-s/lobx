@@ -2,83 +2,21 @@ import Atom from "../core/nodes/atom";
 import Graph from "../core/graph";
 import { getObservable, getObservableSource, getAction } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/observe";
-import { isPropertyKey, getPropertyDescriptor, defaultEquals } from "../utils";
+import { isPropertyKey, getPropertyDescriptor } from "../utils";
 import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 import ComputedNode from "../core/nodes/computed";
 import { runInAction } from "../index";
-
-type ConfigurationTypes = ObservableOptions | ComputedOptions | ActionOptions;
-
-export type ConfigurationGetter<T> = (
-	name: keyof T,
-	object: T
-) => ConfigurationTypes | undefined;
-
-export type Configuration<T> = Partial<
-	Record<keyof T, ConfigurationTypes | undefined>
->;
-
-type Types = "observable" | "computed" | "action";
-
-export type ObservableOptions = {
-	type: "observable";
-	ref?: boolean;
-};
-
-type ObservableOptionsConfig = ObservableOptions & {
-	configuration: Configuration<unknown>;
-};
-
-export type ComputedOptions = {
-	type: "computed";
-	keepAlive?: boolean;
-	equals?: typeof defaultEquals;
-};
-type ActionOptions = { type: "action" };
-
-type PropertyOptions = {
-	observable: ObservableOptions;
-	computed: ComputedOptions;
-	action: ActionOptions;
-};
-
-const observableType: ObservableOptions = {
-	type: "observable",
-	ref: false,
-};
-const computedType: ComputedOptions = {
-	type: "computed",
-	keepAlive: false,
-};
-const actionType: ActionOptions = { type: "action" };
-
-export const propertyType: {
-	[key in Types]: PropertyOptions[key];
-} = {
-	observable: observableType,
-	computed: computedType,
-	action: actionType,
-} as const;
-
-function defaultConfigGetter(
-	key: PropertyKey,
-	proxy: object
-): ConfigurationTypes {
-	const descriptor = getPropertyDescriptor(proxy, key);
-	if (descriptor) {
-		if (
-			typeof descriptor.get === "function" ||
-			typeof descriptor.set === "function"
-		) {
-			return propertyType.computed;
-		} else if (typeof descriptor.value === "function") {
-			return propertyType.action;
-		}
-	}
-
-	return propertyType.observable;
-}
+import {
+	ComputedOptions,
+	Configuration,
+	ConfigurationGetter,
+	ConfigurationTypes,
+	defaultConfigGetter,
+	ObservableOptions,
+	ObservableOptionsConfig,
+	propertyType,
+} from "./utils/configuration";
 
 export class ObjectAdministration<T extends object> extends Administration<T> {
 	keysAtom: Atom;
@@ -292,7 +230,12 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 					);
 				}
 
-				return getAction(this.get(key) as unknown as Function, this.graph);
+				return getAction(
+					this.get(key) as unknown as Function,
+					this.graph,
+					config,
+					this.proxy
+				);
 			}
 			case propertyType.computed.type: {
 				const computedNode = this.getComputed(key);

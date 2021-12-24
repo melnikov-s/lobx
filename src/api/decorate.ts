@@ -1,7 +1,8 @@
-import { Configuration } from "../types/object";
+import { Configuration } from "../types/utils/configuration";
 import { setCtorConfiguration } from "../types/utils/lookup";
+import Observable from "./ObservableClass";
 
-export default function decorate<T extends new (...args: unknown[]) => unknown>(
+export default function decorate<T extends typeof Observable>(
 	config: Configuration<InstanceType<T>>,
 	ObservableCtor: T
 ): T {

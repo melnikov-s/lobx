@@ -23,7 +23,7 @@ import graph, {
 } from "./api/graph";
 import { getObservableSource, isObservable } from "./types/utils/lookup";
 import { observe } from "./types/utils/observe";
-import { Configuration } from "./types/object";
+import { Configuration } from "./types/utils/configuration";
 import { getAdministration } from "./types/utils/lookup";
 import { Scheduler, createScheduler } from "./api/scheduler";
 import Observable from "./api/ObservableClass";

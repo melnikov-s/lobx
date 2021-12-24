@@ -653,9 +653,9 @@ _`mobx` equivalent: `observable.box`_
 
 Creates an observable with a specific configuration, overwriting the default behavior which assigns properties as `observables`, getters as `computed` and methods and setters as `actions`. 
 
-### `observable.withOptions({ref?})`
+### `observable.opts({ref?})`
 
-When decorating or using `observable.configure`, `observable.withOptions` allows for the customization of the observable field.
+When decorating or using `observable.configure`, `observable.opts` allows for the customization of the observable field.
 
 #### Options:
 
@@ -690,15 +690,23 @@ console.log(fullName.get()); // Alice Smith
 - `isKeepAlive(): boolean`: returns `true` if the computed is `keepAlive`, `false` otherwise.
 - `setKeepAlive(keepAlive: boolean)`: change `keepAlive` , if the computed was `keepAlive` and is no longer observed will clear out the cached value.
 
-### `computed.withOptions({keepAlive?, equals?})`
+### `computed.opts({keepAlive = false, equals?})`
 
-When decorating or using `observable.configure`, `computed.withOptions` allows for the customization of the observable field.
+When decorating or using `observable.configure`, `computed.opts` allows for the customization of the observable field.
 
 
 `computed` can also be used in `observable.configure` and `decorate` to denote an object/class getter as a derived value.
 ### `action(fn, { graph? })`
 
 An action allows you to mutate multiple observables and hold off reactions until the (outer most) action has completed. This prevents reactions of triggering on intermediate observable values.
+
+### `action.opts({untracked = true, bound = false})`
+
+When decorating or using `observable.configure`, `computed.opts` allows for the customization of a method or setter.
+
+`untracked` is defaulted to `true` but can be set to `false` so that the observables accessed in a reaction within the action can still be tracked. Useful if you don't know ahead of time if the action will perform a mutation or just derive values based on parameters.
+
+`bound` is defaulted to `false` but can be set to `true` if you wish to have the action's context to be automatically bound to the observable.
 
 ```javascript
 import { observableObject, autorun, action } from "lobx";

@@ -91,7 +91,7 @@ test("computed decorators can be further configured with options", () => {
 			return {};
 		}
 
-		@computed.withOptions({ keepAlive: true }) get compAlive() {
+		@computed.opts({ keepAlive: true }) get compAlive() {
 			return {};
 		}
 	}
@@ -105,7 +105,7 @@ test("computed decorators can be further configured with options", () => {
 
 test("observable decorators can be further configured with options", () => {
 	class C extends Observable {
-		@observable.withOptions({ ref: true }) value = { num: 0 };
+		@observable.opts({ ref: true }) value = { num: 0 };
 
 		@computed get comp() {
 			return this.value.num;

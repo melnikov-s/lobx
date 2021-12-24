@@ -1,11 +1,12 @@
 import Graph from "../../core/graph";
 import { MapAdministration } from "../map";
 import { SetAdministration } from "../set";
+import { ObjectAdministration } from "../object";
 import {
-	ObjectAdministration,
+	ActionOptions,
 	Configuration,
 	ConfigurationGetter,
-} from "../object";
+} from "./configuration";
 import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
@@ -81,8 +82,14 @@ export function getObservableSource<T>(obj: T): T {
 	return adm ? (adm.source as unknown as T) : obj;
 }
 
-export function getAction<T extends Function>(fn: T, graph: Graph): T {
+export function getAction<T extends Function>(
+	fn: T,
+	graph: Graph,
+	options: ActionOptions,
+	context: unknown
+): T {
 	let action = actionsMap.get(fn);
+	const bound = options.bound;
 
 	if (!action) {
 		action = function (this: unknown, ...args: unknown[]): unknown {
@@ -90,7 +97,10 @@ export function getAction<T extends Function>(fn: T, graph: Graph): T {
 				return new (fn as any)(...args);
 			}
 
-			return graph.runInAction(() => fn.apply(this, args), false);
+			return graph.runInAction(
+				() => fn.apply(bound ? context : this, args),
+				options.untracked
+			);
 		};
 
 		actionsMap.set(fn, action);

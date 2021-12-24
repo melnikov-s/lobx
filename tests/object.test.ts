@@ -10,6 +10,7 @@ import {
 	isObservable,
 	getObservableSource,
 	decorate,
+	isInAction,
 } from "../src/index";
 
 function object<T extends object>(obj: T = {} as T): Record<string, any> {
@@ -137,6 +138,7 @@ test("observable objects can be configured with function", () => {
 
 		autorun(() => {
 			o.comp;
+			o.nonObservableValue;
 			count++;
 		});
 
@@ -146,6 +148,146 @@ test("observable objects can be configured with function", () => {
 		expect(o.count).toBe(2);
 		o.nonObservableValue++;
 		expect(count).toBe(2);
+	} finally {
+		enforceActions(false);
+	}
+});
+
+test("observable objects can be configured with config overwriting defaults", () => {
+	enforceActions(true);
+	try {
+		const o = observable.configure(
+			{
+				observableValue: observable,
+				inc: action,
+				comp: computed,
+				nonObservableValue: undefined,
+			},
+			{
+				count: 0,
+				nonObservableValue: 0,
+				observableValue: 0,
+				nonConfiguredValue: 0,
+				nonConfiguredAction() {
+					this.nonConfiguredValue++;
+				},
+				get comp() {
+					this.count++;
+					return this.observableValue * 2;
+				},
+				inc() {
+					this.observableValue++;
+					this.observableValue++;
+				},
+			},
+			{ withDefaults: true }
+		);
+
+		let count = 0;
+
+		autorun(() => {
+			o.comp;
+			o.nonConfiguredValue;
+			o.nonObservableValue;
+			count++;
+		});
+
+		o.inc();
+		expect(count).toBe(2);
+		expect(o.comp).toBe(4);
+		expect(o.count).toBe(2);
+		o.nonConfiguredAction();
+		expect(count).toBe(3);
+		o.nonObservableValue++;
+		expect(count).toBe(3);
+	} finally {
+		enforceActions(false);
+	}
+});
+
+test("observable objects can be configured with function overwriting defaults", () => {
+	enforceActions(true);
+	try {
+		const o = observable.configure(
+			(name, object) => {
+				expect(object).toBe(o);
+				switch (name) {
+					case "observableValue":
+						return observable;
+					case "comp":
+						return computed;
+					case "inc":
+						return action;
+				}
+			},
+			{
+				count: 0,
+				observableValue: 0,
+				nonConfiguredValue: 0,
+				nonConfiguredAction() {
+					this.nonConfiguredValue++;
+				},
+				get comp() {
+					this.count++;
+					return this.observableValue * 2;
+				},
+				inc() {
+					this.observableValue++;
+					this.observableValue++;
+				},
+			},
+			{ withDefaults: true }
+		);
+
+		let count = 0;
+
+		autorun(() => {
+			o.comp;
+			o.nonConfiguredValue;
+			count++;
+		});
+
+		o.inc();
+		expect(count).toBe(2);
+		expect(o.comp).toBe(4);
+		expect(o.count).toBe(2);
+		o.nonConfiguredAction();
+		expect(count).toBe(3);
+	} finally {
+		enforceActions(false);
+	}
+});
+
+test("observable object methods can be bound", () => {
+	enforceActions(true);
+	try {
+		const o = observable.configure(
+			{
+				val: observable,
+				inc: action.opts({ bound: true }),
+			},
+			{
+				count: 0,
+				val: 0,
+				inc() {
+					expect(isInAction()).toBe(true);
+					this.val++;
+					this.val++;
+				},
+			}
+		);
+
+		let count = 0;
+
+		autorun(() => {
+			o.val;
+			count++;
+		});
+
+		const inc = o.inc;
+		inc();
+		expect(count).toBe(2);
+		expect(o.val).toBe(2);
 	} finally {
 		enforceActions(false);
 	}

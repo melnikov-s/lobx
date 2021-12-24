@@ -1,9 +1,8 @@
 import ComputedNode from "../core/nodes/computed";
-import { propertyType } from "../types/object";
+import { getopts, propertyType } from "../types/utils/configuration";
 import { getCtorConfiguration } from "../types/utils/lookup";
 import { isPropertyKey } from "../utils";
 import { resolveGraph, Graph } from "./graph";
-import { ComputedOptions as ObjectComputedOptions } from "../types/object";
 
 export type Computed<T> = {
 	clear: () => void;
@@ -52,24 +51,10 @@ function computed<T>(...args: unknown[]): unknown {
 	}
 }
 
-function computedWithOptions(
-	options: Omit<ObjectComputedOptions, "type">
-): ((target: any, propertyKey: string) => any) & typeof propertyType.computed {
-	function decorator(target: any, propertyKey: string): any {
-		const config = getCtorConfiguration(target.constructor);
-		config[propertyKey] = Object.assign({}, propertyType.computed, options);
-
-		return undefined;
-	}
-	Object.assign(decorator, propertyType.computed, options);
-
-	return decorator as typeof decorator & typeof propertyType.computed;
-}
-
 Object.assign(computed, propertyType.computed);
 
-computed.withOptions = computedWithOptions;
+computed.opts = getopts(propertyType.computed);
 
 export default computed as typeof computed & {
-	withOptions: typeof computedWithOptions;
+	opts: typeof computed.opts;
 } & typeof propertyType.computed;
