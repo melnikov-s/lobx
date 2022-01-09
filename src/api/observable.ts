@@ -10,7 +10,7 @@ import {
 	Configuration,
 	ConfigurationGetter,
 	propertyType,
-	getopts,
+	getOpts,
 	withDefaultConfig,
 } from "../types/utils/configuration";
 
@@ -97,7 +97,7 @@ Object.assign(observable, propertyType.observable);
 
 observable.box = observableBox;
 observable.configure = observableConfigure;
-observable.opts = getopts(propertyType.observable);
+observable.opts = getOpts(propertyType.observable);
 
 export default observable as typeof observable & {
 	box: typeof observableBox;

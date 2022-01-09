@@ -1,6 +1,6 @@
 {
 	"name": "lobx",
-	"version": "0.2.0-rc27",
+	"version": "0.2.0",
 	"description": "lightweight reactive state management",
 	"main": "lib/lobx.js",
 	"module": "lib/lobx.module.js",

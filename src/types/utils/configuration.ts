@@ -105,9 +105,7 @@ export function withDefaultConfig<T extends object>(
 	};
 }
 
-export function getopts<T extends ConfigurationTypes>(
-	defaultOptions: T
-) {
+export function getOpts<T extends ConfigurationTypes>(defaultOptions: T) {
 	return function (options: Omit<T, "type">) {
 		function decorator(target: any, propertyKey: string): any {
 			const config = getCtorConfiguration(target.constructor);

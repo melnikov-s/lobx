@@ -1,5 +1,5 @@
 import ComputedNode from "../core/nodes/computed";
-import { getopts, propertyType } from "../types/utils/configuration";
+import { getOpts, propertyType } from "../types/utils/configuration";
 import { getCtorConfiguration } from "../types/utils/lookup";
 import { isPropertyKey } from "../utils";
 import { resolveGraph, Graph } from "./graph";
@@ -53,7 +53,7 @@ function computed<T>(...args: unknown[]): unknown {
 
 Object.assign(computed, propertyType.computed);
 
-computed.opts = getopts(propertyType.computed);
+computed.opts = getOpts(propertyType.computed);
 
 export default computed as typeof computed & {
 	opts: typeof computed.opts;
